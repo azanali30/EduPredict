@@ -57,16 +57,16 @@ export const RegisterPage: React.FC = () => {
 
   if (success) {
     return (
-      <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-        <CheckCircle2 size={48} color="var(--status-success)" style={{ margin: '0 auto 1rem' }} />
-        <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+      <div className="text-center py-4">
+        <CheckCircle2 size={48} className="mx-auto text-emerald-500 mb-4" />
+        <h2 className="text-xl font-bold text-navy-900 mb-2">
           Registration Successful!
         </h2>
-        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+        <p className="text-sm text-slate-500 mb-6">
           Your student account has been created. Redirecting you to login...
         </p>
         <Link to="/login">
-          <Button variant="primary" style={{ width: '100%' }}>
+          <Button variant="primary" className="w-full">
             Proceed to Login
           </Button>
         </Link>
@@ -76,19 +76,19 @@ export const RegisterPage: React.FC = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'inline-block', marginBottom: '0.25rem' }}>
+      <div className="mb-6">
+        <div className="inline-block mb-1">
           <span className="badge badge-student">Student Access</span>
         </div>
-        <h2 style={{ fontSize: '1.4rem', fontWeight: 800 }}>Create Account</h2>
-        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+        <h2 className="text-xl sm:text-2xl font-extrabold text-navy-900">Create Account</h2>
+        <p className="text-sm text-slate-500 mt-1">
           Register as a student to access AI academic analytics
         </p>
       </div>
 
       <ErrorAlert message={error || ''} onDismiss={() => setError(null)} />
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="space-y-4">
         <InputField
           label="Full Legal Name"
           type="text"
@@ -129,29 +129,17 @@ export const RegisterPage: React.FC = () => {
         />
 
         {/* Password Strength Checklist */}
-        <div
-          style={{
-            backgroundColor: 'var(--bg-subtle)',
-            borderRadius: 'var(--radius-sm)',
-            padding: '0.75rem',
-            marginBottom: '1.25rem',
-            fontSize: '0.78rem',
-            color: 'var(--text-muted)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.25rem',
-          }}
-        >
-          <div style={{ fontWeight: 600, color: 'var(--primary-navy)', marginBottom: '0.15rem' }}>
+        <div className="bg-slate-50 rounded-lg p-3 text-xs text-slate-500 flex flex-col gap-1 border border-slate-200">
+          <div className="font-semibold text-navy-900 mb-0.5">
             Password Requirements:
           </div>
-          <div style={{ color: hasLength ? 'var(--status-success)' : 'var(--text-muted)' }}>
+          <div className={hasLength ? 'text-emerald-600 font-medium' : 'text-slate-400'}>
             {hasLength ? '✓' : '•'} At least 8 characters
           </div>
-          <div style={{ color: hasLetter ? 'var(--status-success)' : 'var(--text-muted)' }}>
+          <div className={hasLetter ? 'text-emerald-600 font-medium' : 'text-slate-400'}>
             {hasLetter ? '✓' : '•'} At least one letter
           </div>
-          <div style={{ color: hasDigit ? 'var(--status-success)' : 'var(--text-muted)' }}>
+          <div className={hasDigit ? 'text-emerald-600 font-medium' : 'text-slate-400'}>
             {hasDigit ? '✓' : '•'} At least one digit
           </div>
         </div>
@@ -161,14 +149,14 @@ export const RegisterPage: React.FC = () => {
           variant="primary"
           isLoading={isLoading}
           leftIcon={<UserPlus size={18} />}
-          style={{ width: '100%', marginBottom: '1.25rem' }}
+          className="w-full mt-2"
         >
           Create Student Account
         </Button>
 
-        <div style={{ textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+        <div className="text-center text-xs sm:text-sm text-slate-500 pt-2">
           Already have an account?{' '}
-          <Link to="/login" style={{ fontWeight: 600, color: 'var(--brand-blue)' }}>
+          <Link to="/login" className="font-semibold text-brand-600 hover:text-brand-700">
             Sign In
           </Link>
         </div>

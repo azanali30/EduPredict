@@ -17,31 +17,19 @@ export const StudentOverview: React.FC = () => {
   const { user } = useAuth();
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+    <div className="flex flex-col gap-6">
       {/* Welcome Hero Banner */}
-      <div
-        className="card"
-        style={{
-          background: 'linear-gradient(135deg, #0B192C 0%, #1E3E62 100%)',
-          color: '#ffffff',
-          padding: '2rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1rem',
-        }}
-      >
+      <div className="card bg-gradient-to-br from-navy-900 to-navy-800 text-white p-6 sm:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-soft">
         <div>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-            <span className="badge badge-student" style={{ backgroundColor: 'rgba(56, 189, 248, 0.2)', color: '#38bdf8' }}>
+          <div className="inline-flex items-center gap-2 mb-2">
+            <span className="badge bg-sky-400/20 text-sky-400 font-semibold tracking-wider text-[11px]">
               Student Portal
             </span>
           </div>
-          <h2 style={{ fontSize: '1.6rem', color: '#ffffff', marginBottom: '0.35rem' }}>
+          <h2 className="text-xl sm:text-2xl font-extrabold text-white mb-1.5">
             Welcome back, {user?.full_name}!
           </h2>
-          <p style={{ color: '#94a3b8', fontSize: '0.9rem', maxWidth: '600px' }}>
+          <p className="text-slate-300 text-sm max-w-xl">
             Track your coursework indicators, monitor academic consistency, and view AI-driven expected grade estimates.
           </p>
         </div>
@@ -49,7 +37,7 @@ export const StudentOverview: React.FC = () => {
         <Link to="/student/records">
           <Button
             variant="outline"
-            style={{ borderColor: 'rgba(255, 255, 255, 0.25)', color: '#ffffff' }}
+            className="border-white/20 text-white hover:bg-white/10 shrink-0"
             leftIcon={<BookOpen size={16} />}
           >
             Manage Academic Data
@@ -59,14 +47,8 @@ export const StudentOverview: React.FC = () => {
 
       {/* Primary KPI Metrics */}
       <div>
-        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Academic Indicators</h3>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '1.25rem',
-          }}
-        >
+        <h3 className="text-base font-bold text-navy-900 mb-4">Academic Indicators</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             title="Attendance Rate"
             value="--"
@@ -95,14 +77,14 @@ export const StudentOverview: React.FC = () => {
       </div>
 
       {/* AI Prediction & Recommendations Placeholder */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-            <Sparkles size={20} color="var(--brand-blue)" />
-            <h4 style={{ fontSize: '1.05rem' }}>Predicted Academic Results</h4>
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles size={20} className="text-brand-500" />
+            <h4 className="text-base font-bold text-navy-900">Predicted Academic Results</h4>
           </div>
           <EmptyState
-            icon={<Sparkles size={26} color="var(--brand-blue)" />}
+            icon={<Sparkles size={26} className="text-brand-500" />}
             title="Prediction Pipeline Ready"
             description="Expected marks and academic risk classifications will be calculated automatically once your term records are submitted and the ML models are trained in Phase 4."
             actionText="View AI Predictions Hub"
@@ -111,12 +93,12 @@ export const StudentOverview: React.FC = () => {
         </div>
 
         <div className="card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-            <Award size={20} color="var(--status-warning)" />
-            <h4 style={{ fontSize: '1.05rem' }}>Actionable Recommendations</h4>
+          <div className="flex items-center gap-2 mb-4">
+            <Award size={20} className="text-amber-500" />
+            <h4 className="text-base font-bold text-navy-900">Actionable Recommendations</h4>
           </div>
           <EmptyState
-            icon={<BookOpen size={26} color="var(--text-muted)" />}
+            icon={<BookOpen size={26} className="text-slate-400" />}
             title="No Active Recommendations"
             description="Personalized improvement strategies will highlight specific subject weak points and attendance adjustments based on your feature weight analysis."
           />

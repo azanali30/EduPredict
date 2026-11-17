@@ -27,46 +27,18 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 1000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(11, 25, 44, 0.55)',
-        backdropFilter: 'blur(3px)',
-        padding: '1rem',
-      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
-        className="card"
-        style={{
-          width: '100%',
-          maxWidth: '520px',
-          backgroundColor: '#ffffff',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-lg)',
-          padding: '1.5rem',
-          position: 'relative',
-        }}
+        className="card w-full max-w-lg bg-white rounded-xl shadow-card p-6 relative animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            borderBottom: '1px solid var(--border-light)',
-            paddingBottom: '0.75rem',
-            marginBottom: '1rem',
-          }}
-        >
-          <h3 style={{ fontSize: '1.15rem' }}>{title}</h3>
+        <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+          <h3 className="text-lg font-bold text-navy-900">{title}</h3>
           <button
             onClick={onClose}
-            style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', padding: '0.2rem' }}
+            className="text-slate-400 hover:text-slate-600 p-1 rounded-md transition-colors"
             aria-label="Close modal"
           >
             <X size={20} />

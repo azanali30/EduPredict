@@ -15,7 +15,7 @@ export const InputField: React.FC<InputFieldProps> = ({
   isPassword = false,
   id,
   type = 'text',
-  style,
+  className = '',
   ...props
 }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -24,45 +24,27 @@ export const InputField: React.FC<InputFieldProps> = ({
   const effectiveType = isPassword ? (showPassword ? 'text' : 'password') : type;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginBottom: '1rem' }}>
+    <div className="flex flex-col gap-1.5 mb-4">
       {label && (
         <label
           htmlFor={inputId}
-          style={{
-            fontSize: '0.85rem',
-            fontWeight: 600,
-            color: 'var(--primary-navy)',
-          }}
+          className="text-xs font-semibold uppercase tracking-wider text-navy-900"
         >
           {label}
         </label>
       )}
 
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+      <div className="relative flex items-center">
         <input
           id={inputId}
           type={effectiveType}
-          style={{
-            width: '100%',
-            padding: '0.65rem 0.85rem',
-            paddingRight: isPassword ? '2.5rem' : '0.85rem',
-            fontSize: '0.9rem',
-            borderRadius: 'var(--radius-md)',
-            border: `1px solid ${error ? 'var(--status-danger)' : 'var(--border-light)'}`,
-            backgroundColor: '#ffffff',
-            color: 'var(--text-main)',
-            outline: 'none',
-            transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-            ...style,
-          }}
-          onFocus={(e) => {
-            if (!error) e.target.style.borderColor = 'var(--brand-blue)';
-            e.target.style.boxShadow = '0 0 0 3px rgba(2, 132, 199, 0.15)';
-          }}
-          onBlur={(e) => {
-            if (!error) e.target.style.borderColor = 'var(--border-light)';
-            e.target.style.boxShadow = 'none';
-          }}
+          className={`w-full py-2.5 px-3.5 text-sm rounded-lg border bg-white text-slate-900 transition-all duration-150 outline-none placeholder:text-slate-400 ${
+            isPassword ? 'pr-10' : 'pr-3.5'
+          } ${
+            error
+              ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20'
+              : 'border-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20'
+          } ${className}`}
           {...props}
         />
 
@@ -70,14 +52,7 @@ export const InputField: React.FC<InputFieldProps> = ({
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            style={{
-              position: 'absolute',
-              right: '0.75rem',
-              color: 'var(--text-muted)',
-              display: 'flex',
-              alignItems: 'center',
-              padding: '0.2rem',
-            }}
+            className="absolute right-3 text-slate-400 hover:text-slate-600 transition-colors p-1"
             tabIndex={-1}
             aria-label={showPassword ? 'Hide password' : 'Show password'}
           >
@@ -87,11 +62,11 @@ export const InputField: React.FC<InputFieldProps> = ({
       </div>
 
       {error ? (
-        <span style={{ fontSize: '0.78rem', color: 'var(--status-danger)', fontWeight: 500 }}>
+        <span className="text-xs font-medium text-rose-600">
           {error}
         </span>
       ) : helperText ? (
-        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+        <span className="text-xs text-slate-500">
           {helperText}
         </span>
       ) : null}

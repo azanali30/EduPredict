@@ -51,56 +51,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
 
   return (
     <aside
-      style={{
-        width: 'var(--sidebar-width)',
-        height: '100vh',
-        backgroundColor: 'var(--primary-navy)',
-        color: '#ffffff',
-        display: isOpen ? 'flex' : 'none',
-        flexDirection: 'column',
-        position: 'sticky',
-        top: 0,
-        zIndex: 90,
-        boxShadow: 'var(--shadow-md)',
-        transition: 'transform 0.2s ease',
-      }}
+      className={`w-64 h-screen sticky top-0 z-40 bg-navy-900 text-white flex-col shadow-lg transition-transform duration-200 ${
+        isOpen ? 'flex' : 'hidden'
+      }`}
     >
       {/* Brand Header */}
-      <div
-        style={{
-          height: 'var(--header-height)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          padding: '0 1.5rem',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-        }}
-      >
-        <div
-          style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: 'var(--radius-md)',
-            backgroundColor: 'var(--brand-blue)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#ffffff',
-          }}
-        >
+      <div className="h-16 flex items-center gap-3 px-6 border-b border-white/10 shrink-0">
+        <div className="w-9 h-9 rounded-lg bg-brand-500 flex items-center justify-center text-white shadow-sm">
           <GraduationCap size={22} />
         </div>
         <div>
-          <h1 style={{ fontSize: '1.15rem', color: '#ffffff', lineHeight: 1.2 }}>EduPredict</h1>
-          <span style={{ fontSize: '0.7rem', color: 'var(--accent-cyan)', fontWeight: 600, letterSpacing: '0.05em' }}>
-            ACADEMIC AI
+          <h1 className="text-lg font-bold text-white leading-tight">EduPredict</h1>
+          <span className="text-[10px] font-bold text-sky-400 tracking-widest uppercase">
+            Academic AI
           </span>
         </div>
       </div>
 
       {/* Navigation Links */}
-      <nav style={{ flex: 1, padding: '1.25rem 0.75rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-        <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-subtle)', padding: '0 0.75rem 0.5rem', fontWeight: 700 }}>
+      <nav className="flex-1 py-5 px-3 flex flex-col gap-1 overflow-y-auto">
+        <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-3 pb-2">
           {user?.role ? `${user.role} workspace` : 'Navigation'}
         </div>
 
@@ -109,19 +79,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
             key={link.to}
             to={link.to}
             end={link.to === '/student' || link.to === '/teacher' || link.to === '/admin'}
-            style={({ isActive }) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              padding: '0.65rem 0.85rem',
-              borderRadius: 'var(--radius-md)',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              color: isActive ? '#ffffff' : '#94a3b8',
-              backgroundColor: isActive ? 'var(--primary-dark)' : 'transparent',
-              borderLeft: isActive ? '3px solid var(--accent-cyan)' : '3px solid transparent',
-              transition: 'all 0.15s ease',
-            })}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
+                isActive
+                  ? 'bg-navy-800 text-white font-semibold border-l-[3px] border-sky-400 shadow-sm'
+                  : 'text-slate-400 hover:text-white hover:bg-navy-800/60 border-l-[3px] border-transparent'
+              }`
+            }
             onClick={onClose}
           >
             {link.icon}
@@ -131,31 +95,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
       </nav>
 
       {/* Sidebar Footer */}
-      <div
-        style={{
-          padding: '1rem',
-          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.5rem',
-        }}
-      >
+      <div className="p-4 border-t border-white/10 shrink-0">
         <button
           onClick={logout}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            padding: '0.65rem 0.85rem',
-            borderRadius: 'var(--radius-md)',
-            color: '#f87171',
-            fontSize: '0.85rem',
-            width: '100%',
-            textAlign: 'left',
-            transition: 'background 0.15s ease',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+          className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 text-sm font-medium w-full text-left transition-colors cursor-pointer"
         >
           <LogOut size={18} />
           <span>Sign Out</span>

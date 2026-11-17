@@ -29,29 +29,17 @@ export const TeacherOverview: React.FC = () => {
   }, []);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+    <div className="flex flex-col gap-6">
       {/* Teacher Banner */}
-      <div
-        className="card"
-        style={{
-          background: 'linear-gradient(135deg, #1E3E62 0%, #0B192C 100%)',
-          color: '#ffffff',
-          padding: '2rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1rem',
-        }}
-      >
+      <div className="card bg-gradient-to-br from-navy-800 to-navy-900 text-white p-6 sm:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-soft">
         <div>
-          <span className="badge badge-teacher" style={{ backgroundColor: 'rgba(167, 139, 250, 0.2)', color: '#c4b5fd', marginBottom: '0.5rem' }}>
+          <span className="badge bg-purple-400/20 text-purple-300 font-semibold tracking-wider text-[11px] mb-2 inline-block">
             Teacher Workspace
           </span>
-          <h2 style={{ fontSize: '1.6rem', color: '#ffffff', marginBottom: '0.35rem' }}>
+          <h2 className="text-xl sm:text-2xl font-extrabold text-white mb-1.5">
             Instructor Dashboard – {user?.full_name}
           </h2>
-          <p style={{ color: '#94a3b8', fontSize: '0.9rem', maxWidth: '600px' }}>
+          <p className="text-slate-300 text-sm max-w-xl">
             Monitor academic metrics, track assigned cohorts, and inspect at-risk alerts as student assignments are logged.
           </p>
         </div>
@@ -59,7 +47,7 @@ export const TeacherOverview: React.FC = () => {
         <Link to="/teacher/students">
           <Button
             variant="outline"
-            style={{ borderColor: 'rgba(255, 255, 255, 0.25)', color: '#ffffff' }}
+            className="border-white/20 text-white hover:bg-white/10 shrink-0"
             rightIcon={<ArrowRight size={16} />}
           >
             View Student Roster
@@ -69,15 +57,15 @@ export const TeacherOverview: React.FC = () => {
 
       {/* Overview Stat Cards */}
       <div>
-        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Cohort Overview</h3>
+        <h3 className="text-base font-bold text-navy-900 mb-4">Cohort Overview</h3>
         {loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <LoadingSkeleton height="110px" />
             <LoadingSkeleton height="110px" />
             <LoadingSkeleton height="110px" />
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <StatCard
               title="Assigned Students"
               value={students.length}
@@ -102,12 +90,12 @@ export const TeacherOverview: React.FC = () => {
 
       {/* Roster Preview */}
       <div className="card">
-        <h4 style={{ fontSize: '1.05rem', marginBottom: '1rem' }}>Assigned Students</h4>
+        <h4 className="text-base font-bold text-navy-900 mb-4">Assigned Students</h4>
         {loading ? (
           <LoadingSkeleton height="160px" />
         ) : students.length === 0 ? (
           <EmptyState
-            icon={<Users size={32} color="var(--brand-blue)" />}
+            icon={<Users size={32} className="text-brand-500" />}
             title="No Students Assigned Yet"
             description="Your administrator has not mapped any student accounts to your instructor profile yet. Assignments will appear here automatically."
           />
@@ -125,8 +113,8 @@ export const TeacherOverview: React.FC = () => {
               <tbody>
                 {students.map((s) => (
                   <tr key={s.id}>
-                    <td style={{ fontWeight: 600 }}>{s.full_name}</td>
-                    <td>{s.email}</td>
+                    <td className="font-semibold text-navy-900">{s.full_name}</td>
+                    <td className="text-slate-600">{s.email}</td>
                     <td>
                       <span className="badge badge-success">Active</span>
                     </td>

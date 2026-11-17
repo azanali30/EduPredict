@@ -23,31 +23,20 @@ export const StatCard: React.FC<StatCardProps> = ({
   badgeVariant = 'info',
 }) => {
   return (
-    <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+    <div className="card flex flex-col gap-3 p-6 transition-all duration-200 hover:shadow-soft">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
           {title}
         </span>
         {icon && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '36px',
-              height: '36px',
-              borderRadius: 'var(--radius-md)',
-              backgroundColor: 'var(--accent-light)',
-              color: 'var(--brand-blue)',
-            }}
-          >
+          <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-sky-50 text-sky-600">
             {icon}
           </div>
         )}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-        <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--primary-navy)' }}>
+      <div className="flex items-baseline gap-2">
+        <span className="text-3xl font-extrabold text-navy-900 tracking-tight">
           {value}
         </span>
         {badgeText && (
@@ -56,18 +45,17 @@ export const StatCard: React.FC<StatCardProps> = ({
       </div>
 
       {(subtitle || trend) && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem' }}>
+        <div className="flex items-center gap-2 text-xs">
           {trend && (
             <span
-              style={{
-                color: trend.isPositive ? 'var(--status-success)' : 'var(--status-danger)',
-                fontWeight: 600,
-              }}
+              className={`font-semibold ${
+                trend.isPositive ? 'text-emerald-600' : 'text-rose-600'
+              }`}
             >
               {trend.value}
             </span>
           )}
-          {subtitle && <span style={{ color: 'var(--text-muted)' }}>{subtitle}</span>}
+          {subtitle && <span className="text-slate-500">{subtitle}</span>}
         </div>
       )}
     </div>

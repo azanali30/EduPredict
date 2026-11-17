@@ -18,35 +18,13 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   onAction,
 }) => {
   return (
-    <div
-      className="card"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center',
-        padding: '3rem 2rem',
-        gap: '1rem',
-      }}
-    >
-      <div
-        style={{
-          width: '56px',
-          height: '56px',
-          borderRadius: 'var(--radius-full)',
-          backgroundColor: 'var(--bg-subtle)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'var(--text-muted)',
-        }}
-      >
+    <div className="card flex flex-col items-center justify-center text-center p-12 gap-4">
+      <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shadow-inner">
         {icon || <Inbox size={28} />}
       </div>
-      <div>
-        <h4 style={{ fontSize: '1.1rem', marginBottom: '0.35rem' }}>{title}</h4>
-        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', maxWidth: '420px', margin: '0 auto' }}>
+      <div className="max-w-md">
+        <h4 className="text-lg font-bold text-navy-900 mb-1.5">{title}</h4>
+        <p className="text-sm text-slate-500 leading-relaxed">
           {description}
         </p>
       </div>

@@ -48,14 +48,16 @@ EduPredict is an AI/ML-driven Educational Performance Prediction and Analytics P
 
 ---
 
-## 2. Frontend Application Architecture (React + TypeScript + Vite)
+## 2. Frontend Application Architecture (React + TypeScript + Vite + Tailwind CSS)
 
-The frontend is structured as a dedicated TypeScript SPA inside `frontend/`:
+The frontend is structured as a dedicated TypeScript SPA inside `frontend/` powered by Vite 6 and Tailwind CSS v3:
 ```text
 frontend/
-├── package.json              # React 18, React Router 6, Lucide React, Vite 6
+├── package.json              # React 18, Tailwind CSS 3.4, PostCSS, Autoprefixer, React Router 6
 ├── tsconfig.json             # Strict TypeScript compiler options
 ├── vite.config.ts            # Local development proxy (/auth, /api -> :5000)
+├── tailwind.config.js        # Design tokens: Navy (#0B192C, #1E3E62), Brand blue, Cyan, Surfaces
+├── postcss.config.js         # PostCSS plugins (tailwindcss, autoprefixer)
 ├── index.html                # HTML5 mount point with Plus Jakarta Sans & Inter
 └── src/
     ├── main.tsx              # Application bootstrap with global styles
@@ -67,20 +69,20 @@ frontend/
     ├── context/
     │   └── AuthContext.tsx   # React Context maintaining authenticated session & user state
     ├── styles/
-    │   └── global.css        # SaaS CSS design system (Navy blue, cards, badges, tables)
+    │   └── global.css        # Tailwind directives (@tailwind base/components/utilities) + SaaS styles
     ├── components/
-    │   ├── common/           # Navbar, Sidebar, StatCard, LoadingSkeleton, EmptyState, Modal
-    │   └── forms/            # Accessible InputField with show/hide password, Button with spinner
+    │   ├── common/           # Navbar, Sidebar, StatCard, LoadingSkeleton, EmptyState, Modal (Tailwind)
+    │   └── forms/            # Accessible InputField with show/hide password, Button with spinner (Tailwind)
     ├── layouts/
-    │   ├── AuthLayout.tsx    # Branded centered container for public authentication
-    │   └── DashboardLayout.tsx # Sticky sidebar, header, and content workspace container
+    │   ├── AuthLayout.tsx    # Branded centered container for public authentication (Tailwind)
+    │   └── DashboardLayout.tsx # Sticky sidebar, header, and content workspace container (Tailwind)
     ├── routes/
     │   └── ProtectedRoute.tsx# Enforces authentication & role-based route protection
     └── pages/
-        ├── auth/             # LoginPage, RegisterPage, ForgotPasswordPage
-        ├── student/          # StudentOverview, StudentProfile, StudentRecords, StudentPredictions
-        ├── teacher/          # TeacherOverview, TeacherStudents (with inspection modal)
-        ├── admin/            # AdminOverview, UserManagement, TeacherAssignments, SystemLogs
+        ├── auth/             # LoginPage, RegisterPage, ForgotPasswordPage (Tailwind)
+        ├── student/          # StudentOverview (Tailwind), StudentProfile, StudentRecords, StudentPredictions
+        ├── teacher/          # TeacherOverview (Tailwind), TeacherStudents (with inspection modal)
+        ├── admin/            # AdminOverview (Tailwind), UserManagement, TeacherAssignments, SystemLogs
         └── status/           # UnauthorizedPage (403), NotFoundPage (404)
 ```
 

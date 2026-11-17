@@ -20,7 +20,7 @@ EduPredict is a standalone AI/ML-powered Educational Performance Prediction and 
 ---
 
 ## Technology Stack
-- **Frontend**: React 18, TypeScript, Vite 6, React Router 6, Lucide React, Modern CSS System
+- **Frontend**: React 18, TypeScript, Vite 6, Tailwind CSS 3.4, PostCSS, Autoprefixer, React Router 6, Lucide React, Modern CSS System
 - **Backend**: Python 3.12, Flask 3.1.3, PyMongo 4.20.0, Flask-Login, Flask-WTF, python-dotenv, bcrypt
 - **Database**: MongoDB 6.x (running locally on port 27017, database: `edupredict`)
 - **Machine Learning**: Scikit-learn, NumPy, Pandas, Joblib (Phase 4)
@@ -50,6 +50,8 @@ EduPredict/
 │   ├── package.json          # Node dependencies and scripts
 │   ├── tsconfig.json         # TypeScript strict configuration
 │   ├── vite.config.ts        # Vite build & proxy configuration (/auth, /api -> :5000)
+│   ├── tailwind.config.js    # Tailwind CSS design system and color palette extension
+│   ├── postcss.config.js     # PostCSS pipeline for Tailwind & Autoprefixer
 │   ├── index.html            # HTML5 template
 │   └── src/
 │       ├── main.tsx          # Application entry point

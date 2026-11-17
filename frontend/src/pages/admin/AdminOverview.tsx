@@ -37,29 +37,17 @@ export const AdminOverview: React.FC = () => {
   const adminCount = users.filter((u) => u.role === 'admin').length;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+    <div className="flex flex-col gap-6">
       {/* Admin Hero */}
-      <div
-        className="card"
-        style={{
-          background: 'linear-gradient(135deg, #0B192C 0%, #1E3E62 100%)',
-          color: '#ffffff',
-          padding: '2rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1rem',
-        }}
-      >
+      <div className="card bg-gradient-to-br from-navy-900 to-navy-800 text-white p-6 sm:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-soft">
         <div>
-          <span className="badge badge-admin" style={{ backgroundColor: 'rgba(251, 191, 36, 0.2)', color: '#fde047', marginBottom: '0.5rem' }}>
+          <span className="badge bg-amber-400/20 text-amber-300 font-semibold tracking-wider text-[11px] mb-2 inline-block">
             System Administration
           </span>
-          <h2 style={{ fontSize: '1.6rem', color: '#ffffff', marginBottom: '0.35rem' }}>
+          <h2 className="text-xl sm:text-2xl font-extrabold text-white mb-1.5">
             Governance & System Control Center
           </h2>
-          <p style={{ color: '#94a3b8', fontSize: '0.9rem', maxWidth: '600px' }}>
+          <p className="text-slate-300 text-sm max-w-xl">
             Centralized telemetry for user access management, role provisioning, teacher-student linkages, and audit logs.
           </p>
         </div>
@@ -67,7 +55,7 @@ export const AdminOverview: React.FC = () => {
         <Link to="/admin/users">
           <Button
             variant="outline"
-            style={{ borderColor: 'rgba(255, 255, 255, 0.25)', color: '#ffffff' }}
+            className="border-white/20 text-white hover:bg-white/10 shrink-0"
             rightIcon={<ArrowRight size={16} />}
           >
             Manage User Directory
@@ -79,16 +67,16 @@ export const AdminOverview: React.FC = () => {
 
       {/* KPI Cards */}
       <div>
-        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Platform Telemetry</h3>
+        <h3 className="text-base font-bold text-navy-900 mb-4">Platform Telemetry</h3>
         {loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <LoadingSkeleton height="110px" />
             <LoadingSkeleton height="110px" />
             <LoadingSkeleton height="110px" />
             <LoadingSkeleton height="110px" />
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
               title="Total Users"
               value={users.length}
@@ -120,14 +108,14 @@ export const AdminOverview: React.FC = () => {
       </div>
 
       {/* Recent Activity / System Diagnostics Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-            <h4 style={{ fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Users size={18} color="var(--brand-blue)" />
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-base font-bold text-navy-900 flex items-center gap-2">
+              <Users size={18} className="text-brand-500" />
               Recent User Registrations
             </h4>
-            <Link to="/admin/users" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+            <Link to="/admin/users" className="text-xs font-semibold text-brand-600 hover:text-brand-700">
               View All
             </Link>
           </div>
@@ -135,23 +123,15 @@ export const AdminOverview: React.FC = () => {
           {loading ? (
             <LoadingSkeleton height="120px" />
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div className="flex flex-col gap-2.5">
               {users.slice(0, 5).map((u) => (
                 <div
                   key={u.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0.5rem 0.75rem',
-                    backgroundColor: 'var(--bg-subtle)',
-                    borderRadius: 'var(--radius-md)',
-                    fontSize: '0.875rem',
-                  }}
+                  className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg text-sm"
                 >
                   <div>
-                    <span style={{ fontWeight: 600, display: 'block' }}>{u.full_name}</span>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{u.email}</span>
+                    <span className="font-semibold text-navy-900 block">{u.full_name}</span>
+                    <span className="text-xs text-slate-500">{u.email}</span>
                   </div>
                   <span className={`badge badge-${u.role}`}>{u.role}</span>
                 </div>
@@ -161,31 +141,31 @@ export const AdminOverview: React.FC = () => {
         </div>
 
         <div className="card">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-            <h4 style={{ fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Activity size={18} color="var(--status-success)" />
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-base font-bold text-navy-900 flex items-center gap-2">
+              <Activity size={18} className="text-emerald-500" />
               Operational Health & Services
             </h4>
-            <Link to="/admin/logs" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+            <Link to="/admin/logs" className="text-xs font-semibold text-brand-600 hover:text-brand-700">
               Inspect Logs
             </Link>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.875rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem', borderBottom: '1px solid var(--border-light)' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Flask Application Server</span>
+          <div className="flex flex-col gap-2 text-sm divide-y divide-slate-100">
+            <div className="flex justify-between py-2.5">
+              <span className="text-slate-500">Flask Application Server</span>
               <span className="badge badge-success">Operational</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem', borderBottom: '1px solid var(--border-light)' }}>
-              <span style={{ color: 'var(--text-muted)' }}>MongoDB 6.0.29 Service</span>
+            <div className="flex justify-between py-2.5">
+              <span className="text-slate-500">MongoDB 6.0.29 Service</span>
               <span className="badge badge-success">Port 27017 Active</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem', borderBottom: '1px solid var(--border-light)' }}>
-              <span style={{ color: 'var(--text-muted)' }}>CSRF & Session Security</span>
+            <div className="flex justify-between py-2.5">
+              <span className="text-slate-500">CSRF & Session Security</span>
               <span className="badge badge-success">Enforced</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Predictive ML Engine</span>
+            <div className="flex justify-between py-2.5">
+              <span className="text-slate-500">Predictive ML Engine</span>
               <span className="badge badge-warning">Awaiting Phase 4</span>
             </div>
           </div>

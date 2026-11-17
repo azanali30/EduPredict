@@ -10,27 +10,17 @@ export const ErrorAlert: React.FC<ErrorAlertProps> = ({ message, onDismiss }) =>
   if (!message) return null;
   return (
     <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0.75rem 1rem',
-        borderRadius: 'var(--radius-md)',
-        backgroundColor: 'var(--status-danger-bg)',
-        border: '1px solid rgba(239, 68, 68, 0.2)',
-        color: 'var(--status-danger)',
-        fontSize: '0.875rem',
-        marginBottom: '1rem',
-      }}
+      role="alert"
+      className="flex items-center justify-between p-3.5 mb-4 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-sm animate-in fade-in duration-200"
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <AlertCircle size={18} style={{ flexShrink: 0 }} />
-        <span>{message}</span>
+      <div className="flex items-center gap-2">
+        <AlertCircle size={18} className="shrink-0 text-rose-500" />
+        <span className="font-medium">{message}</span>
       </div>
       {onDismiss && (
         <button
           onClick={onDismiss}
-          style={{ color: 'var(--status-danger)', display: 'flex', alignItems: 'center', padding: '0.2rem' }}
+          className="text-rose-500 hover:text-rose-700 p-1 rounded-md transition-colors"
           aria-label="Dismiss alert"
         >
           <X size={16} />

@@ -48,16 +48,16 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: '1.5rem' }}>
-        <h2 style={{ fontSize: '1.4rem', fontWeight: 800 }}>Welcome Back</h2>
-        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+      <div className="mb-6">
+        <h2 className="text-xl sm:text-2xl font-extrabold text-navy-900">Welcome Back</h2>
+        <p className="text-sm text-slate-500 mt-1">
           Sign in to access your educational analytics portal
         </p>
       </div>
 
       <ErrorAlert message={error || ''} onDismiss={() => setError(null)} />
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="space-y-4">
         <InputField
           label="Email Address"
           type="email"
@@ -78,26 +78,18 @@ export const LoginPage: React.FC = () => {
           autoComplete="current-password"
         />
 
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: '1.25rem',
-            fontSize: '0.85rem',
-          }}
-        >
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', color: 'var(--text-muted)' }}>
+        <div className="flex items-center justify-between text-xs sm:text-sm">
+          <label className="flex items-center gap-2 cursor-pointer text-slate-600 select-none">
             <input
               type="checkbox"
               checked={remember}
               onChange={(e) => setRemember(e.target.checked)}
-              style={{ cursor: 'pointer' }}
+              className="rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer"
             />
             Remember me
           </label>
 
-          <Link to="/forgot-password" style={{ color: 'var(--brand-blue)', fontWeight: 500 }}>
+          <Link to="/forgot-password" className="text-brand-600 hover:text-brand-700 font-medium">
             Forgot password?
           </Link>
         </div>
@@ -107,14 +99,14 @@ export const LoginPage: React.FC = () => {
           variant="primary"
           isLoading={isLoading}
           leftIcon={<LogIn size={18} />}
-          style={{ width: '100%', marginBottom: '1.25rem' }}
+          className="w-full mt-2"
         >
           Sign In
         </Button>
 
-        <div style={{ textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+        <div className="text-center text-xs sm:text-sm text-slate-500 pt-2">
           Don't have an account?{' '}
-          <Link to="/register" style={{ fontWeight: 600, color: 'var(--brand-blue)' }}>
+          <Link to="/register" className="font-semibold text-brand-600 hover:text-brand-700">
             Register as a Student
           </Link>
         </div>

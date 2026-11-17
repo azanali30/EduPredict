@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --primary-navy: #0B192C;
   --primary-dark: #1E3E62;

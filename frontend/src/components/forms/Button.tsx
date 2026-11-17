@@ -21,73 +21,28 @@ export const Button: React.FC<ButtonProps> = ({
   style,
   ...props
 }) => {
-  const getVariantStyles = (): React.CSSProperties => {
-    switch (variant) {
-      case 'primary':
-        return {
-          backgroundColor: 'var(--brand-blue)',
-          color: '#ffffff',
-          boxShadow: 'var(--shadow-sm)',
-        };
-      case 'secondary':
-        return {
-          backgroundColor: 'var(--bg-subtle)',
-          color: 'var(--text-main)',
-        };
-      case 'outline':
-        return {
-          backgroundColor: 'transparent',
-          color: 'var(--text-main)',
-          border: '1px solid var(--border-light)',
-        };
-      case 'danger':
-        return {
-          backgroundColor: 'var(--status-danger)',
-          color: '#ffffff',
-        };
-      case 'ghost':
-        return {
-          backgroundColor: 'transparent',
-          color: 'var(--text-muted)',
-        };
-    }
-  };
+  const variantClasses = {
+    primary: 'bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white shadow-sm',
+    secondary: 'bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-800',
+    outline: 'border border-slate-200 hover:bg-slate-50 active:bg-slate-100 text-slate-700 bg-transparent',
+    danger: 'bg-rose-500 hover:bg-rose-600 active:bg-rose-700 text-white shadow-sm',
+    ghost: 'text-slate-500 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200 bg-transparent',
+  }[variant];
 
-  const getSizeStyles = (): React.CSSProperties => {
-    switch (size) {
-      case 'sm':
-        return { padding: '0.35rem 0.75rem', fontSize: '0.8rem' };
-      case 'lg':
-        return { padding: '0.75rem 1.5rem', fontSize: '1rem' };
-      case 'md':
-      default:
-        return { padding: '0.55rem 1.15rem', fontSize: '0.875rem' };
-    }
-  };
-
-  const baseStyles: React.CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '0.5rem',
-    borderRadius: 'var(--radius-md)',
-    transition: 'all 0.15s ease',
-    opacity: disabled || isLoading ? 0.65 : 1,
-    cursor: disabled || isLoading ? 'not-allowed' : 'pointer',
-    userSelect: 'none',
-    ...getVariantStyles(),
-    ...getSizeStyles(),
-    ...style,
-  };
+  const sizeClasses = {
+    sm: 'px-3 py-1.5 text-xs font-semibold rounded-md',
+    md: 'px-4 py-2 text-sm font-semibold rounded-lg',
+    lg: 'px-6 py-3 text-base font-semibold rounded-lg',
+  }[size];
 
   return (
     <button
       disabled={disabled || isLoading}
-      style={baseStyles}
-      className={className}
+      style={style}
+      className={`inline-flex items-center justify-center gap-2 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-brand-500/25 disabled:opacity-60 disabled:cursor-not-allowed select-none cursor-pointer ${variantClasses} ${sizeClasses} ${className}`}
       {...props}
     >
-      {isLoading ? <Loader2 size={16} className="animate-spin" /> : leftIcon}
+      {isLoading ? <Loader2 size={16} className="animate-spin shrink-0" /> : leftIcon}
       {children}
       {!isLoading && rightIcon}
     </button>
