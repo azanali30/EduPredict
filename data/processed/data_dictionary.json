@@ -24,21 +24,21 @@
   },
   "attendance_percentage": {
     "type": "float",
-    "description": "Course session presence percentage calculated from term class attendance.",
+    "description": "Estimated attendance proxy percentage derived from absence count assuming a 60-session term baseline (100 - (min(absences, 60)/60 * 100)). This is an estimated proxy and NOT verified institutional roll-call attendance.",
     "range": [
       0.0,
       100.0
     ],
-    "unit": "Percentage (%)"
+    "unit": "Percentage (%) [Estimated Proxy]"
   },
   "study_hours_per_week": {
     "type": "float",
-    "description": "Reported weekly self-study and revision hours dedicated to coursework.",
+    "description": "Estimated weekly self-study hours mapped from ordinal survey category midpoints (<2h -> 1.5, 2-5h -> 3.5, 5-10h -> 7.5, >10h -> 12.0). These are approximate midpoint estimates, not stopwatch-logged study hours. Original survey categories are preserved in 'studytime'.",
     "range": [
       1.0,
       20.0
     ],
-    "unit": "Hours/Week"
+    "unit": "Hours/Week [Midpoint Estimate]"
   },
   "assignment_completion_rate": {
     "type": "float",

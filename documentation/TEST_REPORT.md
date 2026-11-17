@@ -110,3 +110,44 @@ tests/test_rbac.py (6 tests) ......................................... PASSED
 
 ============================= 54 passed in 29.40s =============================
 ```
+
+---
+
+## Phase 4 Extension: Final Data Integrity & Machine Learning Leakage Guard Verification
+- **Date**: 2026-11-17
+- **Target**: Feature Leakage Invariants, Dual-Enrolled Student Grouping, Attendance Proxy Bounds, Study Hours Mapping, Milestone Feature Segregation
+- **Result**: **All Checks PASSED (100%)**
+
+### Leakage Guard Verification Matrix
+| Test Case | Module | Target Checked | Result | Status |
+|---|---|---|---|---|
+| `test_leakage_guard_rejects_g3_and_derived_features` | `test_feature_leakage.py` | `final_exam_marks`, `G3`, `academic_status` | Raised `ValueError` on leaky inputs | **PASS** |
+| `test_leakage_guard_rejects_status_in_classification` | `test_feature_leakage.py` | `academic_status`, `final_exam_marks` | Raised `ValueError` on leaky inputs | **PASS** |
+| `test_dual_enrolled_student_grouping_count` | `test_feature_leakage.py` | `generate_student_group_ids` | Verified 662 distinct student identities | **PASS** |
+| `test_attendance_percentage_proxy_bounds_and_formula`| `test_feature_leakage.py` | `attendance_percentage` | Bounded [0.0, 100.0], negative corr (< -0.99) | **PASS** |
+| `test_study_hours_mapping_and_preservation` | `test_feature_leakage.py` | `study_hours_per_week` | Verified midpoints (1.5, 3.5, 7.5, 12.0) & categorical `studytime` | **PASS** |
+| `test_normalized_features_leakage_isolation` | `test_feature_leakage.py` | Normalized CSV | Predictors cleanly isolated from targets | **PASS** |
+| `test_milestone_feature_partitions` | `test_feature_leakage.py` | Milestone 0, 1, 2 | 0 exam marks in Milestone 0, G1 in M1, G2 in M2 | **PASS** |
+| `test_dataset_identity_consistency` | `test_feature_leakage.py` | `student_code` prefixes | Clean subject partitioning (395 Math, 649 Portuguese) | **PASS** |
+
+### Complete Backend Test Suite Summary (62 Tests)
+```text
+============================= test session starts =============================
+platform win32 -- Python 3.12.16, pytest-9.2.0, pluggy-1.7.0
+rootdir: C:\Users\Azan's PC\Documents\EduPredict
+plugins: flask-1.3.0
+collected 62 items
+
+tests/test_admin.py (7 tests) ........................................ PASSED [ 11%]
+tests/test_app_factory.py (3 tests) .................................. PASSED [ 16%]
+tests/test_auth.py (10 tests) ........................................ PASSED [ 32%]
+tests/test_config.py (4 tests) ....................................... PASSED [ 38%]
+tests/test_data_pipeline.py (13 tests) ............................... PASSED [ 59%]
+tests/test_feature_leakage.py (8 tests) .............................. PASSED [ 72%]
+tests/test_health_routes.py (4 tests) ................................ PASSED [ 79%]
+tests/test_models.py (4 tests) ....................................... PASSED [ 85%]
+tests/test_mongo_connectivity.py (3 tests) ........................... PASSED [ 90%]
+tests/test_rbac.py (6 tests) ......................................... PASSED [100%]
+
+============================= 62 passed in 30.73s =============================
+```

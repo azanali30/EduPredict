@@ -53,15 +53,15 @@ DATA_DICTIONARY: Dict[str, Dict[str, Any]] = {
     },
     "attendance_percentage": {
         "type": "float",
-        "description": "Course session presence percentage calculated from term class attendance.",
+        "description": "Estimated attendance proxy percentage derived from absence count assuming a 60-session term baseline (100 - (min(absences, 60)/60 * 100)). This is an estimated proxy and NOT verified institutional roll-call attendance.",
         "range": [0.0, 100.0],
-        "unit": "Percentage (%)",
+        "unit": "Percentage (%) [Estimated Proxy]",
     },
     "study_hours_per_week": {
         "type": "float",
-        "description": "Reported weekly self-study and revision hours dedicated to coursework.",
+        "description": "Estimated weekly self-study hours mapped from ordinal survey category midpoints (<2h -> 1.5, 2-5h -> 3.5, 5-10h -> 7.5, >10h -> 12.0). These are approximate midpoint estimates, not stopwatch-logged study hours. Original survey categories are preserved in 'studytime'.",
         "range": [1.0, 20.0],
-        "unit": "Hours/Week",
+        "unit": "Hours/Week [Midpoint Estimate]",
     },
     "assignment_completion_rate": {
         "type": "float",
@@ -150,11 +150,13 @@ def clean_and_transform_single_dataset(df_raw: pd.DataFrame, subject_name: str, 
     df["academic_year"] = "2025-2026"
     df["term"] = "Final Term"
 
-    # 2. Derive study hours per week
+    # 2. Derive estimated continuous study hours per week (midpoint proxy)
+    # Note: studytime is categorical (1-4). This maps midpoints for continuous feature scaling.
     df["study_hours_per_week"] = df["studytime"].map(STUDYTIME_HOURS_MAP).fillna(2.5)
 
-    # 3. Calculate Attendance Percentage
-    # Standard term duration is 60 lectures; cap absences and calculate percentage bounded [0, 100]
+    # 3. Calculate Estimated Attendance Percentage (Proxy)
+    # Note: Original UCI dataset only records absence counts. A baseline of 60 scheduled class sessions
+    # is assumed to derive an estimated attendance velocity proxy. This is NOT verified institutional roll-call attendance.
     df["absences_cleaned"] = df["absences"].clip(lower=0, upper=60)
     df["attendance_percentage"] = np.round(
         np.clip(100.0 - (df["absences_cleaned"] / 60.0 * 100.0), 0.0, 100.0), 2

@@ -100,7 +100,7 @@
 ## Phase 4: Dataset Engineering, Big Data Storage & Exploratory Data Analysis
 - **Date**: 2026-11-17
 - **Status**: Completed & Verified
-- **Commits**: Pending Push (`feat(phase-4): dataset engineering, mongodb ingestion, hdfs lakehouse, impala queries, eda and r validation`)
+- **Commits**: `5bf1cae`, `76c07bd`
 - **Actions Executed**:
   1. **Dataset Research & Curation**:
      - Curated and downloaded the official UCI Student Performance benchmark dataset (`student-mat.csv` with 395 records, `student-por.csv` with 649 records; total 1,044 observations, CC BY 4.0 license).
@@ -136,3 +136,33 @@
      - Executed full test suite: **54 / 54 tests passing (100%)** across existing backend modules and new data pipeline.
   9. **Frontend Integrity Verification**:
      - Ran production Vite build (`npm run build`): completed in 21.80s with 0 errors.
+
+---
+
+## Phase 4 Extension: Final Data Integrity Audit & Machine Learning Leakage Guard
+- **Date**: 2026-11-17
+- **Status**: Completed & Verified
+- **Commits**: Pending Push (`feat(audit): implement phase 4 data integrity audit, leakage guard, and test suite`)
+- **Actions Executed**:
+  1. **Dataset Identity Audit**:
+     - Audited original UCI files and `student-merge.R`.
+     - Confirmed that 382 students appear in both Math and Portuguese datasets, totaling 662 distinct physical students across 1,044 enrollment records.
+     - Documented identity leakage risks of unconstrained random train/test splits.
+     - Built `backend.data_engineering.leakage_guard.generate_student_group_ids` implementing group-level clustering for `GroupShuffleSplit` / `GroupKFold`.
+  2. **Attendance Indicator Audit**:
+     - Reclassified `attendance_percentage` as an **Estimated Attendance Proxy** in `backend/data_engineering/clean_dataset.py`, `data_dictionary.json`, and `DATA_DICTIONARY.md`.
+     - Explicitly established that the 60-session denominator is an assumed synthetic proxy baseline, not verified roll-call attendance.
+  3. **Machine Learning Feature Leakage Prevention**:
+     - Audited all 45 columns across CSVs and MongoDB.
+     - Formally isolated targets (`final_exam_marks`, `academic_status`, `G3`) from permitted inputs.
+     - Implemented `backend.data_engineering.leakage_guard.assert_no_leakage()` enforcing strict feature segregation.
+  4. **Study Hours Audit**:
+     - Documented mapping of ordinal `studytime` ($1-4$) to continuous midpoints ($1.5, 3.5, 7.5, 12.0$).
+     - Confirmed preservation of original categorical `studytime` for tree-based models.
+  5. **Train/Test Strategy Formulation**:
+     - Designed subject-stratified splits (Math $N=395$, Portuguese $N=649$) and group-aware pooled splits.
+     - Established 5-fold stratified cross-validation on training folds, regression/classification evaluation metrics, and Dummy/Linear/Logistic baselines.
+  6. **Automated Testing & Build Verification**:
+     - Authored `tests/test_feature_leakage.py` (8 automated tests).
+     - Executed full test suite: **62 / 62 tests passing (100%)**.
+     - Ran frontend production build: 0 errors in 16.53s.
