@@ -53,7 +53,7 @@ EduPredict is an AI/ML-driven Educational Performance Prediction and Analytics P
 The frontend is structured as a dedicated TypeScript SPA inside `frontend/` powered by Vite 6 and Tailwind CSS v3:
 ```text
 frontend/
-├── package.json              # React 18, Tailwind CSS 3.4, PostCSS, Autoprefixer, React Router 6
+├── package.json              # React 18, Tailwind CSS 3.4, Recharts 2.15, PostCSS, Autoprefixer, React Router 6
 ├── tsconfig.json             # Strict TypeScript compiler options
 ├── vite.config.ts            # Local development proxy (/auth, /api -> :5000)
 ├── tailwind.config.js        # Design tokens: Navy (#0B192C, #1E3E62), Brand blue, Cyan, Surfaces

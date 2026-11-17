@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { InputField } from '../../components/forms/InputField';
 import { Button } from '../../components/forms/Button';
 import { ErrorAlert } from '../../components/common/ErrorAlert';
-import { LogIn } from 'lucide-react';
+import { LogIn, ArrowRight } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -22,7 +22,7 @@ export const LoginPage: React.FC = () => {
     setError(null);
 
     if (!email.trim() || !password) {
-      setError('Please enter both your email address and password.');
+      setError('Please provide both your registered email and password.');
       return;
     }
 
@@ -40,7 +40,7 @@ export const LoginPage: React.FC = () => {
         else navigate('/student', { replace: true });
       }
     } catch (err: any) {
-      setError(err?.message || 'Login failed. Please check your credentials.');
+      setError(err?.message || 'Login failed. Please verify your credentials.');
     } finally {
       setIsLoading(false);
     }
@@ -48,10 +48,15 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="text-xl sm:text-2xl font-extrabold text-navy-900">Welcome Back</h2>
+      <div className="mb-8">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-brand-50 text-brand-600 text-[11px] font-bold uppercase tracking-wider mb-3">
+          <span>Portal Access</span>
+        </div>
+        <h2 className="text-2xl font-extrabold text-navy-900 tracking-tight">
+          Welcome back
+        </h2>
         <p className="text-sm text-slate-500 mt-1">
-          Sign in to access your educational analytics portal
+          Sign in to your EduPredict account to continue
         </p>
       </div>
 
@@ -59,9 +64,9 @@ export const LoginPage: React.FC = () => {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <InputField
-          label="Email Address"
+          label="Institutional Email"
           type="email"
-          placeholder="name@edupredict.com"
+          placeholder="user@edupredict.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -71,25 +76,28 @@ export const LoginPage: React.FC = () => {
         <InputField
           label="Password"
           isPassword
-          placeholder="Enter your password"
+          placeholder="••••••••••••"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
           autoComplete="current-password"
         />
 
-        <div className="flex items-center justify-between text-xs sm:text-sm">
+        <div className="flex items-center justify-between text-xs sm:text-sm pt-1">
           <label className="flex items-center gap-2 cursor-pointer text-slate-600 select-none">
             <input
               type="checkbox"
               checked={remember}
               onChange={(e) => setRemember(e.target.checked)}
-              className="rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer"
+              className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer"
             />
-            Remember me
+            <span>Remember me</span>
           </label>
 
-          <Link to="/forgot-password" className="text-brand-600 hover:text-brand-700 font-medium">
+          <Link
+            to="/forgot-password"
+            className="text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors"
+          >
             Forgot password?
           </Link>
         </div>
@@ -97,18 +105,25 @@ export const LoginPage: React.FC = () => {
         <Button
           type="submit"
           variant="primary"
+          size="lg"
           isLoading={isLoading}
           leftIcon={<LogIn size={18} />}
-          className="w-full mt-2"
+          rightIcon={<ArrowRight size={16} className="opacity-70" />}
+          className="w-full mt-4 shadow-sm hover:shadow-soft"
         >
-          Sign In
+          Sign In to Dashboard
         </Button>
 
-        <div className="text-center text-xs sm:text-sm text-slate-500 pt-2">
-          Don't have an account?{' '}
-          <Link to="/register" className="font-semibold text-brand-600 hover:text-brand-700">
-            Register as a Student
-          </Link>
+        <div className="pt-4 border-t border-slate-100 text-center">
+          <p className="text-xs text-slate-500">
+            Enrolling for the first time?{' '}
+            <Link
+              to="/register"
+              className="font-bold text-brand-600 hover:text-brand-700 transition-colors"
+            >
+              Register as Student
+            </Link>
+          </p>
         </div>
       </form>
     </div>

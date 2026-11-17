@@ -7,7 +7,7 @@ import { LoadingSkeleton } from '../../components/common/LoadingSkeleton';
 import { ErrorAlert } from '../../components/common/ErrorAlert';
 import { Modal } from '../../components/common/Modal';
 import { Button } from '../../components/forms/Button';
-import { Users, Search, Shield, Filter, CheckCircle2 } from 'lucide-react';
+import { Users, Search, Shield, CheckCircle2, ShieldAlert } from 'lucide-react';
 
 export const UserManagement: React.FC = () => {
   const { user: currentAdmin } = useAuth();
@@ -60,7 +60,7 @@ export const UserManagement: React.FC = () => {
       setTimeout(() => {
         setSelectedUser(null);
         loadUsers();
-      }, 1000);
+      }, 1200);
     } catch (err: any) {
       setRoleError(err?.message || 'Failed to update user role.');
     } finally {
@@ -75,110 +75,117 @@ export const UserManagement: React.FC = () => {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      <div>
-        <h2 style={{ fontSize: '1.4rem', fontWeight: 800 }}>User Management & Governance</h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-          Inspect user accounts, manage role permissions, and govern platform credentials
-        </p>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-extrabold text-navy-900 tracking-tight">
+            Institutional User Governance
+          </h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Directory of registered students, instructors, and system administrators
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="badge badge-admin text-xs py-1 px-3">
+            Admin Root Authority
+          </span>
+        </div>
       </div>
 
       <ErrorAlert message={error || ''} onDismiss={() => setError(null)} />
 
       {/* Filter and Search Bar */}
-      <div className="card" style={{ padding: '1rem', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minWidth: '280px' }}>
-          <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
-            <Search size={18} style={{ position: 'absolute', left: '0.75rem', color: 'var(--text-muted)' }} />
-            <input
-              type="text"
-              placeholder="Search by name or email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.55rem 0.85rem 0.55rem 2.25rem',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-light)',
-                outline: 'none',
-                fontSize: '0.875rem',
-              }}
-            />
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Filter size={18} style={{ color: 'var(--text-muted)' }} />
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              style={{
-                padding: '0.55rem 0.85rem',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-light)',
-                backgroundColor: '#ffffff',
-                fontSize: '0.875rem',
-                outline: 'none',
-              }}
-            >
-              <option value="all">All Roles</option>
-              <option value="student">Students</option>
-              <option value="teacher">Teachers</option>
-              <option value="admin">Administrators</option>
-            </select>
-          </div>
+      <div className="card p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        <div className="relative flex-1 max-w-md">
+          <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search by full name or email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-slate-200 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all placeholder:text-slate-400"
+          />
         </div>
 
-        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-          {filteredUsers.length} Users Found
-        </span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+            {['all', 'student', 'teacher', 'admin'].map((role) => (
+              <button
+                key={role}
+                onClick={() => setRoleFilter(role)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all cursor-pointer ${roleFilter === role
+                  ? 'bg-white text-navy-900 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-900'
+                  }`}
+              >
+                {role}
+              </button>
+            ))}
+          </div>
+
+          <span className="text-xs font-semibold text-slate-500 shrink-0 hidden md:inline">
+            {filteredUsers.length} Users
+          </span>
+        </div>
       </div>
 
       {/* Users Table */}
       {loading ? (
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <LoadingSkeleton height="40px" />
-          <LoadingSkeleton height="40px" />
-          <LoadingSkeleton height="40px" />
+        <div className="card p-6 space-y-3">
+          <LoadingSkeleton height="44px" />
+          <LoadingSkeleton height="44px" />
+          <LoadingSkeleton height="44px" />
         </div>
       ) : filteredUsers.length === 0 ? (
-        <EmptyState
-          icon={<Users size={36} color="var(--brand-blue)" />}
-          title="No Users Found"
-          description="Try broadening your search or resetting the role filter."
-        />
+        <div className="card p-8">
+          <EmptyState
+            icon={<Users size={40} className="text-brand-500" />}
+            title="No Users Found"
+            description="No user records matched your search query and role filter criteria."
+          />
+        </div>
       ) : (
-        <div className="data-table-container">
+        <div className="data-table-container shadow-sm">
           <table className="data-table">
             <thead>
               <tr>
-                <th>User ID</th>
-                <th>Full Name</th>
-                <th>Email Address</th>
+                <th>User Account</th>
+                <th>Institutional Email</th>
                 <th>Assigned Role</th>
-                <th>Status</th>
-                <th>Created</th>
-                <th>Actions</th>
+                <th>Account Registered</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
               {filteredUsers.map((u) => {
-                const isSelf = u.id === currentAdmin?.id;
+                const isSelf = currentAdmin?.id === u.id;
                 return (
                   <tr key={u.id}>
-                    <td style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                      {u.id.slice(-6)}
-                    </td>
-                    <td style={{ fontWeight: 600 }}>
-                      {u.full_name} {isSelf && <span style={{ fontSize: '0.7rem', color: 'var(--brand-blue)' }}>(You)</span>}
-                    </td>
-                    <td>{u.email}</td>
                     <td>
-                      <span className={`badge badge-${u.role}`}>{u.role}</span>
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center border border-slate-200">
+                          {u.full_name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <span className="font-semibold text-navy-900 block leading-tight">
+                            {u.full_name}
+                          </span>
+                          {isSelf && (
+                            <span className="text-[10px] text-brand-600 font-bold">
+                              (Your Account)
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </td>
+                    <td className="font-mono text-xs text-slate-600">{u.email}</td>
                     <td>
-                      <span className="badge badge-success">Active</span>
+                      <span className={`badge badge-${u.role} text-[10px]`}>{u.role}</span>
                     </td>
-                    <td>{u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}</td>
+                    <td className="text-slate-500 text-xs">
+                      {u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}
+                    </td>
                     <td>
                       <Button
                         variant="outline"
@@ -186,7 +193,7 @@ export const UserManagement: React.FC = () => {
                         onClick={() => handleOpenRoleModal(u)}
                         leftIcon={<Shield size={14} />}
                       >
-                        Change Role
+                        Modify Role
                       </Button>
                     </td>
                   </tr>
@@ -197,72 +204,73 @@ export const UserManagement: React.FC = () => {
         </div>
       )}
 
-      {/* Role Management Modal */}
+      {/* Role Modification Modal */}
       <Modal
         isOpen={!!selectedUser}
         onClose={() => setSelectedUser(null)}
-        title="Modify User Role & Privileges"
+        title="Modify Role & Governance Privileges"
       >
         {selectedUser && (
-          <form onSubmit={handleUpdateRole} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <ErrorAlert message={roleError || ''} onDismiss={() => setRoleError(null)} />
+          <form onSubmit={handleUpdateRole} className="space-y-4">
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1">
+              <span className="text-slate-400 block">Target Account</span>
+              <span className="font-bold text-navy-900 text-sm block">{selectedUser.full_name}</span>
+              <span className="font-mono text-slate-500">{selectedUser.email}</span>
+            </div>
+
             {roleSuccessMsg && (
-              <div
-                style={{
-                  padding: '0.75rem',
-                  backgroundColor: 'var(--status-success-bg)',
-                  color: 'var(--status-success)',
-                  borderRadius: 'var(--radius-md)',
-                  fontSize: '0.85rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                }}
-              >
-                <CheckCircle2 size={16} />
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
+                <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
                 <span>{roleSuccessMsg}</span>
               </div>
             )}
+            <ErrorAlert message={roleError || ''} onDismiss={() => setRoleError(null)} />
 
             <div>
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Target User:</span>
-              <div style={{ fontWeight: 700, fontSize: '1rem' }}>{selectedUser.full_name}</div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{selectedUser.email}</div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--primary-navy)' }}>
-                Select Role:
+              <label className="text-xs font-bold uppercase tracking-wider text-navy-900 block mb-2">
+                Select New Role Privilege
               </label>
-              <select
-                value={newRole}
-                onChange={(e) => setNewRole(e.target.value as UserRole)}
-                style={{
-                  padding: '0.65rem',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--border-light)',
-                  outline: 'none',
-                  fontSize: '0.9rem',
-                }}
-              >
-                <option value="student">Student (Standard User)</option>
-                <option value="teacher">Teacher (Instructor & Cohort Viewer)</option>
-                <option value="admin">Administrator (Full System Control)</option>
-              </select>
+              <div className="grid grid-cols-3 gap-2.5">
+                {(['student', 'teacher', 'admin'] as UserRole[]).map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setNewRole(r)}
+                    className={`p-3 rounded-xl border text-xs font-semibold capitalize transition-all cursor-pointer ${newRole === r
+                      ? 'border-brand-500 bg-sky-50 text-brand-700 ring-2 ring-brand-500/20'
+                      : 'border-slate-200 hover:border-slate-300 text-slate-600 bg-white'
+                      }`}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {selectedUser.id === currentAdmin?.id && (
-              <div style={{ fontSize: '0.8rem', color: 'var(--status-warning)', backgroundColor: 'var(--status-warning-bg)', padding: '0.5rem', borderRadius: 'var(--radius-sm)' }}>
-                Note: Administrators cannot remove their own administrator privileges.
+            {currentAdmin?.id === selectedUser.id && newRole !== 'admin' && (
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center gap-2">
+                <ShieldAlert size={16} className="text-amber-600 shrink-0" />
+                <span>You cannot demote your own active administrator account.</span>
               </div>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.5rem' }}>
-              <Button type="button" variant="secondary" size="sm" onClick={() => setSelectedUser(null)}>
+            <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setSelectedUser(null)}
+                type="button"
+              >
                 Cancel
               </Button>
-              <Button type="submit" variant="primary" size="sm" isLoading={roleUpdating}>
-                Update Role
+              <Button
+                variant="primary"
+                size="sm"
+                type="submit"
+                isLoading={roleUpdating}
+                disabled={currentAdmin?.id === selectedUser.id && newRole !== 'admin'}
+              >
+                Save Role Assignment
               </Button>
             </div>
           </form>

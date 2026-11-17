@@ -15,44 +15,22 @@ export const UnauthorizedPage: React.FC = () => {
   };
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '70vh',
-        textAlign: 'center',
-        padding: '2rem',
-      }}
-    >
-      <div
-        style={{
-          width: '64px',
-          height: '64px',
-          borderRadius: 'var(--radius-full)',
-          backgroundColor: 'var(--status-danger-bg)',
-          color: 'var(--status-danger)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: '1.5rem',
-        }}
-      >
+    <div className="flex flex-col items-center justify-center min-h-[70vh] text-center p-6 max-w-md mx-auto">
+      <div className="w-16 h-16 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center mb-6 shadow-sm">
         <ShieldX size={36} />
       </div>
 
-      <h1 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-        403 – Access Denied
+      <span className="badge badge-danger text-[10px] mb-2">Access Denied (403)</span>
+      <h1 className="text-2xl sm:text-3xl font-extrabold text-navy-900 mb-2 tracking-tight">
+        Unauthorized Area
       </h1>
-      <p style={{ color: 'var(--text-muted)', maxWidth: '440px', marginBottom: '2rem' }}>
-        You do not possess the required role permissions to access this protected area.
-        Role boundaries are strictly enforced by the EduPredict security subsystem.
+      <p className="text-sm text-slate-500 mb-8 leading-relaxed">
+        Your current account role privileges do not permit access to this module. Role-based access control (RBAC) boundaries are strictly enforced.
       </p>
 
       <Link to={getHomePath()}>
-        <Button variant="primary" leftIcon={<ArrowLeft size={16} />}>
-          Return to Dashboard
+        <Button variant="primary" size="lg" leftIcon={<ArrowLeft size={16} />}>
+          Return to My Workspace
         </Button>
       </Link>
     </div>

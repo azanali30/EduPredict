@@ -4,7 +4,7 @@ import { api } from '../../services/api';
 import { InputField } from '../../components/forms/InputField';
 import { Button } from '../../components/forms/Button';
 import { ErrorAlert } from '../../components/common/ErrorAlert';
-import { User, Lock, Save, CheckCircle2 } from 'lucide-react';
+import { User, Lock, Save, CheckCircle2, ShieldCheck } from 'lucide-react';
 
 export const StudentProfile: React.FC = () => {
   const { user, refreshUser } = useAuth();
@@ -60,169 +60,170 @@ export const StudentProfile: React.FC = () => {
       return;
     }
 
+    if (newPassword.length < 8 || !/[a-zA-Z]/.test(newPassword) || !/\d/.test(newPassword)) {
+      setPwdError('New password must have 8+ characters, at least one letter, and at least one number.');
+      return;
+    }
+
     setIsUpdatingPwd(true);
     try {
       const res = await api.changePassword({
         current_password: currentPassword,
         new_password: newPassword,
       });
-      setPwdMsg(res.message || 'Password changed successfully.');
+      setPwdMsg(res.message || 'Password updated successfully.');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err: any) {
-      setPwdError(err?.message || 'Failed to change password.');
+      setPwdError(err?.message || 'Failed to change password. Please verify current password.');
     } finally {
       setIsUpdatingPwd(false);
     }
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '800px' }}>
+    <div className="space-y-6">
+      {/* Header */}
       <div>
-        <h2 style={{ fontSize: '1.4rem', fontWeight: 800 }}>Account & Profile Settings</h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-          Manage your personal identification details and account security credentials
+        <h1 className="text-2xl font-extrabold text-navy-900 tracking-tight">
+          Personal Profile & Security Settings
+        </h1>
+        <p className="text-sm text-slate-500 mt-0.5">
+          Manage your verified institutional name, review account role credentials, and update password
         </p>
       </div>
 
-      {/* Account Info Summary Card */}
-      <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-        <div
-          style={{
-            width: '56px',
-            height: '56px',
-            borderRadius: 'var(--radius-full)',
-            backgroundColor: 'var(--accent-light)',
-            color: 'var(--brand-blue)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '1.5rem',
-            fontWeight: 700,
-          }}
-        >
-          {user?.full_name?.charAt(0).toUpperCase() || <User size={28} />}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column: Profile Card */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="card p-6 text-center">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-brand-600 to-sky-400 text-white flex items-center justify-center font-extrabold text-2xl mx-auto mb-4 shadow-glow">
+              {user?.full_name ? user.full_name.charAt(0).toUpperCase() : 'S'}
+            </div>
+            <h2 className="text-lg font-bold text-navy-900">{user?.full_name}</h2>
+            <p className="text-xs text-slate-500 mb-3">{user?.email}</p>
+            <span className={`badge badge-${user?.role} uppercase tracking-wider text-[10px]`}>
+              {user?.role} Account
+            </span>
+
+            <div className="mt-6 pt-6 border-t border-slate-100 text-left space-y-3 text-xs text-slate-600">
+              <div className="flex justify-between">
+                <span className="text-slate-400">Account ID</span>
+                <span className="font-mono text-slate-700 text-[11px] truncate max-w-[140px]">{user?.id}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Security</span>
+                <span className="text-emerald-600 font-semibold flex items-center gap-1">
+                  <ShieldCheck size={12} /> Active
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <h3 style={{ fontSize: '1.15rem' }}>{user?.full_name}</h3>
-            <span className={`badge badge-${user?.role}`}>{user?.role}</span>
+
+        {/* Right Column: Forms */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* General Profile Information */}
+          <div className="card p-6">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
+              <User size={18} className="text-brand-500" />
+              <h3 className="text-base font-bold text-navy-900">General Information</h3>
+            </div>
+
+            {profileMsg && (
+              <div className="flex items-center gap-2 p-3 mb-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium">
+                <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+                <span>{profileMsg}</span>
+              </div>
+            )}
+            <ErrorAlert message={profileError || ''} onDismiss={() => setProfileError(null)} />
+
+            <form onSubmit={handleUpdateProfile} className="space-y-4">
+              <InputField
+                label="Full Legal Name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+              />
+
+              <InputField
+                label="Institutional Email Address"
+                value={user?.email || ''}
+                disabled
+                helperText="Email is bound to your academic enrollment and cannot be modified directly."
+              />
+
+              <Button
+                type="submit"
+                variant="primary"
+                isLoading={isUpdatingProfile}
+                leftIcon={<Save size={16} />}
+              >
+                Save Profile Changes
+              </Button>
+            </form>
           </div>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{user?.email}</p>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-subtle)' }}>
-            Account Created: {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
-          </span>
+
+          {/* Password Security Form */}
+          <div className="card p-6">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
+              <Lock size={18} className="text-brand-500" />
+              <h3 className="text-base font-bold text-navy-900">Security & Credentials</h3>
+            </div>
+
+            {pwdMsg && (
+              <div className="flex items-center gap-2 p-3 mb-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium">
+                <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+                <span>{pwdMsg}</span>
+              </div>
+            )}
+            <ErrorAlert message={pwdError || ''} onDismiss={() => setPwdError(null)} />
+
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <InputField
+                label="Current Password"
+                type="password"
+                isPassword
+                placeholder="Enter current password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                required
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <InputField
+                  label="New Password"
+                  type="password"
+                  isPassword
+                  placeholder="At least 8 characters"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                />
+
+                <InputField
+                  label="Confirm New Password"
+                  type="password"
+                  isPassword
+                  placeholder="Re-type new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              <Button
+                type="submit"
+                variant="outline"
+                isLoading={isUpdatingPwd}
+                leftIcon={<Lock size={16} />}
+              >
+                Update Password
+              </Button>
+            </form>
+          </div>
         </div>
-      </div>
-
-      {/* Personal Information Form */}
-      <div className="card">
-        <h4 style={{ fontSize: '1.1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <User size={18} color="var(--brand-blue)" />
-          Personal Information
-        </h4>
-
-        <ErrorAlert message={profileError || ''} onDismiss={() => setProfileError(null)} />
-        {profileMsg && (
-          <div
-            style={{
-              padding: '0.75rem 1rem',
-              backgroundColor: 'var(--status-success-bg)',
-              color: 'var(--status-success)',
-              borderRadius: 'var(--radius-md)',
-              marginBottom: '1rem',
-              fontSize: '0.875rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-            }}
-          >
-            <CheckCircle2 size={16} />
-            <span>{profileMsg}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleUpdateProfile}>
-          <InputField
-            label="Registered Email (Immutable)"
-            type="email"
-            value={user?.email || ''}
-            disabled
-            helperText="Email address cannot be modified once verified."
-          />
-
-          <InputField
-            label="Full Name"
-            type="text"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            required
-          />
-
-          <Button type="submit" variant="primary" isLoading={isUpdatingProfile} leftIcon={<Save size={16} />}>
-            Save Changes
-          </Button>
-        </form>
-      </div>
-
-      {/* Security Credentials Form */}
-      <div className="card">
-        <h4 style={{ fontSize: '1.1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Lock size={18} color="var(--status-danger)" />
-          Security Credentials
-        </h4>
-
-        <ErrorAlert message={pwdError || ''} onDismiss={() => setPwdError(null)} />
-        {pwdMsg && (
-          <div
-            style={{
-              padding: '0.75rem 1rem',
-              backgroundColor: 'var(--status-success-bg)',
-              color: 'var(--status-success)',
-              borderRadius: 'var(--radius-md)',
-              marginBottom: '1rem',
-              fontSize: '0.875rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-            }}
-          >
-            <CheckCircle2 size={16} />
-            <span>{pwdMsg}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleChangePassword}>
-          <InputField
-            label="Current Password"
-            isPassword
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            required
-          />
-
-          <InputField
-            label="New Password"
-            isPassword
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            required
-            helperText="Minimum 8 characters with at least one letter and digit."
-          />
-
-          <InputField
-            label="Confirm New Password"
-            isPassword
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-          />
-
-          <Button type="submit" variant="primary" isLoading={isUpdatingPwd} leftIcon={<Lock size={16} />}>
-            Update Password
-          </Button>
-        </form>
       </div>
     </div>
   );

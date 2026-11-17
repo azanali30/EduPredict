@@ -1,56 +1,35 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Info, ArrowLeft } from 'lucide-react';
+import { Info, ArrowLeft, ShieldAlert } from 'lucide-react';
 import { Button } from '../../components/forms/Button';
 
 export const ForgotPasswordPage: React.FC = () => {
   return (
-    <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-      <div
-        style={{
-          width: '56px',
-          height: '56px',
-          borderRadius: 'var(--radius-full)',
-          backgroundColor: 'var(--status-info-bg)',
-          color: 'var(--status-info)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: '0 auto 1.25rem',
-        }}
-      >
+    <div className="text-center py-4">
+      <div className="w-14 h-14 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center mx-auto mb-4 border border-sky-100 shadow-sm">
         <Info size={28} />
       </div>
 
-      <h2 style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-        Password Recovery Notice
+      <h2 className="text-2xl font-extrabold text-navy-900 mb-2 tracking-tight">
+        Password Assistance
       </h2>
 
-      <div
-        style={{
-          backgroundColor: 'var(--bg-subtle)',
-          padding: '1rem',
-          borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--border-light)',
-          textAlign: 'left',
-          fontSize: '0.875rem',
-          color: 'var(--text-muted)',
-          lineHeight: 1.6,
-          marginBottom: '1.5rem',
-        }}
-      >
-        <p style={{ fontWeight: 600, color: 'var(--primary-navy)', marginBottom: '0.35rem' }}>
-          Automated Recovery Unavailable
+      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-left text-sm text-slate-600 leading-relaxed mb-6 space-y-2">
+        <div className="flex items-center gap-2 font-bold text-navy-900 text-xs uppercase tracking-wider">
+          <ShieldAlert size={16} className="text-amber-500" />
+          <span>Administrative Reset Policy</span>
+        </div>
+        <p className="text-xs text-slate-500">
+          Automated self-service email recovery is intentionally disabled to protect institutional educational records.
         </p>
-        <p>
-          Self-service automated email recovery is not enabled in this deployment phase.
-          If you have lost access to your account, please reach out to your institution's System Administrator for an authorized credential reset.
+        <p className="text-xs text-slate-500">
+          To reset your credentials, please contact your designated EduPredict System Administrator or Instructor to issue a secure password reset.
         </p>
       </div>
 
       <Link to="/login">
-        <Button variant="primary" style={{ width: '100%' }} leftIcon={<ArrowLeft size={16} />}>
-          Back to Login
+        <Button variant="primary" size="lg" className="w-full" leftIcon={<ArrowLeft size={16} />}>
+          Return to Sign In
         </Button>
       </Link>
     </div>

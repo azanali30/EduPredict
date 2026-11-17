@@ -4,7 +4,7 @@ import { User } from '../../types';
 import { Button } from '../../components/forms/Button';
 import { ErrorAlert } from '../../components/common/ErrorAlert';
 import { LoadingSkeleton } from '../../components/common/LoadingSkeleton';
-import { UserPlus, CheckCircle2, UserCheck, Shield } from 'lucide-react';
+import { UserPlus, CheckCircle2, Shield } from 'lucide-react';
 
 export const TeacherAssignments: React.FC = () => {
   const [teachers, setTeachers] = useState<User[]>([]);
@@ -59,123 +59,139 @@ export const TeacherAssignments: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem', maxWidth: '800px' }}>
-      <div>
-        <h2 style={{ fontSize: '1.4rem', fontWeight: 800 }}>Teacher-Student Link Management</h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-          Assign learners to authorized instructors to permit cohort tracking and progress inspection
-        </p>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-extrabold text-navy-900 tracking-tight">
+            Teacher-Student Cohort Linkages
+          </h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Configure instructional mappings granting teachers permission to review student records
+          </p>
+        </div>
+
+        <span className="badge badge-admin text-xs py-1 px-3">
+          RBAC Security Bound
+        </span>
       </div>
 
       <ErrorAlert message={error || ''} onDismiss={() => setError(null)} />
+
       {successMsg && (
-        <div
-          style={{
-            padding: '0.75rem 1rem',
-            backgroundColor: 'var(--status-success-bg)',
-            color: 'var(--status-success)',
-            borderRadius: 'var(--radius-md)',
-            fontSize: '0.875rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-          }}
-        >
-          <CheckCircle2 size={16} />
+        <div className="flex items-center gap-2.5 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold shadow-sm">
+          <CheckCircle2 size={18} className="text-emerald-600 shrink-0" />
           <span>{successMsg}</span>
         </div>
       )}
 
-      {loading ? (
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <LoadingSkeleton height="48px" />
-          <LoadingSkeleton height="48px" />
-          <LoadingSkeleton height="40px" width="160px" />
-        </div>
-      ) : (
-        <div className="card">
-          <h4 style={{ fontSize: '1.1rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <UserPlus size={18} color="var(--brand-blue)" />
-            Create Authorization Assignment
-          </h4>
-
-          {teachers.length === 0 ? (
-            <div style={{ padding: '1rem', backgroundColor: 'var(--status-warning-bg)', color: 'var(--status-warning)', borderRadius: 'var(--radius-md)', fontSize: '0.875rem' }}>
-              No teachers found. Please promote at least one user to the 'teacher' role in the User Directory before creating assignments.
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Form Card */}
+        <div className="lg:col-span-2">
+          <div className="card p-6">
+            <div className="flex items-center gap-2 mb-6 pb-3 border-b border-slate-100">
+              <UserPlus size={18} className="text-brand-500" />
+              <h2 className="text-base font-bold text-navy-900">Create New Instructional Link</h2>
             </div>
-          ) : students.length === 0 ? (
-            <div style={{ padding: '1rem', backgroundColor: 'var(--status-warning-bg)', color: 'var(--status-warning)', borderRadius: 'var(--radius-md)', fontSize: '0.875rem' }}>
-              No students found. Student registrations will appear here for assignment.
-            </div>
-          ) : (
-            <form onSubmit={handleAssign} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--primary-navy)' }}>
-                  Select Assigned Teacher:
-                </label>
-                <select
-                  value={selectedTeacher}
-                  onChange={(e) => setSelectedTeacher(e.target.value)}
-                  style={{
-                    padding: '0.65rem',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--border-light)',
-                    fontSize: '0.9rem',
-                    outline: 'none',
-                  }}
-                  required
-                >
-                  {teachers.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.full_name} ({t.email})
-                    </option>
-                  ))}
-                </select>
-              </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--primary-navy)' }}>
-                  Select Student to Assign:
-                </label>
-                <select
-                  value={selectedStudent}
-                  onChange={(e) => setSelectedStudent(e.target.value)}
-                  style={{
-                    padding: '0.65rem',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--border-light)',
-                    fontSize: '0.9rem',
-                    outline: 'none',
-                  }}
-                  required
-                >
-                  {students.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.full_name} ({s.email})
-                    </option>
-                  ))}
-                </select>
+            {loading ? (
+              <div className="space-y-4">
+                <LoadingSkeleton height="50px" />
+                <LoadingSkeleton height="50px" />
+                <LoadingSkeleton height="40px" width="160px" />
               </div>
+            ) : (
+              <form onSubmit={handleAssign} className="space-y-5">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-navy-900 block mb-2">
+                    1. Select Authorized Instructor
+                  </label>
+                  {teachers.length === 0 ? (
+                    <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+                      No teacher accounts found. Please promote a user to 'teacher' in User Governance first.
+                    </div>
+                  ) : (
+                    <select
+                      value={selectedTeacher}
+                      onChange={(e) => setSelectedTeacher(e.target.value)}
+                      className="w-full py-2.5 px-3.5 text-sm rounded-xl border border-slate-200 bg-white text-navy-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all cursor-pointer"
+                    >
+                      {teachers.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.full_name} ({t.email})
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
 
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                <Shield size={14} style={{ display: 'inline', marginRight: '4px' }} />
-                Assigning grants the instructor explicit authorization to view this student's records while protecting peer privacy across all other classrooms.
-              </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-navy-900 block mb-2">
+                    2. Select Assigned Student
+                  </label>
+                  {students.length === 0 ? (
+                    <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+                      No student accounts found. Awaiting student registration.
+                    </div>
+                  ) : (
+                    <select
+                      value={selectedStudent}
+                      onChange={(e) => setSelectedStudent(e.target.value)}
+                      className="w-full py-2.5 px-3.5 text-sm rounded-xl border border-slate-200 bg-white text-navy-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all cursor-pointer"
+                    >
+                      {students.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.full_name} ({s.email})
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
 
-              <div>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  isLoading={submitting}
-                  leftIcon={<UserCheck size={16} />}
-                >
-                  Confirm Assignment
-                </Button>
-              </div>
-            </form>
-          )}
+                <div className="pt-2">
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    isLoading={submitting}
+                    disabled={teachers.length === 0 || students.length === 0}
+                    leftIcon={<UserPlus size={16} />}
+                  >
+                    Confirm Cohort Assignment
+                  </Button>
+                </div>
+              </form>
+            )}
+          </div>
         </div>
-      )}
+
+        {/* Right Info Card */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="card p-6 bg-slate-50 border-slate-200">
+            <div className="flex items-center gap-2 mb-3 font-bold text-navy-900 text-xs uppercase tracking-wider">
+              <Shield size={16} className="text-brand-500" />
+              <span>RBAC Governance Policy</span>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed mb-4">
+              EduPredict enforces strict data isolation. Instructors can <strong>only</strong> view academic records, attendance indicators, and early warning risk tags for students explicitly mapped via this console.
+            </p>
+
+            <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-2 text-xs">
+              <div className="flex justify-between text-slate-500">
+                <span>Active Instructors</span>
+                <span className="font-bold text-navy-900">{teachers.length}</span>
+              </div>
+              <div className="flex justify-between text-slate-500">
+                <span>Available Students</span>
+                <span className="font-bold text-navy-900">{students.length}</span>
+              </div>
+              <div className="flex justify-between text-slate-500">
+                <span>Index Enforcement</span>
+                <span className="badge badge-success text-[9px] py-0 px-2">Unique Compound</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
