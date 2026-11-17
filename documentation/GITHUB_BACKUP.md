@@ -30,6 +30,7 @@
 |---|---|---|---|---|
 | **Phase 0** | `5d45fe3` | chore(phase-0): baseline project audit, environment verification and documentation setup | Pushed to `origin/main` | Yes |
 | **Phase 0** | `1541a73` | docs(phase-0): record Phase 0 commit hash in backup log | Pushed to `origin/main` | Yes |
+| **Phase 0** | `dd0e42b` | docs(phase-0): incorporate Aptech big data feasibility audit and implementation plans | Pushed to `origin/main` | Yes |
 
 ---
 
