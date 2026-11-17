@@ -40,6 +40,8 @@
 | **Phase 2** | `e99e045` | feat(phase-2): database schemas, bcrypt authentication, role-based authorization, admin governance, and test suite | Pushed to `origin/main` | Yes |
 | **Phase 2** | `5543b10` | docs(phase-2): record Phase 2 commit hash in backup log | Pushed to `origin/main` | Yes |
 | **Phase 3** | `e5601a3` | feat(phase-3): react 18 typescript frontend, vite proxy, auth context, role-based dashboards, and screenshots | Pushed to `origin/main` | Yes |
+| **Phase 3** | `1f9e834` | docs(phase-3): record Phase 3 commit hash in backup log | Pushed to `origin/main` | Yes |
+| **Phase 3 Ext** | `6f468e3` | feat(frontend): integrate tailwind css v3 with postcss and migrate core components | Pushed to `origin/main` | Yes |
 
 ---
 
