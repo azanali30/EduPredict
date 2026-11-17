@@ -50,7 +50,7 @@
 | **Phase 4 Audit** | `cb16858` | docs(audit): record Phase 4 data integrity audit commit in backup log | Pushed to `origin/main` | Yes |
 | **Phase 5 Readiness** | `82ccfd1` | feat(readiness): document phase 5 readiness verification, split protocols, and metrics | Pushed to `origin/main` | Yes |
 | **Phase 5A** | `80e8829` | feat(phase-5a): subject-specific ml model training, pipelines, reports, and tests | Pushed to `origin/main` | Yes |
-| **Phase 5A Audit** | `Pending` | docs(audit): phase 5a final model integrity audit report | Pushed to `origin/main` | Yes |
+| **Phase 5A Audit** | `a3cecf6` | docs(audit): phase 5a final model integrity audit report | Pushed to `origin/main` | Yes |
 
 ---
 
