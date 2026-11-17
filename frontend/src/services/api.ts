@@ -1,4 +1,11 @@
-import { User, UserRole, SystemLog } from '../types';
+import {
+  User,
+  UserRole,
+  SystemLog,
+  PredictionRecord,
+  PredictionOptions,
+  CreatePredictionPayload,
+} from '../types';
 
 let cachedCsrfToken: string | null = null;
 
@@ -148,4 +155,47 @@ export const api = {
   // Diagnostics
   getHealth: () =>
     apiRequest<{ status: string; app: string; database: any }>('/api/health'),
+
+  // Prediction APIs (Phase 5B & 5C)
+  getPredictionOptions: () =>
+    apiRequest<{ options: PredictionOptions; status_code: number }>('/api/predictions/options'),
+
+  createPrediction: (payload: CreatePredictionPayload) =>
+    apiRequest<{ message: string; prediction: PredictionRecord; status_code: number }>(
+      '/api/predictions',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    ),
+
+  listPredictions: (params?: {
+    student_id?: string;
+    subject?: string;
+    milestone?: number;
+    limit?: number;
+    skip?: number;
+  }) => {
+    const query = new URLSearchParams();
+    if (params?.student_id) query.set('student_id', params.student_id);
+    if (params?.subject) query.set('subject', params.subject);
+    if (params?.milestone !== undefined && params?.milestone !== null) {
+      query.set('milestone', params.milestone.toString());
+    }
+    if (params?.limit) query.set('limit', params.limit.toString());
+    if (params?.skip) query.set('skip', params.skip.toString());
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest<{
+      predictions: PredictionRecord[];
+      total_count: number;
+      limit: number;
+      skip: number;
+      status_code: number;
+    }>(`/api/predictions${qs}`);
+  },
+
+  getPredictionDetail: (predictionId: string) =>
+    apiRequest<{ prediction: PredictionRecord; status_code: number }>(
+      `/api/predictions/${predictionId}`
+    ),
 };

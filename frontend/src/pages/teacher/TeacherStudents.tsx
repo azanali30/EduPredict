@@ -1,35 +1,55 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../../services/api';
-import { User } from '../../types';
+import { User, PredictionRecord } from '../../types';
 import { EmptyState } from '../../components/common/EmptyState';
 import { LoadingSkeleton } from '../../components/common/LoadingSkeleton';
 import { ErrorAlert } from '../../components/common/ErrorAlert';
 import { Modal } from '../../components/common/Modal';
 import { Button } from '../../components/forms/Button';
-import { Users, Search, UserCheck, ShieldAlert } from 'lucide-react';
+import { TeacherPredictionModal } from '../../components/predictions/TeacherPredictionModal';
+import {
+  Users,
+  Search,
+  UserCheck,
+  Sparkles,
+  AlertTriangle,
+  AlertCircle,
+  CheckCircle2,
+  BrainCircuit,
+} from 'lucide-react';
 
 export const TeacherStudents: React.FC = () => {
   const [students, setStudents] = useState<User[]>([]);
+  const [predictions, setPredictions] = useState<PredictionRecord[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [riskFilter, setRiskFilter] = useState<string>('ALL');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Selected Student Modal State
+  // Inspection Modal State
   const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
   const [modalLoading, setModalLoading] = useState(false);
 
+  // Prediction Modal State
+  const [predictingStudent, setPredictingStudent] = useState<User | null>(null);
+
+  const loadData = async () => {
+    try {
+      const [studentsRes, predsRes] = await Promise.all([
+        api.getTeacherStudents(),
+        api.listPredictions({ limit: 100 }),
+      ]);
+      setStudents(studentsRes.students || []);
+      setPredictions(predsRes.predictions || []);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to fetch assigned students or predictions.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const res = await api.getTeacherStudents();
-        setStudents(res.students || []);
-      } catch (err: any) {
-        setError(err?.message || 'Failed to fetch assigned students.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStudents();
+    loadData();
   }, []);
 
   const handleInspectStudent = async (studentId: string) => {
@@ -44,11 +64,74 @@ export const TeacherStudents: React.FC = () => {
     }
   };
 
-  const filteredStudents = students.filter(
-    (s) =>
+  // Build a map of studentId -> latest prediction
+  const latestPredictionByStudent = new Map<string, PredictionRecord>();
+  predictions.forEach((pred) => {
+    const existing = latestPredictionByStudent.get(pred.student_id);
+    if (!existing || new Date(pred.created_at) > new Date(existing.created_at)) {
+      latestPredictionByStudent.set(pred.student_id, pred);
+    }
+  });
+
+  // Calculate cohort risk counts
+  let highRiskCount = 0;
+  let modRiskCount = 0;
+  students.forEach((s) => {
+    const pred = latestPredictionByStudent.get(s.id);
+    if (pred?.predicted_status === 'High Risk') highRiskCount++;
+    else if (pred?.predicted_status === 'Moderate Risk') modRiskCount++;
+  });
+
+  const filteredStudents = students.filter((s) => {
+    const matchesSearch =
       s.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      s.email.toLowerCase().includes(searchTerm.toLowerCase());
+    if (!matchesSearch) return false;
+
+    if (riskFilter !== 'ALL') {
+      const pred = latestPredictionByStudent.get(s.id);
+      if (riskFilter === 'NO_PRED') {
+        if (pred) return false;
+      } else if (pred?.predicted_status !== riskFilter) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  const getRiskBadge = (status?: string) => {
+    if (!status) {
+      return (
+        <span className="badge bg-slate-100 text-slate-500 text-[10px]">
+          No Model Run
+        </span>
+      );
+    }
+    switch (status) {
+      case 'High Risk':
+        return (
+          <span className="badge bg-rose-100 text-rose-800 border-rose-200 text-[10px] font-bold flex items-center gap-1">
+            <AlertTriangle size={12} className="text-rose-600" />
+            High Risk
+          </span>
+        );
+      case 'Moderate Risk':
+        return (
+          <span className="badge bg-amber-100 text-amber-800 border-amber-200 text-[10px] font-bold flex items-center gap-1">
+            <AlertCircle size={12} className="text-amber-600" />
+            Moderate Risk
+          </span>
+        );
+      case 'Low Risk / On Track':
+      default:
+        return (
+          <span className="badge bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px] font-bold flex items-center gap-1">
+            <CheckCircle2 size={12} className="text-emerald-600" />
+            Low Risk
+          </span>
+        );
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -58,7 +141,7 @@ export const TeacherStudents: React.FC = () => {
             Assigned Students Directory
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Cohort management, individual learner profile review, and diagnostic tracking
+            Cohort management, predictive risk screening, and student evaluation tracking
           </p>
         </div>
 
@@ -70,6 +153,30 @@ export const TeacherStudents: React.FC = () => {
       </div>
 
       <ErrorAlert message={error || ''} onDismiss={() => setError(null)} />
+
+      {/* Academic Attention Banner (if any student is flagged High or Moderate Risk) */}
+      {(highRiskCount > 0 || modRiskCount > 0) && (
+        <div className="p-4 rounded-xl border border-amber-300 bg-amber-50/90 text-amber-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+            <div className="text-xs">
+              <span className="font-bold text-amber-900 block">
+                Learners Requiring Academic Attention
+              </span>
+              <span className="text-amber-800">
+                {highRiskCount} student{highRiskCount !== 1 ? 's' : ''} flagged High Risk,{' '}
+                {modRiskCount} student{modRiskCount !== 1 ? 's' : ''} flagged Moderate Risk. Early intervention recommended.
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={() => setRiskFilter(highRiskCount > 0 ? 'High Risk' : 'Moderate Risk')}
+            className="btn btn-outline text-xs px-3 py-1 bg-white border-amber-300 text-amber-900 hover:bg-amber-100 shrink-0"
+          >
+            Filter Flagged Learners
+          </button>
+        </div>
+      )}
 
       {/* Search & Actions Bar */}
       <div className="card p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -84,9 +191,26 @@ export const TeacherStudents: React.FC = () => {
           />
         </div>
 
-        <span className="text-xs font-semibold text-slate-500">
-          Showing {filteredStudents.length} of {students.length} assigned learners
-        </span>
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+          <div className="flex items-center gap-1.5 text-xs text-slate-600">
+            <span className="font-semibold text-slate-400">Risk Filter:</span>
+            <select
+              value={riskFilter}
+              onChange={(e) => setRiskFilter(e.target.value)}
+              className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 outline-none focus:border-brand-500"
+            >
+              <option value="ALL">All Cohort</option>
+              <option value="High Risk">High Risk</option>
+              <option value="Moderate Risk">Moderate Risk</option>
+              <option value="Low Risk / On Track">Low Risk / On Track</option>
+              <option value="NO_PRED">No Prediction Yet</option>
+            </select>
+          </div>
+
+          <span className="text-xs font-semibold text-slate-500">
+            {filteredStudents.length} of {students.length}
+          </span>
+        </div>
       </div>
 
       {/* Roster Table */}
@@ -104,7 +228,7 @@ export const TeacherStudents: React.FC = () => {
             description={
               students.length === 0
                 ? 'Your instructor account does not currently have any student assignments. When an administrator links students in the Admin Console, they will appear here.'
-                : 'Try adjusting your search query.'
+                : 'Try adjusting your search query or risk filter.'
             }
           />
         </div>
@@ -116,50 +240,76 @@ export const TeacherStudents: React.FC = () => {
                 <th>Student ID</th>
                 <th>Full Name</th>
                 <th>Institutional Email</th>
-                <th>Account Status</th>
-                <th>Enrollment Date</th>
+                <th>Latest AI Status</th>
+                <th>Projected Mark</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredStudents.map((s) => (
-                <tr key={s.id}>
-                  <td className="font-mono text-xs text-slate-400">
-                    {s.id.slice(-8)}
-                  </td>
-                  <td>
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-sky-50 text-sky-700 font-bold text-xs flex items-center justify-center border border-sky-200">
-                        {s.full_name.charAt(0).toUpperCase()}
+              {filteredStudents.map((s) => {
+                const latestPred = latestPredictionByStudent.get(s.id);
+                return (
+                  <tr key={s.id}>
+                    <td className="font-mono text-xs text-slate-400">
+                      {s.id.slice(-8)}
+                    </td>
+                    <td>
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-sky-50 text-sky-700 font-bold text-xs flex items-center justify-center border border-sky-200">
+                          {s.full_name.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="font-semibold text-navy-900">{s.full_name}</span>
                       </div>
-                      <span className="font-semibold text-navy-900">{s.full_name}</span>
-                    </div>
-                  </td>
-                  <td className="text-slate-600 font-mono text-xs">{s.email}</td>
-                  <td>
-                    <span className="badge badge-success text-[10px]">Active</span>
-                  </td>
-                  <td className="text-slate-500 text-xs">
-                    {s.created_at ? new Date(s.created_at).toLocaleDateString() : 'N/A'}
-                  </td>
-                  <td>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleInspectStudent(s.id)}
-                      leftIcon={<UserCheck size={14} />}
-                    >
-                      Inspect Profile
-                    </Button>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="text-slate-600 font-mono text-xs">{s.email}</td>
+                    <td>{getRiskBadge(latestPred?.predicted_status)}</td>
+                    <td>
+                      {latestPred ? (
+                        <div className="flex items-center gap-1 font-mono text-xs font-bold text-navy-950">
+                          <span>{latestPred.predicted_marks.toFixed(1)}</span>
+                          <span className="text-[10px] text-slate-400">/ 100</span>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 text-xs">—</span>
+                      )}
+                    </td>
+                    <td>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => setPredictingStudent(s)}
+                          leftIcon={<Sparkles size={13} />}
+                        >
+                          Predict AI
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleInspectStudent(s.id)}
+                          leftIcon={<UserCheck size={13} />}
+                        >
+                          Profile
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
 
-      {/* Student Inspection Modal */}
+      {/* Teacher Prediction Modal */}
+      <TeacherPredictionModal
+        student={predictingStudent}
+        isOpen={!!predictingStudent}
+        onClose={() => setPredictingStudent(null)}
+        onPredictionCreated={loadData}
+      />
+
+      {/* Student Profile Inspection Modal */}
       <Modal
         isOpen={!!selectedStudent || modalLoading}
         onClose={() => {
@@ -205,15 +355,27 @@ export const TeacherStudents: React.FC = () => {
 
             <div className="p-4 rounded-xl bg-sky-50/60 border border-sky-100 text-xs text-slate-600 space-y-1">
               <div className="font-bold text-navy-900 flex items-center gap-1.5">
-                <ShieldAlert size={14} className="text-brand-500" />
-                <span>Academic Record Attachment Notice</span>
+                <BrainCircuit size={14} className="text-brand-500" />
+                <span>AI Prediction Availability</span>
               </div>
               <p className="text-[11px] text-slate-500 leading-relaxed">
-                Detailed term records and early warning flags for this student will become available once coursework indicators are linked in Phase 4.
+                You can generate performance predictions across Mathematics and Portuguese Language milestones directly from the student roster.
               </p>
             </div>
 
-            <div className="flex justify-end pt-2">
+            <div className="flex justify-between items-center pt-2">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  const s = selectedStudent;
+                  setSelectedStudent(null);
+                  setPredictingStudent(s);
+                }}
+                leftIcon={<Sparkles size={14} />}
+              >
+                Launch Prediction Engine
+              </Button>
               <Button variant="secondary" size="sm" onClick={() => setSelectedStudent(null)}>
                 Close
               </Button>

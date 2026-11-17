@@ -12,10 +12,10 @@ EduPredict is a standalone AI/ML-powered Educational Performance Prediction and 
 - **Subject-Wise Analysis**: Granular identification of student strengths, weaknesses, and academic bottlenecks.
 - **Personalized Recommendations**: Rule- and model-guided actionable improvement steps tailored to individual student performance metrics.
 - **Modern SaaS Web Interface**: High-performance React 18, TypeScript, and Vite single-page application with responsive layouts for Student, Teacher, and Administrator roles.
-- **Role-Based Access Control (RBAC)**:
-  - **Student**: Register, view personal profile, view own predictions, track personal academic progress. Strictly prohibited from accessing peer records.
-  - **Teacher**: Access assigned students, review classroom academic indicators, monitor early warning flags. Prohibited from accessing unassigned students.
-  - **Administrator**: Comprehensive governance, user directory, role assignments, student-to-teacher mappings, system audit telemetry.
+- **Role-Based Access Control (RBAC) & Interactive Workspaces**:
+  - **Student Workspace**: Register, view personal profile, generate milestone-specific academic predictions (Milestones 0, 1, 2), observe empirical early-warning false-negative disclosures, and inspect prediction audit history. Prohibited from predicting for peers.
+  - **Teacher Workspace**: Access assigned learners, review classroom academic indicators, generate AI predictions on behalf of assigned students, monitor cohort risk levels, and receive academic attention alerts. Prohibited from accessing unassigned students.
+  - **Administrator Console**: Comprehensive governance, user directory, role assignments, student-to-teacher mappings, system audit telemetry, and real-time AI prediction intelligence analytics.
 - **Big Data Lakehouse & OLAP Analytics**: Multi-tier HDFS Lakehouse architecture, Apache Impala 3.x/4.x Parquet analytical SQL queries, MongoDB batch upsert pipeline, and native R 4.6.2 inferential hypothesis testing.
 
 ---

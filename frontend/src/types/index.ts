@@ -48,3 +48,79 @@ export interface ApiErrorResponse {
   message: string;
   status_code: number;
 }
+
+// Prediction Domain Types (Phase 5B & 5C)
+export type PredictionSubject = 'Mathematics' | 'Portuguese Language';
+export type PredictionMilestone = 0 | 1 | 2;
+export type AcademicRiskStatus = 'High Risk' | 'Moderate Risk' | 'Low Risk / On Track';
+
+export interface EarlyWarningAdvisory {
+  milestone: number;
+  false_negative_rate_pct: number;
+  false_negatives_count: number;
+  total_failing_count: number;
+  warning: string;
+  actionable_guidance: string;
+  model_type?: string;
+}
+
+export interface PredictionFeatureSummaryItem {
+  value: any;
+  label: string;
+  is_estimated_proxy: boolean;
+}
+
+export interface PredictionRecord {
+  id: string;
+  student_id: string;
+  created_by: string;
+  subject: string;
+  milestone: number;
+  predicted_marks: number;
+  predicted_status: string;
+  confidence_scores: Record<string, number>;
+  top_confidence: number;
+  confidence_type: string;
+  uncertainty_warning: boolean;
+  uncertainty_message?: string | null;
+  early_warning_advisory?: EarlyWarningAdvisory | null;
+  features_summary: Record<string, PredictionFeatureSummaryItem>;
+  regressor_model: string;
+  classifier_model: string;
+  created_at: string;
+}
+
+export interface MilestoneOption {
+  milestone: number;
+  name: string;
+  description: string;
+  feature_count: number;
+  features: string[];
+  prohibited_features: string[];
+  advisory?: string;
+}
+
+export interface PredictionOptions {
+  supported_subjects: Array<{
+    id: string;
+    name: string;
+    observation_count: number;
+    target_scale: string;
+  }>;
+  milestones: MilestoneOption[];
+  estimated_feature_labels: Record<string, string>;
+  target_definitions: {
+    regression: { variable: string; scale: string };
+    classification: {
+      variable: string;
+      classes: Array<{ name: string; range: string }>;
+    };
+  };
+}
+
+export interface CreatePredictionPayload {
+  subject: string;
+  milestone: number;
+  features: Record<string, any>;
+  student_id?: string;
+}
