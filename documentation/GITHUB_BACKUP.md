@@ -52,7 +52,7 @@
 | **Phase 5A** | `80e8829` | feat(phase-5a): subject-specific ml model training, pipelines, reports, and tests | Pushed to `origin/main` | Yes |
 | **Phase 5A Audit** | `a3cecf6` | docs(audit): phase 5a final model integrity audit report | Pushed to `origin/main` | Yes |
 | **Phase 5B** | `ec23264` | feat(phase-5b): secure prediction api, rbac enforcement, history persistence, and tests | Pushed to `origin/main` | Yes |
-| **Phase 5B Audit** | `Pending` | docs(audit): phase 5b final api safety audit report | Pushed to `origin/main` | Yes |
+| **Phase 5B Audit** | `d98818e` | docs(audit): phase 5b final api safety audit report | Pushed to `origin/main` | Yes |
 
 ---
 
