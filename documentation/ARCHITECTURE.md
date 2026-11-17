@@ -26,7 +26,9 @@ EduPredict is an AI/ML-driven Educational Performance Prediction and Analytics P
                       +-------------------------------------------------------+
                       |                Service Business Tier                  |
                       |  - AuthService & Role Enforcement                     |
-                      |  - AcademicRecordService                              |
+                      |  - UserService (Profile, Passwords, Role Management)  |
+                      |  - AssignmentService (Teacher-Student Links)          |
+                      |  - SystemLogService (Audit Trail)                     |
                       |  - PredictionEngineService & RecommendationService    |
                       |  - ParallelBatchProcessor (Multiprocessing Engine)    |
                       |  - BigDataBridge (HDFS Adapter, Impala OLAP, Tableau) |
@@ -38,30 +40,49 @@ EduPredict is an AI/ML-driven Educational Performance Prediction and Analytics P
     |         Operational Datastore         |               |          Big Data & ML Layer          |
     |  - MongoDB Server 6.0.29 (Native)     |               |  - HDFS Storage Lake (/user/...)      |
     |  - Collections: users, records,       |               |  - Apache Impala SQL OLAP Queries     |
-    |    predictions, system_logs           |               |  - Serialized Scikit-Learn Models     |
+    |    predictions, assignments, logs     |               |  - Serialized Scikit-Learn Models     |
     |  - Admin tools: mongosh & Compass     |               |  - Feature Scalers & Encoders         |
     +---------------------------------------+               +---------------------------------------+
 ```
 
 ---
 
-## 2. Component Interaction & Data Flow
-
-1. **OLTP Flow (Operational)**:
-   - Student/Teacher inputs academic metrics via Flask Web Interface.
-   - Verified via Flask-WTF; stored into **MongoDB 6.x** (`academic_records`).
-   - Triggering of `PredictionEngineService`: Scikit-learn models evaluate features, compute predicted grade and risk tier, generate recommendations, and persist in `predictions` collection.
-2. **Real-Time Streaming Flow**:
-   - Campus academic events (attendance logs, quiz scores) are streamed via `EventStreamerService`.
-   - Front-end dashboards receive live updates using Server-Sent Events (SSE).
-3. **Big Data Lake & Batch Processing Flow**:
-   - Historical student records from MongoDB are exported to the **HDFS Data Lake** in partitioned formats (`/user/edupredict/cohorts/year=YYYY/`).
-   - **Parallel Batch Processor** leverages multi-core CPU workers to compute cohort-level statistics.
-   - **Apache Impala SQL Engine** runs deep analytical aggregations across the historical lake.
-4. **Business Intelligence & Data Science Flow**:
-   - **Tableau Export Service** generates denormalized datasets and links directly to `tableau/EduPredict_Analytics_Workbook.twb`.
-   - **Jupyter Notebooks** execute reproducible EDA and ML training pipelines.
-   - **RStudio Scripts** perform rigorous statistical hypothesis tests (ANOVA, regression diagnostics).
+## 2. Implemented Backend Modular Structure
+```text
+EduPredict/backend/
+├── __init__.py               # Package root exporting create_app
+├── app.py                    # Application factory, user_loader, error handlers
+├── config.py                 # BaseConfig, DevelopmentConfig, TestingConfig, ProductionConfig
+├── extensions.py             # csrf (CSRFProtect), login_manager (LoginManager), mongo (MongoManager)
+├── commands/
+│   ├── __init__.py
+│   └── admin_commands.py     # Click CLI commands: create-admin, init-db
+├── database/
+│   ├── __init__.py
+│   └── schema.py             # Index definitions and schema initialization for MongoDB 6
+├── models/
+│   ├── __init__.py
+│   ├── user_model.py         # User domain entity implementing Flask-Login interface
+│   ├── academic_record_model.py # AcademicRecord document mapping
+│   ├── assignment_model.py   # TeacherStudentAssignment document mapping
+│   └── system_log_model.py   # SystemLog audit trail mapping
+├── routes/
+│   ├── __init__.py
+│   ├── health_routes.py      # /, /health, /api/health, /api/health/db
+│   ├── auth_routes.py        # /auth/register, /auth/login, /auth/logout, /api/csrf-token
+│   ├── user_routes.py        # /api/me, /api/me/password, /api/students/<id>, /api/teacher/students
+│   └── admin_routes.py       # /api/admin/users, /api/admin/users/<id>/role, /api/admin/assignments, /api/admin/logs
+├── services/
+│   ├── __init__.py
+│   ├── auth_service.py       # Registration, login authentication, credential checking
+│   ├── user_service.py       # User CRUD, role updates, profile management
+│   ├── assignment_service.py # Teacher-student linkage management
+│   └── system_log_service.py # Centralized audit event logger
+└── utils/
+    ├── __init__.py
+    ├── security.py           # Bcrypt password hashing, normalization, ObjectId safety
+    └── decorators.py         # @role_required, @admin_required, @teacher_required, can_access_student_data
+```
 
 ---
 
@@ -69,34 +90,42 @@ EduPredict is an AI/ML-driven Educational Performance Prediction and Analytics P
 
 MongoDB 6.x runs locally on port `27017` with database name `edupredict`.
 
-### Collections:
+### Collections and Indexes:
 1. `users`:
    - `_id`: ObjectId
-   - `email`: String (Unique index)
-   - `password_hash`: String (bcrypt)
+   - `email`: String (Normalized lowercase, stripped)
+   - `password_hash`: String (bcrypt hash with salt)
    - `full_name`: String
-   - `role`: Enum (`student`, `teacher`, `admin`)
-   - `assigned_teacher_id`: ObjectId (optional, for students)
-   - `student_id_code`: String (optional, unique)
-   - `created_at`: DateTime
-   - `updated_at`: DateTime
+   - `role`: Enum (`student`, `teacher`, `admin`), default `student`
+   - `is_active`: Boolean, default `True`
+   - `created_at`: DateTime (UTC)
+   - `updated_at`: DateTime (UTC)
+   - **Indexes**:
+     - `idx_users_email_unique`: `[("email", 1)]`, unique=True
+     - `idx_users_role`: `[("role", 1)]`
+     - `idx_users_created_at`: `[("created_at", -1)]`
 
 2. `academic_records`:
    - `_id`: ObjectId
-   - `student_id`: ObjectId (Indexed)
+   - `student_id`: ObjectId (References `users._id`)
    - `term`: String
    - `attendance_percentage`: Float (0-100)
    - `study_hours_per_week`: Float
    - `assignment_completion_rate`: Float (0-100)
    - `quiz_average`: Float (0-100)
    - `previous_exam_marks`: Float (0-100)
-   - `subject_scores`: Object (e.g., `{"Mathematics": 82, "Science": 74, "English": 88}`)
-   - `recorded_at`: DateTime
+   - `subject_scores`: Object (e.g., `{"Mathematics": 82.0, "Science": 74.0}`)
+   - `created_at`: DateTime (UTC)
+   - `updated_at`: DateTime (UTC)
+   - **Indexes**:
+     - `idx_records_student_id`: `[("student_id", 1)]`
+     - `idx_records_student_term`: `[("student_id", 1), ("term", 1)]`
+     - `idx_records_created_at`: `[("created_at", -1)]`
 
 3. `predictions`:
    - `_id`: ObjectId
-   - `student_id`: ObjectId (Indexed)
-   - `academic_record_id`: ObjectId (Indexed)
+   - `student_id`: ObjectId (References `users._id`)
+   - `academic_record_id`: ObjectId (References `academic_records._id`)
    - `predicted_marks`: Float
    - `predicted_grade`: String (`A`, `B`, `C`, `D`, `F`)
    - `risk_level`: Enum (`LOW`, `MODERATE`, `HIGH`)
@@ -104,51 +133,54 @@ MongoDB 6.x runs locally on port `27017` with database name `edupredict`.
    - `top_contributing_factors`: Array of `{ factor: String, impact: String, value: Any }`
    - `recommendations`: Array of String
    - `model_version`: String
-   - `created_at`: DateTime
+   - `created_at`: DateTime (UTC)
+   - **Indexes**:
+     - `idx_preds_student_id`: `[("student_id", 1)]`
+     - `idx_preds_academic_record_id`: `[("academic_record_id", 1)]`
+     - `idx_preds_risk_level`: `[("risk_level", 1)]`
+     - `idx_preds_created_at`: `[("created_at", -1)]`
 
-4. `system_logs`:
+4. `teacher_student_assignments`:
    - `_id`: ObjectId
-   - `event_type`: String (`AUTH_LOGIN`, `MODEL_INFERENCE`, `BATCH_RUN`, `EXPORT_TABLEAU`, `SECURITY_EVENT`)
-   - `user_id`: ObjectId (optional)
+   - `teacher_id`: ObjectId (References `users._id` with `role='teacher'`)
+   - `student_id`: ObjectId (References `users._id` with `role='student'`)
+   - `assigned_by`: ObjectId (References administrator `users._id`)
+   - `status`: Enum (`active`, `inactive`), default `active`
+   - `assigned_at`: DateTime (UTC)
+   - **Indexes**:
+     - `idx_assignments_teacher_student_unique`: `[("teacher_id", 1), ("student_id", 1)]`, unique=True
+     - `idx_assignments_teacher_id`: `[("teacher_id", 1)]`
+     - `idx_assignments_student_id`: `[("student_id", 1)]`
+     - `idx_assignments_status`: `[("status", 1)]`
+
+5. `system_logs`:
+   - `_id`: ObjectId
+   - `event_type`: String (`USER_CREATED`, `AUTH_LOGIN_SUCCESS`, `AUTH_LOGIN_FAILED`, `ROLE_MODIFIED`, `ASSIGNMENT_CREATED`, etc.)
    - `details`: Object
-   - `timestamp`: DateTime
+   - `user_id`: ObjectId (Target user, optional)
+   - `actor_id`: ObjectId (Acting user, optional)
+   - `ip_address`: String (optional)
+   - `timestamp`: DateTime (UTC)
+   - **Indexes**:
+     - `idx_logs_timestamp`: `[("timestamp", -1)]`
+     - `idx_logs_event_type`: `[("event_type", 1)]`
+     - `idx_logs_user_id`: `[("user_id", 1)]`
 
 ---
 
-## 4. Big Data Lake & Analytical SQL Schema (HDFS / Impala)
+## 4. Role-Based Access Control (RBAC) Matrix
 
-### HDFS Storage Paths:
-- `/user/edupredict/raw/academic_records/`
-- `/user/edupredict/analytical_lake/cohort_parquet/`
-
-### Impala Analytical External Table:
-```sql
-CREATE EXTERNAL TABLE IF NOT EXISTS edupredict_lake.student_cohort_analytics (
-    student_id STRING,
-    cohort STRING,
-    academic_year INT,
-    attendance_pct DOUBLE,
-    study_hours_weekly DOUBLE,
-    assignment_rate DOUBLE,
-    quiz_avg DOUBLE,
-    prev_exam_marks DOUBLE,
-    predicted_marks DOUBLE,
-    risk_level STRING,
-    risk_probability DOUBLE
-)
-PARTITIONED BY (term STRING)
-STORED AS PARQUET
-LOCATION '/user/edupredict/analytical_lake/cohort_parquet/';
-```
-
----
-
-## 5. Machine Learning Pipeline Architecture
-1. **Regression Task (Expected Marks Estimation)**:
-   - Algorithms: Linear Regression, Decision Tree Regressor, Random Forest Regressor.
-   - Evaluated using MAE, RMSE, and $R^2$.
-2. **Classification Task (Academic Risk Categorization)**:
-   - Algorithms: Logistic Regression, Decision Tree Classifier, Random Forest Classifier.
-   - Evaluated using Accuracy, Precision, Recall, F1-Score, and ROC-AUC.
-3. **Artifact Serialization**:
-   - Model pipelines and `StandardScaler` saved via `joblib` in `ml_models/`.
+| Endpoint | Method | Allowed Roles | Authorization Rules / Boundary Enforcement |
+|---|---|---|---|
+| `/auth/register` | `POST` | Public | Enforces `role='student'` strictly |
+| `/auth/login` | `POST` | Public | Authenticates credentials, creates session |
+| `/auth/logout` | `POST` | Authenticated | Terminates session via `logout_user()` |
+| `/api/me` | `GET` | Authenticated | Returns profile of `current_user` |
+| `/api/me` | `PUT` | Authenticated | Modifies only editable profile fields |
+| `/api/me/password` | `PUT` | Authenticated | Verifies old password, updates bcrypt hash |
+| `/api/students/<student_id>` | `GET` | `student`, `teacher`, `admin` | **IDOR Guard**: Student can only access self; Teacher can only access assigned students; Admin can access all |
+| `/api/teacher/students` | `GET` | `teacher` | Returns active assigned students only |
+| `/api/admin/users` | `GET` | `admin` | Directory listing with role filter |
+| `/api/admin/users/<id>/role`| `PUT` | `admin` | Role assignment; blocks self-demotion |
+| `/api/admin/assignments` | `POST` | `admin` | Maps student to teacher; validates roles |
+| `/api/admin/logs` | `GET` | `admin` | View system audit trail |

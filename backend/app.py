@@ -9,6 +9,12 @@ from flask import Flask, jsonify
 from backend.config import get_config
 from backend.extensions import csrf, login_manager, mongo
 from backend.routes.health_routes import health_bp
+from backend.routes.auth_routes import auth_bp
+from backend.routes.user_routes import user_bp
+from backend.routes.admin_routes import admin_bp
+from backend.commands.admin_commands import create_admin_command, init_db_command
+from backend.services.user_service import UserService
+from backend.database.schema import init_db_indexes
 
 # Configure logging
 logging.basicConfig(
@@ -21,7 +27,7 @@ logger = logging.getLogger("edupredict")
 def create_app(config_name=None):
     """
     Application Factory Pattern for EduPredict.
-    Initializes Flask application, configuration, extensions, and routes.
+    Initializes Flask application, configuration, extensions, routes, and CLI commands.
 
     :param config_name: 'development', 'testing', 'production', or None (uses FLASK_ENV)
     :return: Configured Flask application instance
@@ -43,15 +49,44 @@ def create_app(config_name=None):
     login_manager.init_app(app)
     mongo.init_app(app)
 
-    # Configure LoginManager defaults
+    # Configure LoginManager
     login_manager.login_view = "auth.login"
     login_manager.login_message = "Please log in to access this page."
     login_manager.login_message_category = "info"
 
+    @login_manager.user_loader
+    def load_user(user_id):
+        """Flask-Login user loader callback."""
+        return UserService.get_by_id(mongo.db, user_id)
+
+    @login_manager.unauthorized_handler
+    def unauthorized_handler():
+        """Handle unauthorized access with structured JSON response."""
+        return jsonify({
+            "error": "Unauthorized",
+            "message": "Authentication required. Please log in.",
+            "status_code": 401,
+        }), 401
+
     # 3. Register Blueprints
     app.register_blueprint(health_bp)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(user_bp)
+    app.register_blueprint(admin_bp)
 
-    # 4. Global Error Handlers
+    # 4. Register CLI Commands
+    app.cli.add_command(create_admin_command)
+    app.cli.add_command(init_db_command)
+
+    # 5. Initialize Database Indexes if database is reachable
+    with app.app_context():
+        if mongo.db is not None:
+            try:
+                init_db_indexes(mongo.db)
+            except Exception as e:
+                logger.warning("Could not auto-initialize indexes on startup: %s", str(e))
+
+    # 6. Global Error Handlers
     @app.errorhandler(404)
     def handle_not_found(e):
         return jsonify({
@@ -76,6 +111,14 @@ def create_app(config_name=None):
             "message": str(e.description) if hasattr(e, "description") else "Bad request.",
             "status_code": 400,
         }), 400
+
+    @app.errorhandler(403)
+    def handle_forbidden(e):
+        return jsonify({
+            "error": "Forbidden",
+            "message": "You do not have permission to access this resource.",
+            "status_code": 403,
+        }), 403
 
     return app
 

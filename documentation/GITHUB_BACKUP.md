@@ -17,6 +17,8 @@
 - **Audit Checklist**:
   - `[PASS]` No `.env` or credential files tracked (`.gitignore` verified).
   - `[PASS]` No plain-text passwords, tokens, or API keys in code or configuration.
+  - `[PASS]` Passwords stored using industry-standard salted `bcrypt` hashes.
+  - `[PASS]` `to_dict()` methods explicitly omit `password_hash` to prevent API credential leaks.
   - `[PASS]` MongoDB connection strings use non-sensitive localhost template without credentials (`mongodb://localhost:27017/edupredict`).
   - `[PASS]` No private student information, grades, or personal identifying data tracked.
   - `[PASS]` No proprietary or confidential external datasets tracked.
@@ -33,6 +35,8 @@
 | **Phase 0** | `dd0e42b` | docs(phase-0): incorporate Aptech big data feasibility audit and implementation plans | Pushed to `origin/main` | Yes |
 | **Phase 0** | `80fecdf` | docs(phase-0): record final Phase 0 Big Data audit commit in backup log | Pushed to `origin/main` | Yes |
 | **Phase 1** | `6f6c796` | feat(phase-1): application architecture, dependency configuration, pymongo setup, health endpoints, and test suite | Pushed to `origin/main` | Yes |
+| **Phase 1** | `fdedb5e` | docs(phase-1): record Phase 1 commit hash in backup log | Pushed to `origin/main` | Yes |
+| **Phase 2** | Pending Commit | feat(phase-2): database schemas, bcrypt authentication, role-based authorization, admin governance, and test suite | Staged for Push | Pending |
 
 ---
 
