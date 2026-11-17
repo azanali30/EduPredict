@@ -142,7 +142,7 @@
 ## Phase 4 Extension: Final Data Integrity Audit & Machine Learning Leakage Guard
 - **Date**: 2026-11-17
 - **Status**: Completed & Verified
-- **Commits**: Pending Push (`feat(audit): implement phase 4 data integrity audit, leakage guard, and test suite`)
+- **Commits**: `1937720`, `cb16858`
 - **Actions Executed**:
   1. **Dataset Identity Audit**:
      - Audited original UCI files and `student-merge.R`.
@@ -166,3 +166,31 @@
      - Authored `tests/test_feature_leakage.py` (8 automated tests).
      - Executed full test suite: **62 / 62 tests passing (100%)**.
      - Ran frontend production build: 0 errors in 16.53s.
+
+---
+
+## Phase 5 Readiness Verification: Pre-Modeling Protocols & Audit Review
+- **Date**: 2026-11-17
+- **Status**: Completed & Verified (Zero Models Trained)
+- **Commits**: Pending Push (`feat(readiness): document phase 5 readiness verification, split protocols, and metrics`)
+- **Actions Executed**:
+  1. **Student Identity Grouping Limitations Audit**:
+     - Investigated exact mathematical reconciliation: 1,044 enrollment records vs. 662 demographic profile equivalence classes vs. 382 merge rows in `student-merge.R`.
+     - Confirmed that 662 is an *estimated demographic profile count*, not a verified physical human student count, due to cohort demographic vector collisions (8 duplicate rows in Math, 23 in Portuguese).
+     - Recommended Mathematics ($N=395$) and Portuguese ($N=649$) subject-specific models as primary architecture.
+  2. **Regression & Classification Split Strategy Formulation**:
+     - Solved the continuous target stratification error by defining `get_regression_stratification_bins()` for performance tiers and quantiles.
+     - Separated continuous regression cross-validation (`KFold`) from classification (`StratifiedKFold`).
+     - Established 20% holdout test partition isolation rules.
+  3. **Preprocessing Leakage Audit**:
+     - Verified that existing Phase 4 feature scalings rely on fixed domain formulas (zero global statistical leakage).
+     - Mandated Scikit-learn `Pipeline` and `ColumnTransformer` encapsulation for all future training fold transformers.
+  4. **Evaluation Metrics Corrections**:
+     - Audited zero-division in standard MAPE caused by 53 student records with $G_3 = 0$.
+     - Replaced standard MAPE with bounded Symmetric MAPE (`safe_smape`) and prioritized MAE and RMSE.
+     - Formalized classification metrics: Macro F1, Weighted F1, Balanced Accuracy, Precision, Recall, Confusion Matrix.
+  5. **Verification & Automated Testing**:
+     - Authored `documentation/PHASE_5_READINESS_VERIFICATION.md`.
+     - Added unit tests for regression stratification binning and `safe_smape`.
+     - Full test suite passed: **64 / 64 tests passing (100%)**.
+     - Frontend production build passed: 0 errors in 17.35s.

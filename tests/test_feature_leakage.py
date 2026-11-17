@@ -14,6 +14,8 @@ from backend.data_engineering.leakage_guard import (
     assert_no_leakage,
     generate_student_group_ids,
     get_forbidden_features,
+    get_regression_stratification_bins,
+    safe_smape,
     REGRESSION_TARGET,
     CLASSIFICATION_TARGET,
     BASE_DEMOGRAPHIC_BEHAVIORAL_FEATURES,
@@ -175,3 +177,49 @@ def test_dataset_identity_consistency(cleaned_df):
     assert (por_df["student_code"].str.startswith("STU-POR-")).all()
     assert len(math_df) == 395
     assert len(por_df) == 649
+
+
+
+def test_regression_stratification_binning(cleaned_df):
+    """
+    Verifies that get_regression_stratification_bins produces valid categorical
+    bins suitable for stratified train/test split on continuous targets.
+    """
+    y = cleaned_df["final_exam_marks"]
+
+    # Test performance_tier strategy
+    bins_tier = get_regression_stratification_bins(y, strategy="performance_tier")
+    assert len(bins_tier) == len(y)
+    assert set(bins_tier.unique()) == {
+        "High Risk (<50)",
+        "Moderate Risk (50-69.9)",
+        "Low Risk (>=70)"
+    }
+    # Verify counts match risk distribution (230, 520, 294)
+    counts = bins_tier.value_counts()
+    assert counts["High Risk (<50)"] == 230
+    assert counts["Moderate Risk (50-69.9)"] == 520
+    assert counts["Low Risk (>=70)"] == 294
+
+    # Test quantile strategy
+    bins_q = get_regression_stratification_bins(y, strategy="quantile", n_bins=5)
+    assert len(bins_q) == len(y)
+    assert bins_q.nunique() >= 4  # Quantiles discretize into 4-5 bins cleanly
+
+
+def test_safe_smape_zero_handling():
+    """
+    Verifies that safe_smape safely computes percentage error even when
+    actual values are zero (which occurs 53 times in the dataset).
+    """
+    # Sample with y_true = 0
+    y_true = np.array([0.0, 10.0, 15.0, 0.0, 20.0])
+    y_pred = np.array([2.0, 11.0, 14.0, 0.0, 18.0])
+
+    val = safe_smape(y_true, y_pred)
+    assert not np.isnan(val)
+    assert not np.isinf(val)
+    assert 0.0 <= val <= 200.0
+
+    # Perfect prediction must yield 0%
+    assert safe_smape(y_true, y_true) < 1e-4
