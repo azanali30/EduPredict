@@ -12,7 +12,7 @@
 ## Commit History & Phase Tracking
 | Phase | Commit Hash | Message / Description | Remote Push Status |
 |---|---|---|---|
-| **Phase 0** | Pending First Commit | Baseline environment audit, documentation & .gitignore | Awaiting Remote URL |
+| **Phase 0** | `5d45fe3` | chore(phase-0): baseline project audit, environment verification and documentation setup | Awaiting Remote URL |
 
 ---
 
