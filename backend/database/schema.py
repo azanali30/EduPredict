@@ -45,9 +45,14 @@ def init_db_indexes(db: Database) -> dict[str, list[str]]:
         preds_idx = [
             db.predictions.create_index([("student_id", ASCENDING)], name="idx_preds_student_id"),
             db.predictions.create_index(
-                [("academic_record_id", ASCENDING)],
-                name="idx_preds_academic_record_id",
+                [("student_id", ASCENDING), ("created_at", DESCENDING)],
+                name="idx_preds_student_created",
             ),
+            db.predictions.create_index(
+                [("subject", ASCENDING), ("milestone", ASCENDING)],
+                name="idx_preds_subject_milestone",
+            ),
+            db.predictions.create_index([("predicted_status", ASCENDING)], name="idx_preds_predicted_status"),
             db.predictions.create_index([("risk_level", ASCENDING)], name="idx_preds_risk_level"),
             db.predictions.create_index([("created_at", DESCENDING)], name="idx_preds_created_at"),
         ]

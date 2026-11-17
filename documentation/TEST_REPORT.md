@@ -243,3 +243,67 @@ dist/assets/index-cwR6B7wV.js   735.12 kB │ gzip: 199.12 kB
 ```
 Status: **100% Passing, 0 Type Errors, 0 Build Warnings.**
 
+---
+
+## Phase 5B: Secure Prediction API Test Execution Summary
+- **Date**: 2026-11-17
+- **Target**: Prediction Endpoints, Input Validation, Temporal & Target Leakage Prevention, IDOR Protection, Role Scoping, Persistence, Safety Advisories
+- **Result**: **All 86 Backend Tests & Frontend Production Build PASSED (100%)**
+
+### Phase 5B Prediction API Test Matrix (14 Tests)
+| Test Case | Module | Target Tested | Result | Status |
+|---|---|---|---|---|
+| `test_get_prediction_options_requires_auth` | `test_prediction_api.py` | Auth gate on `/api/predictions/options` | Rejects unauthenticated requests with 401 | **PASS** |
+| `test_get_prediction_options_success` | `test_prediction_api.py` | Metadata discovery endpoint | Returns subjects, milestones (0–2), feature lists, estimated labels | **PASS** |
+| `test_student_generate_prediction_milestone_0_success` | `test_prediction_api.py` | M0 prediction generation for self | Returns marks, risk tier, M0 Early Warning Advisory, saves to DB | **PASS** |
+| `test_student_generate_prediction_milestone_1_and_2` | `test_prediction_api.py` | M1 and M2 prediction generation | Evaluates with `previous_exam_marks` and `quiz_scores` | **PASS** |
+| `test_student_cannot_generate_prediction_for_other_student` | `test_prediction_api.py` | IDOR prevention on prediction | Rejects student passing another student ID with 403 Forbidden | **PASS** |
+| `test_teacher_predict_assigned_vs_unassigned_student` | `test_prediction_api.py` | Teacher assignment scoping | Allows assigned student (201); blocks unassigned student (403) | **PASS** |
+| `test_admin_can_predict_for_any_student` | `test_prediction_api.py` | System-wide admin governance | Admin generates prediction for any student (201) | **PASS** |
+| `test_prediction_invalid_subject_and_milestone` | `test_prediction_api.py` | Subject & milestone boundaries | Rejects unknown subject or invalid milestone with 400 Bad Request | **PASS** |
+| `test_prediction_missing_and_out_of_range_features` | `test_prediction_api.py` | Schema & range validation | Rejects missing features, age=99, invalid categorical values (400) | **PASS** |
+| `test_target_leakage_fields_rejected` | `test_prediction_api.py` | Target leakage defense | Rejects $G_3$, `final_exam_marks`, `academic_status`, `student_code` | **PASS** |
+| `test_temporal_milestone_leakage_rejected` | `test_prediction_api.py` | Temporal milestone restrictions | M0 rejects $G_1$; M1 rejects $G_2$ (400 Bad Request) | **PASS** |
+| `test_prediction_history_student_isolation` | `test_prediction_api.py` | Scoped history queries | Student queries return strictly their own predictions | **PASS** |
+| `test_prediction_history_teacher_scoping` | `test_prediction_api.py` | Teacher history boundaries | Teacher lists assigned students; unassigned query returns 403 | **PASS** |
+| `test_prediction_detail_rbac` | `test_prediction_api.py` | Single record detail RBAC | Enforces student ownership and teacher assignment on record fetch | **PASS** |
+
+### Complete Backend Pytest Execution Summary (86 Tests)
+```text
+============================= test session starts =============================
+platform win32 -- Python 3.12.16, pytest-9.2.0, pluggy-1.7.0
+rootdir: C:\Users\Azan's PC\Documents\EduPredict
+plugins: flask-1.3.0
+collected 86 items
+
+tests/test_admin.py (7 tests) ........................................ PASSED [  8%]
+tests/test_app_factory.py (3 tests) .................................. PASSED [ 11%]
+tests/test_auth.py (10 tests) ........................................ PASSED [ 23%]
+tests/test_config.py (4 tests) ....................................... PASSED [ 27%]
+tests/test_data_pipeline.py (13 tests) ............................... PASSED [ 43%]
+tests/test_feature_leakage.py (10 tests) ............................. PASSED [ 54%]
+tests/test_health_routes.py (4 tests) ................................ PASSED [ 59%]
+tests/test_ml_models.py (8 tests) .................................... PASSED [ 68%]
+tests/test_models.py (4 tests) ....................................... PASSED [ 73%]
+tests/test_mongo_connectivity.py (3 tests) ........................... PASSED [ 76%]
+tests/test_prediction_api.py (14 tests) .............................. PASSED [ 93%]
+tests/test_rbac.py (6 tests) ......................................... PASSED [100%]
+
+============================= 86 passed in 43.23s =============================
+```
+
+### Frontend Production Build Verification
+```text
+> edupredict-frontend@1.0.0 build
+> tsc -b && vite build
+
+vite v6.4.6 building for production...
+✓ 2025 modules transformed.
+dist/index.html                   0.81 kB │ gzip:   0.46 kB
+dist/assets/index-BpR1vFdi.css   36.27 kB │ gzip:   7.10 kB
+dist/assets/index-cwR6B7wV.js   735.12 kB │ gzip: 199.12 kB
+✓ built in 14.37s
+```
+Status: **100% Passing, 0 Type Errors, 0 Build Warnings.**
+
+

@@ -27,7 +27,7 @@ EduPredict is a standalone AI/ML-powered Educational Performance Prediction and 
 - **Big Data & OLAP**: HDFS WebHDFS REST API client, Apache Impala MPP SQL query catalog, Apache Parquet
 - **Statistical Computing**: Native R 4.6.2 (ANOVA, Welch t-test, Kruskal-Wallis, Pearson correlation)
 - **Machine Learning & EDA**: Scikit-learn 1.9.1, NumPy 2.5.5, Pandas 3.1.1, Joblib 1.6.0, Matplotlib, Seaborn, Jupyter Notebook
-- **Testing**: Pytest (72 automated tests, 100% passing), pytest-flask, TypeScript compiler (`tsc -b`), Vite production bundler
+- **Testing**: Pytest (86 automated tests, 100% passing), pytest-flask, TypeScript compiler (`tsc -b`), Vite production bundler
 
 ---
 
@@ -51,9 +51,9 @@ EduPredict/
 │   ├── commands/             # CLI commands (create-admin, init-db)
 │   ├── database/             # MongoDB 6 schema and index governance
 │   ├── data_engineering/     # Cleaning, normalization, MongoDB ingestion & HDFS lakehouse manager
-│   ├── models/               # Domain entities (User, AcademicRecord, Assignment, SystemLog)
-│   ├── routes/               # Modular Flask blueprints (health, auth, user, admin)
-│   └── services/             # Core business & analytics services
+│   ├── models/               # Domain entities (User, AcademicRecord, Assignment, SystemLog, PredictionRecord)
+│   ├── routes/               # Modular Flask blueprints (health, auth, user, admin, prediction)
+│   └── services/             # Core business, analytics & prediction services
 ├── data/
 │   ├── raw/                  # UCI Student Performance raw CSVs (student-mat.csv, student-por.csv)
 │   └── processed/            # Cleaned, standardized datasets & machine-readable data dictionary
@@ -77,7 +77,7 @@ EduPredict/
 │   ├── saved_models/         # 12 champion Scikit-learn pipelines (.joblib) & metadata (.json)
 │   └── reports/              # Holdout evaluation, cross-validation & confusion matrix reports
 ├── notebooks/                # Executed Jupyter Notebooks (eda_academic_performance.ipynb)
-└── tests/                    # 72 automated unit & integration tests
+└── tests/                    # 86 automated unit & integration tests
     ├── conftest.py
     ├── test_admin.py
     ├── test_app_factory.py
@@ -89,6 +89,7 @@ EduPredict/
     ├── test_ml_models.py     # ML models, milestone restrictions & pipeline tests
     ├── test_models.py
     ├── test_mongo_connectivity.py
+    ├── test_prediction_api.py # Prediction REST APIs, RBAC, leakage & safety advisories
     └── test_rbac.py
 ```
 
@@ -164,7 +165,7 @@ Execute full backend, data pipeline, and machine learning pytest suite:
 $env:PYTHONPATH="."
 .\.venv\Scripts\pytest.exe -v
 ```
-*(All 72 tests passing)*
+*(All 86 tests passing)*
 
 Execute frontend type-checking and production build:
 ```cmd

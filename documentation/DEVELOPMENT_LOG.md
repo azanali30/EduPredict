@@ -200,7 +200,7 @@
 ## Phase 5A: Machine Learning Model Development & Empirical Evaluation
 - **Date**: 2026-11-17
 - **Status**: Completed & Empirically Verified
-- **Commits**: Pending Commit (`feat(phase-5a): subject-specific ml model training, pipelines, reports, and tests`)
+- **Commits**: `80e8829`, `f56c53b`, `a3cecf6`, `cf7b879`
 - **Actions Executed**:
   1. **Subject Separation & Milestone Feature Partitions**:
      - Enforced independent training on Mathematics ($N=395$) and Portuguese Language ($N=649$) cohorts.
@@ -230,4 +230,39 @@
      - Authored `tests/test_ml_models.py` (8 automated tests covering subject separation, milestone restrictions, leakage prevention, train/test isolation, pipeline preprocessing, artifact loading, inference reproducibility, and metric calculations).
      - Full test suite passed: **72 / 72 tests passing (100%)**.
      - Frontend production build passed: 0 errors in 17.58s.
-     - Authored comprehensive documentation `documentation/PHASE_5A_ML_MODEL_DEVELOPMENT.md`.
+     - Authored comprehensive documentation `documentation/PHASE_5A_ML_MODEL_DEVELOPMENT.md` and read-only audit report `documentation/PHASE_5A_FINAL_INTEGRITY_AUDIT.md`.
+
+---
+
+## Phase 5B: Secure Prediction API Development
+- **Date**: 2026-11-17
+- **Status**: Completed & Empirically Verified
+- **Commits**: Pending Commit (`feat(phase-5b): secure prediction api, rbac enforcement, history persistence, and tests`)
+- **Actions Executed**:
+  1. **Prediction Model & Persistence Layer**:
+     - Implemented `PredictionRecord` domain model in `backend/models/prediction_model.py` with full provenance, metadata, and JSON/BSON serialization.
+     - Extended MongoDB `predictions` schema and indexes in `backend/database/schema.py` with compound index `idx_preds_student_created` and `idx_preds_subject_milestone`.
+  2. **In-Memory Model Caching & Joint Inference**:
+     - Enhanced `backend/ml/model_loader.py` with thread-safe model caching (`_MODEL_CACHE`) and `predict_student()` joint inference engine.
+     - Executes continuous regression mark prediction alongside discrete risk classification and uncalibrated class probability extraction.
+  3. **Prediction Business Service & Input Validation**:
+     - Built `backend/services/prediction_service.py` with comprehensive schema validation.
+     - Validates subject, milestone (0, 1, 2), numeric ranges, and categorical domains across all 33–35 features.
+     - Strictly intercepts prohibited target fields (`G3`, `final_exam_marks`, `academic_status`, `student_code`) and milestone temporal violations.
+  4. **Role-Based Access Control & IDOR Defense**:
+     - Integrated `can_access_student_data` authorization checks into all prediction endpoints.
+     - Enforces that students can only generate and list predictions for themselves (attempting other student IDs returns 403 Forbidden).
+     - Enforces that teachers can only generate and list predictions for students assigned to them in `teacher_student_assignments`.
+     - Grants administrators system-wide prediction governance.
+  5. **Educational Safety Advisories & Uncertainty Warnings**:
+     - Injected mandatory Milestone 0 Early Warning Advisory alerting users to the >60% false negative rate without exam grades.
+     - Attached uncertainty warning flags whenever top-class probability is below 0.55.
+     - Labeled estimated proxies (`assignment_completion_rate`, `attendance_percentage`, `study_hours_per_week`) explicitly in metadata.
+  6. **Secure REST API Blueprint**:
+     - Created `backend/routes/prediction_routes.py` with `/api/predictions/options`, `POST /api/predictions`, `GET /api/predictions`, and `GET /api/predictions/<id>`.
+     - Registered `prediction_bp` in application factory `backend/app.py`.
+  7. **Testing & Build Verification**:
+     - Authored `tests/test_prediction_api.py` with 14 automated unit/integration tests.
+     - Full test suite passed: **86 / 86 tests passing (100%)**.
+     - Frontend production build passed: 0 errors in 14.37s.
+     - Authored documentation `documentation/PHASE_5B_PREDICTION_API.md`.
