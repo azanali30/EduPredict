@@ -11,6 +11,7 @@ EduPredict is a standalone AI/ML-powered Educational Performance Prediction and 
 - **Academic Risk Detection**: Classify student risk levels (High Risk, Moderate Risk, Low Risk / On Track) using machine learning classification algorithms.
 - **Subject-Wise Analysis**: Granular identification of student strengths, weaknesses, and academic bottlenecks.
 - **Personalized Recommendations**: Rule- and model-guided actionable improvement steps tailored to individual student performance metrics.
+- **Modern SaaS Web Interface**: High-performance React 18, TypeScript, and Vite single-page application with responsive layouts for Student, Teacher, and Administrator roles.
 - **Role-Based Access Control (RBAC)**:
   - **Student**: Register, view personal profile, view own predictions, track personal academic progress. Strictly prohibited from accessing peer records.
   - **Teacher**: Access assigned students, review classroom academic indicators, monitor early warning flags. Prohibited from accessing unassigned students.
@@ -19,63 +20,82 @@ EduPredict is a standalone AI/ML-powered Educational Performance Prediction and 
 ---
 
 ## Technology Stack
-- **Backend**: Python 3.12, Flask, PyMongo, Flask-Login, Flask-WTF, python-dotenv, bcrypt
+- **Frontend**: React 18, TypeScript, Vite 6, React Router 6, Lucide React, Modern CSS System
+- **Backend**: Python 3.12, Flask 3.1.3, PyMongo 4.20.0, Flask-Login, Flask-WTF, python-dotenv, bcrypt
 - **Database**: MongoDB 6.x (running locally on port 27017, database: `edupredict`)
-- **Machine Learning**: Scikit-learn, NumPy, Pandas, Joblib
-- **Frontend**: Responsive HTML5, CSS3, JavaScript, Bootstrap 5, Chart.js
-- **Testing**: Pytest, pytest-flask
+- **Machine Learning**: Scikit-learn, NumPy, Pandas, Joblib (Phase 4)
+- **Testing**: Pytest, pytest-flask, TypeScript compiler (`tsc -b`), Vite build verification
 
 ---
 
-## Database Architecture (MongoDB 6.x)
-- `users`: User profiles with unique normalized emails, bcrypt password hashes, and assigned roles (`student`, `teacher`, `admin`).
-- `academic_records`: Term-based student metrics (attendance %, study hours, assignment rate, quiz average, previous marks, subject score maps).
-- `predictions`: ML prediction outcomes, risk classifications, contributing factor weights, and recommendations.
-- `teacher_student_assignments`: Explicit mappings linking students to authorized teachers with unique compound index.
-- `system_logs`: Immutable security and administrative audit trail with UTC timestamps.
-
----
-
-## API Endpoints (Phase 1 & Phase 2)
-
-### Health & Diagnostics
-- `GET /`: Application welcome and endpoint index
-- `GET /health`: Lightweight uptime and database health probe
-- `GET /api/health`: Full system diagnostics (versions, latency, environment)
-- `GET /api/health/db`: Dedicated MongoDB connectivity probe
-- `GET /api/csrf-token`: Fetch CSRF token for web clients
-
-### Authentication
-- `POST /auth/register`: Public student registration (enforces `role='student'`)
-- `POST /auth/login`: User session login via Flask-Login
-- `POST /auth/logout`: Terminate active session (requires authentication)
-
-### User & Profile Management
-- `GET /api/me`: Retrieve current user profile
-- `PUT /api/me`: Update personal profile (e.g. `full_name`)
-- `PUT /api/me/password`: Secure password change with current password verification
-- `GET /api/students/<student_id>`: View student details (enforces student privacy, teacher assignment, or admin access)
-- `GET /api/teacher/students`: List students assigned to the authenticated teacher
-
-### Administration
-- `GET /api/admin/users`: List system users with optional role filtering
-- `PUT /api/admin/users/<user_id>/role`: Promote or reassign user roles
-- `POST /api/admin/assignments`: Map a student to a teacher
-- `GET /api/admin/logs`: Inspect security and administrative audit logs
+## Project Structure
+```text
+EduPredict/
+├── .env                      # Local development secrets (untracked by git)
+├── .env.example              # Template environment configuration
+├── .gitignore                # Exclusion rules for git (excludes .venv, secrets, node_modules)
+├── requirements.txt          # Python dependencies
+├── README.md                 # Project README
+├── backend/
+│   ├── __init__.py           # Package root exposing create_app
+│   ├── app.py                # Application factory, user_loader, error handlers
+│   ├── config.py             # Environment configuration (Dev, Test, Prod)
+│   ├── extensions.py         # Extensions (PyMongo manager, CSRF, LoginManager)
+│   ├── commands/             # CLI commands (create-admin, init-db)
+│   ├── database/             # MongoDB 6 schema and index governance
+│   ├── models/               # Domain entities (User, AcademicRecord, Assignment, SystemLog)
+│   ├── routes/               # Modular Flask blueprints (health, auth, user, admin)
+│   └── services/             # Core business & analytics services
+├── frontend/                 # Modern React + TypeScript + Vite Single-Page Application
+│   ├── package.json          # Node dependencies and scripts
+│   ├── tsconfig.json         # TypeScript strict configuration
+│   ├── vite.config.ts        # Vite build & proxy configuration (/auth, /api -> :5000)
+│   ├── index.html            # HTML5 template
+│   └── src/
+│       ├── main.tsx          # Application entry point
+│       ├── App.tsx           # React Router and route guards
+│       ├── types/            # TypeScript interfaces and domain types
+│       ├── services/         # Centralized API service with CSRF & credential handling
+│       ├── context/          # Centralized AuthContext (login, register, session restore)
+│       ├── styles/           # Premium SaaS design system (Navy blue, card elevation)
+│       ├── components/       # Reusable components (Navbar, Sidebar, StatCards, Forms)
+│       ├── layouts/          # AuthLayout and DashboardLayout
+│       ├── pages/            # Role-partitioned pages (Student, Teacher, Admin, Auth)
+│       └── routes/           # ProtectedRoute with RBAC guards
+├── data/
+│   ├── raw/                  # Raw academic datasets
+│   └── processed/            # Preprocessed feature datasets
+├── documentation/
+│   ├── ARCHITECTURE.md
+│   ├── BIG_DATA_IMPLEMENTATION_PLAN.md
+│   ├── DEVELOPMENT_LOG.md
+│   ├── GITHUB_BACKUP.md
+│   ├── PROJECT_OVERVIEW.md
+│   ├── TECHNOLOGY_FEASIBILITY.md
+│   └── TEST_REPORT.md
+├── ml_models/
+├── notebooks/
+└── tests/
+    ├── conftest.py
+    ├── test_admin.py
+    ├── test_app_factory.py
+    ├── test_auth.py
+    ├── test_config.py
+    ├── test_health_routes.py
+    ├── test_models.py
+    ├── test_mongo_connectivity.py
+    └── test_rbac.py
+```
 
 ---
 
 ## Getting Started
 
 ### 1. Environment Setup
-The project uses Python 3.12 inside a dedicated virtual environment (`.venv`).
-```powershell
-# Activate virtual environment (PowerShell)
-.\.venv\Scripts\Activate.ps1
-```
+The backend uses Python 3.12 inside a dedicated virtual environment (`.venv`), and the frontend uses Node.js.
 
 ### 2. Configure Environment
-Ensure your local `.env` file exists (copied from `.env.example`):
+Ensure your local `.env` file exists:
 ```env
 FLASK_APP=backend.app
 FLASK_ENV=development
@@ -87,27 +107,27 @@ MONGO_URI=mongodb://localhost:27017/edupredict
 MONGO_DB_NAME=edupredict
 ```
 
-### 3. Provision Initial Administrator Account
-Use the built-in CLI command to create an administrator account without hardcoding credentials:
-```powershell
-.\.venv\Scripts\flask.exe create-admin --email admin@edupredict.com --name "System Administrator"
-```
-
-### 4. Initialize Database Indexes
-Initialize collections and unique indexes in MongoDB:
-```powershell
-.\.venv\Scripts\flask.exe init-db
-```
-
-### 5. Run the Application
-Start the Flask development server:
-```powershell
+### 3. Start Backend Server (Windows CMD / PowerShell)
+```cmd
 .\.venv\Scripts\python.exe -m backend.app
 ```
-Access the server at `http://127.0.0.1:5000/`.
+Flask runs at `http://127.0.0.1:5000/`.
 
-### 6. Run Automated Tests
-Execute the complete test suite:
+### 4. Start Frontend Development Server (Windows CMD)
+```cmd
+cd frontend
+npm run dev
+```
+Vite runs at `http://localhost:5173/` and automatically proxies `/auth` and `/api` requests to `http://127.0.0.1:5000`.
+
+### 5. Run Automated Tests
+Execute backend pytest suite:
 ```powershell
 .\.venv\Scripts\pytest.exe -v
+```
+
+Execute frontend type-checking and production build:
+```cmd
+cd frontend
+npm run build
 ```

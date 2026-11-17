@@ -1,18 +1,19 @@
 # EduPredict – System Architecture & Technical Design
 
 ## 1. Architectural Philosophy
-EduPredict is an AI/ML-driven Educational Performance Prediction and Analytics Platform designed using a **Decoupled Modular Architecture**. It combines a responsive web layer, a high-throughput operational NoSQL datastore (MongoDB 6.x), a scalable Big Data analytical lakehouse (HDFS / Impala), an enterprise BI bridge (Tableau), and an extensible machine learning inference engine.
+EduPredict is an AI/ML-driven Educational Performance Prediction and Analytics Platform designed using a **Decoupled Modular Architecture**. It combines a responsive modern React Single Page Application (SPA), a high-throughput operational NoSQL datastore (MongoDB 6.x), a scalable Big Data analytical lakehouse (HDFS / Impala), an enterprise BI bridge (Tableau), and an extensible machine learning inference engine.
 
 ```
                       +-------------------------------------------------------+
-                      |                 Presentation & BI Tier                |
-                      |  - Web UI: Student, Teacher, Admin (HTML5/Bootstrap5) |
-                      |  - Interactive Analytics: Chart.js                    |
-                      |  - Enterprise BI: Tableau Public / Desktop (.twb)     |
-                      |  - Research Workbenches: Jupyter Notebook & RStudio   |
+                      |         Presentation Tier: React 18 / TypeScript SPA  |
+                      |  - Vite 6 Bundler & Dev Proxy                         |
+                      |  - Centralized AuthContext (Session Restoration)      |
+                      |  - Role-Partitioned Dashboards (Student, Teacher, Admin)|
+                      |  - Responsive SaaS Layout & Lucide Iconography        |
                       +---------------------------+---------------------------+
                                                   |
-                                            HTTP / REST
+                                            HTTP / JSON
+                                  (Credentials: include, X-CSRFToken)
                                                   v
                       +-------------------------------------------------------+
                       |              Web & Application Gateway                |
@@ -47,140 +48,67 @@ EduPredict is an AI/ML-driven Educational Performance Prediction and Analytics P
 
 ---
 
-## 2. Implemented Backend Modular Structure
+## 2. Frontend Application Architecture (React + TypeScript + Vite)
+
+The frontend is structured as a dedicated TypeScript SPA inside `frontend/`:
 ```text
-EduPredict/backend/
-├── __init__.py               # Package root exporting create_app
-├── app.py                    # Application factory, user_loader, error handlers
-├── config.py                 # BaseConfig, DevelopmentConfig, TestingConfig, ProductionConfig
-├── extensions.py             # csrf (CSRFProtect), login_manager (LoginManager), mongo (MongoManager)
-├── commands/
-│   ├── __init__.py
-│   └── admin_commands.py     # Click CLI commands: create-admin, init-db
-├── database/
-│   ├── __init__.py
-│   └── schema.py             # Index definitions and schema initialization for MongoDB 6
-├── models/
-│   ├── __init__.py
-│   ├── user_model.py         # User domain entity implementing Flask-Login interface
-│   ├── academic_record_model.py # AcademicRecord document mapping
-│   ├── assignment_model.py   # TeacherStudentAssignment document mapping
-│   └── system_log_model.py   # SystemLog audit trail mapping
-├── routes/
-│   ├── __init__.py
-│   ├── health_routes.py      # /, /health, /api/health, /api/health/db
-│   ├── auth_routes.py        # /auth/register, /auth/login, /auth/logout, /api/csrf-token
-│   ├── user_routes.py        # /api/me, /api/me/password, /api/students/<id>, /api/teacher/students
-│   └── admin_routes.py       # /api/admin/users, /api/admin/users/<id>/role, /api/admin/assignments, /api/admin/logs
-├── services/
-│   ├── __init__.py
-│   ├── auth_service.py       # Registration, login authentication, credential checking
-│   ├── user_service.py       # User CRUD, role updates, profile management
-│   ├── assignment_service.py # Teacher-student linkage management
-│   └── system_log_service.py # Centralized audit event logger
-└── utils/
-    ├── __init__.py
-    ├── security.py           # Bcrypt password hashing, normalization, ObjectId safety
-    └── decorators.py         # @role_required, @admin_required, @teacher_required, can_access_student_data
+frontend/
+├── package.json              # React 18, React Router 6, Lucide React, Vite 6
+├── tsconfig.json             # Strict TypeScript compiler options
+├── vite.config.ts            # Local development proxy (/auth, /api -> :5000)
+├── index.html                # HTML5 mount point with Plus Jakarta Sans & Inter
+└── src/
+    ├── main.tsx              # Application bootstrap with global styles
+    ├── App.tsx               # React Router layout structure & route hierarchy
+    ├── types/
+    │   └── index.ts          # TypeScript interfaces: User, AcademicRecord, Assignment, Log
+    ├── services/
+    │   └── api.ts            # Centralized API service with automated CSRF injection
+    ├── context/
+    │   └── AuthContext.tsx   # React Context maintaining authenticated session & user state
+    ├── styles/
+    │   └── global.css        # SaaS CSS design system (Navy blue, cards, badges, tables)
+    ├── components/
+    │   ├── common/           # Navbar, Sidebar, StatCard, LoadingSkeleton, EmptyState, Modal
+    │   └── forms/            # Accessible InputField with show/hide password, Button with spinner
+    ├── layouts/
+    │   ├── AuthLayout.tsx    # Branded centered container for public authentication
+    │   └── DashboardLayout.tsx # Sticky sidebar, header, and content workspace container
+    ├── routes/
+    │   └── ProtectedRoute.tsx# Enforces authentication & role-based route protection
+    └── pages/
+        ├── auth/             # LoginPage, RegisterPage, ForgotPasswordPage
+        ├── student/          # StudentOverview, StudentProfile, StudentRecords, StudentPredictions
+        ├── teacher/          # TeacherOverview, TeacherStudents (with inspection modal)
+        ├── admin/            # AdminOverview, UserManagement, TeacherAssignments, SystemLogs
+        └── status/           # UnauthorizedPage (403), NotFoundPage (404)
 ```
 
 ---
 
-## 3. Database Schema Design (MongoDB 6.x)
+## 3. Frontend-Backend Security & Authentication Flow
 
-MongoDB 6.x runs locally on port `27017` with database name `edupredict`.
-
-### Collections and Indexes:
-1. `users`:
-   - `_id`: ObjectId
-   - `email`: String (Normalized lowercase, stripped)
-   - `password_hash`: String (bcrypt hash with salt)
-   - `full_name`: String
-   - `role`: Enum (`student`, `teacher`, `admin`), default `student`
-   - `is_active`: Boolean, default `True`
-   - `created_at`: DateTime (UTC)
-   - `updated_at`: DateTime (UTC)
-   - **Indexes**:
-     - `idx_users_email_unique`: `[("email", 1)]`, unique=True
-     - `idx_users_role`: `[("role", 1)]`
-     - `idx_users_created_at`: `[("created_at", -1)]`
-
-2. `academic_records`:
-   - `_id`: ObjectId
-   - `student_id`: ObjectId (References `users._id`)
-   - `term`: String
-   - `attendance_percentage`: Float (0-100)
-   - `study_hours_per_week`: Float
-   - `assignment_completion_rate`: Float (0-100)
-   - `quiz_average`: Float (0-100)
-   - `previous_exam_marks`: Float (0-100)
-   - `subject_scores`: Object (e.g., `{"Mathematics": 82.0, "Science": 74.0}`)
-   - `created_at`: DateTime (UTC)
-   - `updated_at`: DateTime (UTC)
-   - **Indexes**:
-     - `idx_records_student_id`: `[("student_id", 1)]`
-     - `idx_records_student_term`: `[("student_id", 1), ("term", 1)]`
-     - `idx_records_created_at`: `[("created_at", -1)]`
-
-3. `predictions`:
-   - `_id`: ObjectId
-   - `student_id`: ObjectId (References `users._id`)
-   - `academic_record_id`: ObjectId (References `academic_records._id`)
-   - `predicted_marks`: Float
-   - `predicted_grade`: String (`A`, `B`, `C`, `D`, `F`)
-   - `risk_level`: Enum (`LOW`, `MODERATE`, `HIGH`)
-   - `risk_probability`: Float
-   - `top_contributing_factors`: Array of `{ factor: String, impact: String, value: Any }`
-   - `recommendations`: Array of String
-   - `model_version`: String
-   - `created_at`: DateTime (UTC)
-   - **Indexes**:
-     - `idx_preds_student_id`: `[("student_id", 1)]`
-     - `idx_preds_academic_record_id`: `[("academic_record_id", 1)]`
-     - `idx_preds_risk_level`: `[("risk_level", 1)]`
-     - `idx_preds_created_at`: `[("created_at", -1)]`
-
-4. `teacher_student_assignments`:
-   - `_id`: ObjectId
-   - `teacher_id`: ObjectId (References `users._id` with `role='teacher'`)
-   - `student_id`: ObjectId (References `users._id` with `role='student'`)
-   - `assigned_by`: ObjectId (References administrator `users._id`)
-   - `status`: Enum (`active`, `inactive`), default `active`
-   - `assigned_at`: DateTime (UTC)
-   - **Indexes**:
-     - `idx_assignments_teacher_student_unique`: `[("teacher_id", 1), ("student_id", 1)]`, unique=True
-     - `idx_assignments_teacher_id`: `[("teacher_id", 1)]`
-     - `idx_assignments_student_id`: `[("student_id", 1)]`
-     - `idx_assignments_status`: `[("status", 1)]`
-
-5. `system_logs`:
-   - `_id`: ObjectId
-   - `event_type`: String (`USER_CREATED`, `AUTH_LOGIN_SUCCESS`, `AUTH_LOGIN_FAILED`, `ROLE_MODIFIED`, `ASSIGNMENT_CREATED`, etc.)
-   - `details`: Object
-   - `user_id`: ObjectId (Target user, optional)
-   - `actor_id`: ObjectId (Acting user, optional)
-   - `ip_address`: String (optional)
-   - `timestamp`: DateTime (UTC)
-   - **Indexes**:
-     - `idx_logs_timestamp`: `[("timestamp", -1)]`
-     - `idx_logs_event_type`: `[("event_type", 1)]`
-     - `idx_logs_user_id`: `[("user_id", 1)]`
+1. **CSRF Protection via Session Secret**:
+   - On application load or prior to mutating requests, `api.ts` invokes `GET /api/csrf-token`.
+   - Flask-WTF generates a signed CSRF token bound to the active session.
+   - For all `POST`, `PUT`, `DELETE` requests, `api.ts` automatically attaches the token in the `X-CSRFToken` request header.
+   - If a request encounters a CSRF expiration error (400), `api.ts` automatically refreshes the token and transparently retries the mutation once.
+2. **Session Cookies & Credentials**:
+   - All fetch requests specify `credentials: 'include'`.
+   - Flask-Login issues secure HTTP-only cookies (`session=...`).
+   - Sensitive credentials (passwords, tokens) are never stored in `localStorage` or `sessionStorage`.
+3. **Session Restoration**:
+   - When the user refreshes their browser, `AuthContext` calls `GET /api/me`.
+   - If the session cookie is valid, the user state is restored and the user remains on their dashboard.
+   - If the session has expired or is invalid (401), the user is redirected to `/login`.
+4. **Client-Side Role Authorization & Route Guards**:
+   - `ProtectedRoute` inspects `user.role` against `allowedRoles`.
+   - If an authenticated student attempts to navigate directly to `/admin` or `/teacher`, they are redirected to `/unauthorized` (403 Access Denied).
+   - Server-side decorators (`@role_required`, `@admin_required`) remain the primary source of truth.
 
 ---
 
-## 4. Role-Based Access Control (RBAC) Matrix
-
-| Endpoint | Method | Allowed Roles | Authorization Rules / Boundary Enforcement |
-|---|---|---|---|
-| `/auth/register` | `POST` | Public | Enforces `role='student'` strictly |
-| `/auth/login` | `POST` | Public | Authenticates credentials, creates session |
-| `/auth/logout` | `POST` | Authenticated | Terminates session via `logout_user()` |
-| `/api/me` | `GET` | Authenticated | Returns profile of `current_user` |
-| `/api/me` | `PUT` | Authenticated | Modifies only editable profile fields |
-| `/api/me/password` | `PUT` | Authenticated | Verifies old password, updates bcrypt hash |
-| `/api/students/<student_id>` | `GET` | `student`, `teacher`, `admin` | **IDOR Guard**: Student can only access self; Teacher can only access assigned students; Admin can access all |
-| `/api/teacher/students` | `GET` | `teacher` | Returns active assigned students only |
-| `/api/admin/users` | `GET` | `admin` | Directory listing with role filter |
-| `/api/admin/users/<id>/role`| `PUT` | `admin` | Role assignment; blocks self-demotion |
-| `/api/admin/assignments` | `POST` | `admin` | Maps student to teacher; validates roles |
-| `/api/admin/logs` | `GET` | `admin` | View system audit trail |
+## 4. Backend Modular Layout & Database Schema
+*(Preserved from Phase 2)*
+- MongoDB 6.x running on port `27017` with collections: `users`, `academic_records`, `predictions`, `teacher_student_assignments`, `system_logs`.
+- All 41 backend tests verified and passing.

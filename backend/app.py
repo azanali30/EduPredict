@@ -119,6 +119,14 @@ def create_app(config_name=None):
             "message": "You do not have permission to access this resource.",
             "status_code": 403,
         }), 403
+    
+    @app.errorhandler(403)
+    def handle_forbidden(e):
+        return jsonify({
+            "error": "Forbidden",
+            "message": "You do not have permission to access this resource.",
+            "status_code": 403,
+        }), 403
 
     return app
 
