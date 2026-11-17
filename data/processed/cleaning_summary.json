@@ -1,0 +1,25 @@
+{
+  "pipeline_version": "1.0.0",
+  "dataset_name": "UCI Student Performance Dataset (Cortez and Silva, 2008)",
+  "license": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+  "source_repository": "https://archive.ics.uci.edu/dataset/320/student+performance",
+  "total_source_records": 1044,
+  "mathematics_records": 395,
+  "portuguese_records": 649,
+  "processed_records": 1044,
+  "missing_values_imputed": 0,
+  "duplicate_records_handled": 0,
+  "features_count": 45,
+  "risk_distribution": {
+    "Moderate Risk": 520,
+    "Low Risk / On Track": 294,
+    "High Risk": 230
+  },
+  "performance_statistics": {
+    "mean_attendance": 92.63,
+    "mean_study_hours": 4.02,
+    "mean_previous_exam": 56.07,
+    "mean_quiz_score": 56.23,
+    "mean_final_exam": 56.71
+  }
+}

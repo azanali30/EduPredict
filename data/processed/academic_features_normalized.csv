@@ -1,0 +1,1045 @@
+student_code,subject,academic_year,term,school,sex,age,address,famsize,Pstatus,Medu,Fedu,study_hours_per_week,failures,schoolsup,famsup,paid,activities,higher,internet,romantic,famrel,freetime,goout,health,absences,attendance_percentage,assignment_completion_rate,previous_exam_marks,quiz_scores,final_exam_marks,academic_status
+STU-MAT-001,Mathematics,2025-2026,Final Term,GP,F,18,U,GT3,A,4,4,3.5,0,yes,no,no,no,yes,no,no,4,3,4,3,6,90.0,86.0,25.0,30.0,30.0,High Risk
+STU-MAT-002,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,1,1,3.5,0,no,yes,no,no,yes,yes,no,5,3,3,3,4,93.33,86.0,25.0,25.0,30.0,High Risk
+STU-MAT-003,Mathematics,2025-2026,Final Term,GP,F,15,U,LE3,T,1,1,3.5,3,yes,no,yes,no,yes,yes,no,4,3,2,3,10,83.33,68.0,35.0,40.0,50.0,Moderate Risk
+STU-MAT-004,Mathematics,2025-2026,Final Term,GP,F,15,U,GT3,T,4,2,7.5,0,no,yes,yes,yes,yes,yes,yes,3,2,2,5,2,96.67,94.5,75.0,70.0,75.0,Low Risk / On Track
+STU-MAT-005,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,3,3,3.5,0,no,yes,yes,no,yes,no,no,4,3,2,5,4,93.33,86.0,30.0,50.0,50.0,Moderate Risk
+STU-MAT-006,Mathematics,2025-2026,Final Term,GP,M,16,U,LE3,T,4,3,3.5,0,no,yes,yes,yes,yes,yes,no,5,4,2,5,10,83.33,90.0,75.0,75.0,75.0,Low Risk / On Track
+STU-MAT-007,Mathematics,2025-2026,Final Term,GP,M,16,U,LE3,T,2,2,3.5,0,no,no,no,no,yes,yes,no,4,4,4,3,0,100.0,86.0,60.0,60.0,55.0,Moderate Risk
+STU-MAT-008,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,A,4,4,3.5,0,yes,yes,no,no,yes,no,no,4,1,4,1,6,90.0,86.0,30.0,25.0,30.0,High Risk
+STU-MAT-009,Mathematics,2025-2026,Final Term,GP,M,15,U,LE3,A,3,2,3.5,0,no,yes,yes,no,yes,yes,no,4,2,2,1,0,100.0,86.0,80.0,90.0,95.0,Low Risk / On Track
+STU-MAT-010,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,T,3,4,3.5,0,no,yes,yes,yes,yes,yes,no,5,5,1,5,0,100.0,90.0,70.0,75.0,75.0,Low Risk / On Track
+STU-MAT-011,Mathematics,2025-2026,Final Term,GP,F,15,U,GT3,T,4,4,3.5,0,no,yes,yes,no,yes,yes,no,3,3,3,2,0,100.0,86.0,50.0,40.0,45.0,High Risk
+STU-MAT-012,Mathematics,2025-2026,Final Term,GP,F,15,U,GT3,T,2,1,7.5,0,no,yes,no,yes,yes,yes,no,5,2,2,4,4,93.33,94.5,50.0,60.0,60.0,Moderate Risk
+STU-MAT-013,Mathematics,2025-2026,Final Term,GP,M,15,U,LE3,T,4,4,1.5,0,no,yes,yes,yes,yes,yes,no,4,3,3,5,2,96.67,85.5,70.0,70.0,70.0,Low Risk / On Track
+STU-MAT-014,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,T,4,3,3.5,0,no,yes,yes,no,yes,yes,no,5,4,3,3,2,96.67,86.0,50.0,50.0,55.0,Moderate Risk
+STU-MAT-015,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,A,2,2,7.5,0,no,yes,no,no,yes,yes,yes,4,5,2,3,0,100.0,90.5,70.0,80.0,80.0,Low Risk / On Track
+STU-MAT-016,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,4,4,1.5,0,no,yes,no,no,yes,yes,no,4,4,4,2,4,93.33,81.5,70.0,70.0,70.0,Low Risk / On Track
+STU-MAT-017,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,4,4,7.5,0,no,yes,yes,yes,yes,yes,no,3,2,3,2,6,90.0,94.5,65.0,70.0,70.0,Low Risk / On Track
+STU-MAT-018,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,3,3,3.5,0,yes,yes,no,yes,yes,no,no,5,3,2,4,4,93.33,90.0,40.0,50.0,50.0,Moderate Risk
+STU-MAT-019,Mathematics,2025-2026,Final Term,GP,M,17,U,GT3,T,3,2,1.5,3,no,yes,no,yes,yes,yes,no,5,5,5,5,16,73.33,67.5,30.0,25.0,25.0,High Risk
+STU-MAT-020,Mathematics,2025-2026,Final Term,GP,M,16,U,LE3,T,4,3,1.5,0,no,no,yes,yes,yes,yes,no,3,1,3,5,4,93.33,85.5,40.0,50.0,50.0,Moderate Risk
+STU-MAT-021,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,T,4,3,3.5,0,no,no,no,no,yes,yes,no,4,4,1,1,0,100.0,86.0,65.0,70.0,75.0,Low Risk / On Track
+STU-MAT-022,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,T,4,4,1.5,0,no,yes,yes,no,yes,yes,no,5,4,2,5,0,100.0,81.5,60.0,75.0,75.0,Low Risk / On Track
+STU-MAT-023,Mathematics,2025-2026,Final Term,GP,M,16,U,LE3,T,4,2,3.5,0,no,no,no,yes,yes,yes,no,4,5,1,5,2,96.67,90.0,75.0,75.0,80.0,Low Risk / On Track
+STU-MAT-024,Mathematics,2025-2026,Final Term,GP,M,16,U,LE3,T,2,2,3.5,0,no,yes,no,yes,yes,yes,no,5,4,4,5,0,100.0,90.0,65.0,65.0,60.0,Moderate Risk
+STU-MAT-025,Mathematics,2025-2026,Final Term,GP,F,15,R,GT3,T,2,4,7.5,0,yes,yes,yes,yes,yes,yes,no,4,3,2,5,2,96.67,94.5,50.0,45.0,40.0,High Risk
+STU-MAT-026,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,2,2,1.5,2,no,yes,yes,no,yes,yes,no,1,2,2,5,14,76.67,69.5,30.0,45.0,40.0,High Risk
+STU-MAT-027,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,T,2,2,1.5,0,no,yes,yes,no,yes,yes,no,4,2,2,5,2,96.67,81.5,60.0,60.0,55.0,Moderate Risk
+STU-MAT-028,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,T,4,2,1.5,0,no,no,yes,no,yes,yes,no,2,2,4,1,4,93.33,81.5,75.0,80.0,75.0,Low Risk / On Track
+STU-MAT-029,Mathematics,2025-2026,Final Term,GP,M,16,U,LE3,A,3,4,3.5,0,yes,yes,no,yes,yes,yes,no,5,3,3,5,4,93.33,90.0,55.0,55.0,55.0,Moderate Risk
+STU-MAT-030,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,4,4,3.5,0,no,yes,yes,yes,yes,yes,yes,4,4,5,5,16,73.33,90.0,50.0,60.0,55.0,Moderate Risk
+STU-MAT-031,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,T,4,4,3.5,0,no,yes,yes,no,yes,yes,no,5,4,2,5,0,100.0,86.0,45.0,55.0,60.0,Moderate Risk
+STU-MAT-032,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,T,4,4,3.5,0,no,yes,no,yes,yes,yes,no,4,3,1,5,0,100.0,90.0,85.0,80.0,85.0,Low Risk / On Track
+STU-MAT-033,Mathematics,2025-2026,Final Term,GP,M,15,R,GT3,T,4,3,3.5,0,no,yes,no,yes,yes,yes,yes,4,5,2,5,0,100.0,90.0,85.0,80.0,80.0,Low Risk / On Track
+STU-MAT-034,Mathematics,2025-2026,Final Term,GP,M,15,U,LE3,T,3,3,3.5,0,no,no,no,yes,yes,yes,no,5,3,2,2,0,100.0,90.0,40.0,50.0,60.0,Moderate Risk
+STU-MAT-035,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,3,2,1.5,0,no,yes,yes,no,yes,yes,no,5,4,3,5,0,100.0,81.5,60.0,70.0,75.0,Low Risk / On Track
+STU-MAT-036,Mathematics,2025-2026,Final Term,GP,F,15,U,GT3,T,2,3,1.5,0,no,yes,no,yes,yes,no,no,3,5,1,5,0,100.0,85.5,40.0,35.0,30.0,High Risk
+STU-MAT-037,Mathematics,2025-2026,Final Term,GP,M,15,U,LE3,T,4,3,7.5,0,no,yes,no,yes,yes,yes,no,5,4,3,4,2,96.67,94.5,75.0,80.0,90.0,Low Risk / On Track
+STU-MAT-038,Mathematics,2025-2026,Final Term,GP,M,16,R,GT3,A,4,4,7.5,0,no,yes,no,yes,yes,yes,yes,2,4,3,5,7,88.33,94.5,75.0,80.0,75.0,Low Risk / On Track
+STU-MAT-039,Mathematics,2025-2026,Final Term,GP,F,15,R,GT3,T,3,4,7.5,0,yes,yes,yes,yes,yes,yes,no,4,3,2,5,2,96.67,94.5,60.0,60.0,55.0,Moderate Risk
+STU-MAT-040,Mathematics,2025-2026,Final Term,GP,F,15,R,GT3,T,2,2,1.5,0,yes,yes,yes,yes,yes,no,no,4,3,1,2,8,86.67,85.5,70.0,65.0,65.0,Moderate Risk
+STU-MAT-041,Mathematics,2025-2026,Final Term,GP,F,16,U,LE3,T,2,2,3.5,1,no,yes,no,yes,yes,yes,yes,3,3,3,3,25,58.33,84.0,35.0,50.0,55.0,Moderate Risk
+STU-MAT-042,Mathematics,2025-2026,Final Term,GP,M,15,U,LE3,T,4,4,1.5,0,no,yes,no,no,yes,yes,yes,5,4,3,5,8,86.67,81.5,60.0,60.0,60.0,Moderate Risk
+STU-MAT-043,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,T,4,4,3.5,0,no,yes,no,yes,yes,yes,no,4,3,3,5,2,96.67,90.0,95.0,90.0,90.0,Low Risk / On Track
+STU-MAT-044,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,T,2,2,1.5,0,yes,yes,no,no,yes,yes,no,5,4,1,1,0,100.0,81.5,40.0,40.0,55.0,Moderate Risk
+STU-MAT-045,Mathematics,2025-2026,Final Term,GP,F,16,U,LE3,T,2,2,3.5,1,yes,no,no,yes,yes,yes,no,4,3,3,5,14,76.67,84.0,50.0,50.0,45.0,High Risk
+STU-MAT-046,Mathematics,2025-2026,Final Term,GP,F,15,U,LE3,A,4,3,3.5,0,yes,yes,yes,yes,yes,yes,yes,5,2,2,5,8,86.67,90.0,40.0,40.0,30.0,High Risk
+STU-MAT-047,Mathematics,2025-2026,Final Term,GP,F,16,U,LE3,A,3,3,3.5,0,no,yes,no,no,yes,yes,no,2,3,5,3,12,80.0,86.0,55.0,60.0,55.0,Moderate Risk
+STU-MAT-048,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,4,3,12.0,0,no,no,no,yes,yes,yes,no,4,2,2,2,4,93.33,99.0,95.0,95.0,100.0,Low Risk / On Track
+STU-MAT-049,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,T,4,2,3.5,0,no,yes,yes,no,yes,no,no,4,3,3,5,2,96.67,86.0,75.0,75.0,70.0,Low Risk / On Track
+STU-MAT-050,Mathematics,2025-2026,Final Term,GP,F,15,U,GT3,T,4,4,3.5,1,yes,yes,no,yes,yes,yes,no,4,4,4,3,2,96.67,84.0,35.0,35.0,35.0,High Risk
+STU-MAT-051,Mathematics,2025-2026,Final Term,GP,F,16,U,LE3,T,2,2,3.5,0,no,yes,yes,no,yes,yes,no,4,3,3,4,2,96.67,86.0,60.0,65.0,65.0,Moderate Risk
+STU-MAT-052,Mathematics,2025-2026,Final Term,GP,F,15,U,LE3,T,4,2,3.5,0,no,yes,yes,no,yes,yes,no,4,3,3,5,2,96.67,86.0,55.0,65.0,65.0,Moderate Risk
+STU-MAT-053,Mathematics,2025-2026,Final Term,GP,M,15,U,LE3,A,4,2,1.5,1,no,no,no,no,yes,no,no,5,5,5,5,6,90.0,75.5,55.0,55.0,50.0,Moderate Risk
+STU-MAT-054,Mathematics,2025-2026,Final Term,GP,F,15,U,GT3,T,4,4,1.5,0,yes,yes,yes,no,yes,yes,no,3,3,4,5,0,100.0,81.5,40.0,50.0,55.0,Moderate Risk
+STU-MAT-055,Mathematics,2025-2026,Final Term,GP,F,15,U,LE3,A,3,3,1.5,0,no,no,yes,no,yes,yes,no,5,3,4,1,6,90.0,81.5,50.0,65.0,65.0,Moderate Risk
+STU-MAT-056,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,A,2,1,3.5,0,no,no,yes,yes,yes,yes,yes,5,3,4,2,8,86.67,90.0,40.0,45.0,50.0,Moderate Risk
+STU-MAT-057,Mathematics,2025-2026,Final Term,GP,F,15,U,GT3,A,4,3,3.5,0,no,yes,yes,yes,yes,yes,no,4,3,2,1,0,100.0,90.0,70.0,75.0,75.0,Low Risk / On Track
+STU-MAT-058,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,T,4,4,3.5,0,no,yes,no,yes,yes,no,no,3,2,2,5,4,93.33,90.0,70.0,75.0,75.0,Low Risk / On Track
+STU-MAT-059,Mathematics,2025-2026,Final Term,GP,M,15,U,LE3,T,1,2,3.5,0,yes,yes,no,yes,yes,yes,no,4,3,2,5,2,96.67,90.0,45.0,50.0,45.0,High Risk
+STU-MAT-060,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,4,2,3.5,0,no,yes,no,no,yes,yes,no,4,2,3,5,2,96.67,86.0,75.0,80.0,80.0,Low Risk / On Track
+STU-MAT-061,Mathematics,2025-2026,Final Term,GP,F,16,R,GT3,T,4,4,3.5,0,no,yes,no,yes,yes,no,no,2,4,4,4,6,90.0,90.0,50.0,55.0,55.0,Moderate Risk
+STU-MAT-062,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,1,1,1.5,0,yes,yes,no,yes,yes,yes,yes,5,5,5,5,6,90.0,85.5,50.0,40.0,55.0,Moderate Risk
+STU-MAT-063,Mathematics,2025-2026,Final Term,GP,F,16,U,LE3,T,1,2,3.5,0,yes,no,no,yes,yes,yes,no,4,4,3,1,4,93.33,90.0,40.0,50.0,45.0,High Risk
+STU-MAT-064,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,4,3,7.5,0,yes,yes,yes,yes,yes,yes,no,3,4,4,4,2,96.67,94.5,50.0,45.0,45.0,High Risk
+STU-MAT-065,Mathematics,2025-2026,Final Term,GP,F,15,U,LE3,T,4,3,3.5,0,yes,no,no,yes,yes,yes,yes,4,4,4,2,0,100.0,90.0,50.0,50.0,50.0,Moderate Risk
+STU-MAT-066,Mathematics,2025-2026,Final Term,GP,F,16,U,LE3,T,4,3,3.5,0,no,yes,no,yes,yes,yes,no,5,4,3,1,2,96.67,90.0,80.0,75.0,75.0,Low Risk / On Track
+STU-MAT-067,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,A,4,4,12.0,0,no,yes,no,yes,yes,yes,yes,1,3,3,3,4,93.33,99.0,65.0,65.0,60.0,Moderate Risk
+STU-MAT-068,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,3,1,12.0,0,yes,yes,yes,no,yes,yes,no,4,3,3,5,4,93.33,95.0,35.0,35.0,30.0,High Risk
+STU-MAT-069,Mathematics,2025-2026,Final Term,GP,F,15,R,LE3,T,2,2,3.5,0,yes,yes,yes,no,yes,yes,no,4,1,3,4,2,96.67,86.0,40.0,45.0,40.0,High Risk
+STU-MAT-070,Mathematics,2025-2026,Final Term,GP,F,15,R,LE3,T,3,1,12.0,0,no,yes,no,no,yes,yes,no,4,4,2,3,12,80.0,95.0,80.0,80.0,80.0,Low Risk / On Track
+STU-MAT-071,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,3,1,12.0,0,no,yes,yes,no,yes,yes,no,4,3,2,5,0,100.0,95.0,65.0,75.0,75.0,Low Risk / On Track
+STU-MAT-072,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,T,4,2,12.0,0,no,no,no,no,yes,yes,no,3,3,3,3,0,100.0,95.0,50.0,50.0,50.0,Moderate Risk
+STU-MAT-073,Mathematics,2025-2026,Final Term,GP,F,15,R,GT3,T,1,1,3.5,2,yes,yes,no,no,yes,yes,yes,3,3,4,5,2,96.67,74.0,40.0,30.0,25.0,High Risk
+STU-MAT-074,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,3,1,1.5,0,no,no,no,yes,yes,no,no,5,3,2,5,2,96.67,85.5,60.0,60.0,70.0,Low Risk / On Track
+STU-MAT-075,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,3,3,3.5,0,yes,yes,yes,yes,yes,yes,no,4,3,3,5,54,10.0,90.0,55.0,60.0,55.0,Moderate Risk
+STU-MAT-076,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,T,4,3,3.5,0,no,yes,yes,yes,yes,yes,no,4,3,3,5,6,90.0,90.0,45.0,45.0,50.0,Moderate Risk
+STU-MAT-077,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,T,4,0,12.0,0,no,no,no,yes,yes,yes,no,3,4,3,1,8,86.67,99.0,55.0,55.0,50.0,Moderate Risk
+STU-MAT-078,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,2,2,12.0,0,no,no,yes,no,yes,yes,yes,5,2,3,3,0,100.0,95.0,55.0,55.0,55.0,Moderate Risk
+STU-MAT-079,Mathematics,2025-2026,Final Term,GP,M,17,U,GT3,T,2,1,1.5,3,yes,yes,no,yes,no,yes,no,4,5,1,3,2,96.67,59.5,40.0,40.0,50.0,Moderate Risk
+STU-MAT-080,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,3,4,3.5,0,no,yes,no,no,yes,yes,no,2,4,3,3,12,80.0,86.0,25.0,25.0,25.0,High Risk
+STU-MAT-081,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,T,2,3,1.5,0,yes,yes,yes,yes,yes,yes,yes,3,2,2,3,2,96.67,85.5,50.0,60.0,60.0,Moderate Risk
+STU-MAT-082,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,T,2,3,7.5,0,yes,no,yes,no,yes,yes,no,5,3,2,5,4,93.33,90.5,55.0,50.0,55.0,Moderate Risk
+STU-MAT-083,Mathematics,2025-2026,Final Term,GP,F,15,U,LE3,T,3,2,3.5,0,no,yes,yes,no,yes,yes,no,4,4,4,5,10,83.33,86.0,35.0,30.0,30.0,High Risk
+STU-MAT-084,Mathematics,2025-2026,Final Term,GP,M,15,U,LE3,T,2,2,3.5,0,no,no,yes,yes,yes,yes,no,5,3,3,4,4,93.33,90.0,75.0,75.0,75.0,Low Risk / On Track
+STU-MAT-085,Mathematics,2025-2026,Final Term,GP,F,15,U,GT3,T,1,1,3.5,0,no,yes,no,yes,yes,yes,no,4,3,2,4,2,96.67,90.0,45.0,50.0,50.0,Moderate Risk
+STU-MAT-086,Mathematics,2025-2026,Final Term,GP,F,15,U,GT3,T,4,4,3.5,2,no,no,yes,no,yes,yes,yes,4,4,4,5,6,90.0,74.0,35.0,45.0,40.0,High Risk
+STU-MAT-087,Mathematics,2025-2026,Final Term,GP,F,16,U,LE3,T,2,2,3.5,0,no,yes,no,no,yes,no,no,4,3,4,2,4,93.33,86.0,40.0,35.0,30.0,High Risk
+STU-MAT-088,Mathematics,2025-2026,Final Term,GP,F,15,U,GT3,T,4,2,7.5,0,no,yes,no,yes,yes,yes,no,5,3,3,1,4,93.33,94.5,65.0,70.0,70.0,Low Risk / On Track
+STU-MAT-089,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,2,2,3.5,1,no,no,yes,yes,yes,yes,no,4,4,2,3,12,80.0,84.0,55.0,50.0,50.0,Moderate Risk
+STU-MAT-090,Mathematics,2025-2026,Final Term,GP,M,16,U,LE3,A,4,4,3.5,0,no,yes,no,no,yes,no,no,4,1,3,5,18,70.0,86.0,40.0,30.0,35.0,High Risk
+STU-MAT-091,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,3,3,7.5,0,no,yes,yes,no,yes,yes,yes,4,3,3,4,0,100.0,90.5,35.0,35.0,40.0,High Risk
+STU-MAT-092,Mathematics,2025-2026,Final Term,GP,F,15,U,GT3,T,4,3,1.5,0,no,no,yes,yes,yes,yes,no,4,5,5,1,4,93.33,85.5,80.0,85.0,90.0,Low Risk / On Track
+STU-MAT-093,Mathematics,2025-2026,Final Term,GP,F,16,U,LE3,T,3,1,3.5,0,yes,yes,no,no,yes,no,no,3,3,3,2,4,93.33,86.0,35.0,30.0,30.0,High Risk
+STU-MAT-094,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,4,2,3.5,0,no,yes,yes,yes,yes,yes,no,5,3,3,1,0,100.0,90.0,55.0,50.0,50.0,Moderate Risk
+STU-MAT-095,Mathematics,2025-2026,Final Term,GP,M,15,U,LE3,T,2,2,12.0,0,no,yes,no,yes,yes,yes,no,4,3,4,4,6,90.0,99.0,55.0,65.0,70.0,Low Risk / On Track
+STU-MAT-096,Mathematics,2025-2026,Final Term,GP,F,15,R,GT3,T,1,1,12.0,1,yes,yes,yes,yes,yes,yes,no,3,1,2,1,2,96.67,93.0,35.0,50.0,50.0,Moderate Risk
+STU-MAT-097,Mathematics,2025-2026,Final Term,GP,M,16,R,GT3,T,4,3,1.5,0,yes,yes,no,yes,yes,yes,no,3,3,3,4,2,96.67,85.5,55.0,75.0,75.0,Low Risk / On Track
+STU-MAT-098,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,2,1,3.5,0,no,yes,yes,no,yes,no,yes,4,3,5,5,2,96.67,86.0,40.0,45.0,50.0,Moderate Risk
+STU-MAT-099,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,4,4,1.5,0,no,no,no,yes,yes,yes,no,5,3,4,1,6,90.0,85.5,55.0,70.0,70.0,Low Risk / On Track
+STU-MAT-100,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,4,3,7.5,0,yes,yes,yes,no,yes,yes,no,5,3,5,3,0,100.0,90.5,35.0,45.0,40.0,High Risk
+STU-MAT-101,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,4,4,1.5,0,yes,yes,yes,yes,yes,yes,no,4,5,5,4,14,76.67,85.5,35.0,35.0,25.0,High Risk
+STU-MAT-102,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,4,4,7.5,0,no,yes,no,yes,yes,yes,yes,4,4,3,4,0,100.0,94.5,80.0,85.0,85.0,Low Risk / On Track
+STU-MAT-103,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,T,4,4,1.5,0,no,yes,no,yes,yes,yes,no,5,3,3,5,4,93.33,85.5,50.0,65.0,70.0,Low Risk / On Track
+STU-MAT-104,Mathematics,2025-2026,Final Term,GP,F,15,U,GT3,T,3,2,3.5,0,yes,yes,yes,no,yes,yes,no,4,3,5,2,26,56.67,86.0,35.0,30.0,30.0,High Risk
+STU-MAT-105,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,A,3,4,3.5,0,no,yes,yes,yes,yes,yes,no,5,4,4,1,0,100.0,90.0,80.0,90.0,90.0,Low Risk / On Track
+STU-MAT-106,Mathematics,2025-2026,Final Term,GP,F,15,U,GT3,A,3,3,12.0,0,yes,no,no,no,yes,no,no,4,3,3,4,10,83.33,95.0,50.0,55.0,55.0,Moderate Risk
+STU-MAT-107,Mathematics,2025-2026,Final Term,GP,F,15,U,GT3,T,2,2,12.0,0,yes,yes,yes,no,yes,yes,no,5,1,2,3,8,86.67,95.0,35.0,40.0,40.0,High Risk
+STU-MAT-108,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,3,3,7.5,0,no,yes,no,yes,yes,yes,no,5,3,3,5,2,96.67,94.5,80.0,90.0,90.0,Low Risk / On Track
+STU-MAT-109,Mathematics,2025-2026,Final Term,GP,M,15,R,GT3,T,4,4,12.0,0,no,yes,yes,yes,yes,yes,yes,1,3,5,1,6,90.0,99.0,50.0,65.0,65.0,Moderate Risk
+STU-MAT-110,Mathematics,2025-2026,Final Term,GP,F,16,U,LE3,T,4,4,7.5,0,no,yes,yes,yes,yes,yes,yes,5,4,5,4,4,93.33,94.5,70.0,75.0,80.0,Low Risk / On Track
+STU-MAT-111,Mathematics,2025-2026,Final Term,GP,M,15,U,LE3,A,4,4,1.5,0,no,no,no,yes,yes,yes,no,5,5,3,4,6,90.0,85.5,90.0,95.0,95.0,Low Risk / On Track
+STU-MAT-112,Mathematics,2025-2026,Final Term,GP,F,16,R,GT3,T,3,3,7.5,1,yes,yes,no,yes,yes,yes,no,4,1,2,2,0,100.0,88.5,35.0,50.0,50.0,Moderate Risk
+STU-MAT-113,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,2,2,3.5,1,yes,no,no,yes,yes,yes,no,3,1,2,5,6,90.0,84.0,50.0,65.0,65.0,Moderate Risk
+STU-MAT-114,Mathematics,2025-2026,Final Term,GP,M,15,U,LE3,T,4,2,1.5,0,no,no,no,no,yes,yes,no,3,5,2,3,10,83.33,81.5,90.0,95.0,95.0,Low Risk / On Track
+STU-MAT-115,Mathematics,2025-2026,Final Term,GP,M,15,R,GT3,T,2,1,3.5,0,no,no,no,yes,yes,yes,yes,5,4,2,5,8,86.67,90.0,45.0,45.0,45.0,High Risk
+STU-MAT-116,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,4,4,3.5,0,no,yes,no,yes,yes,yes,no,5,4,4,5,2,96.67,90.0,75.0,75.0,80.0,Low Risk / On Track
+STU-MAT-117,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,T,4,4,3.5,0,no,yes,no,yes,yes,no,no,4,4,3,2,2,96.67,90.0,55.0,65.0,70.0,Low Risk / On Track
+STU-MAT-118,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,3,3,1.5,0,no,no,no,yes,yes,yes,no,5,4,2,5,0,100.0,85.5,65.0,70.0,65.0,Moderate Risk
+STU-MAT-119,Mathematics,2025-2026,Final Term,GP,M,17,R,GT3,T,1,3,3.5,1,no,yes,no,yes,yes,yes,no,5,2,4,5,20,66.67,84.0,45.0,35.0,40.0,High Risk
+STU-MAT-120,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,T,3,4,1.5,0,no,no,no,no,yes,yes,no,3,4,3,4,6,90.0,81.5,70.0,65.0,65.0,Moderate Risk
+STU-MAT-121,Mathematics,2025-2026,Final Term,GP,F,15,U,GT3,T,1,2,3.5,0,no,no,no,no,yes,yes,no,3,2,3,1,2,96.67,86.0,80.0,75.0,75.0,Low Risk / On Track
+STU-MAT-122,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,T,2,2,12.0,0,no,yes,yes,yes,yes,yes,no,5,5,4,5,6,90.0,99.0,80.0,70.0,75.0,Low Risk / On Track
+STU-MAT-123,Mathematics,2025-2026,Final Term,GP,F,16,U,LE3,T,2,4,3.5,0,no,yes,yes,yes,yes,yes,yes,4,2,2,5,2,96.67,90.0,65.0,65.0,65.0,Moderate Risk
+STU-MAT-124,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,4,4,1.5,0,no,yes,no,yes,yes,yes,no,3,4,4,5,18,70.0,85.5,70.0,55.0,65.0,Moderate Risk
+STU-MAT-125,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,2,2,3.5,0,no,no,yes,no,yes,yes,yes,5,4,4,5,0,100.0,86.0,40.0,35.0,40.0,High Risk
+STU-MAT-126,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,T,3,4,1.5,0,yes,no,no,no,yes,yes,no,5,5,5,5,0,100.0,81.5,65.0,65.0,60.0,Moderate Risk
+STU-MAT-127,Mathematics,2025-2026,Final Term,GP,F,15,U,LE3,A,3,4,3.5,0,yes,no,no,yes,yes,yes,yes,5,3,2,1,0,100.0,90.0,35.0,50.0,55.0,Moderate Risk
+STU-MAT-128,Mathematics,2025-2026,Final Term,GP,F,19,U,GT3,T,0,1,3.5,3,no,yes,no,no,no,no,no,3,4,2,5,2,96.67,60.0,35.0,40.0,45.0,High Risk
+STU-MAT-129,Mathematics,2025-2026,Final Term,GP,M,18,R,GT3,T,2,2,1.5,2,no,yes,no,yes,yes,yes,no,3,3,3,4,0,100.0,73.5,35.0,20.0,0.0,High Risk
+STU-MAT-130,Mathematics,2025-2026,Final Term,GP,M,16,R,GT3,T,4,4,1.5,0,no,no,yes,yes,yes,yes,no,3,5,5,4,8,86.67,85.5,90.0,90.0,90.0,Low Risk / On Track
+STU-MAT-131,Mathematics,2025-2026,Final Term,GP,F,15,R,GT3,T,3,4,7.5,2,no,yes,no,no,yes,yes,yes,4,2,2,5,0,100.0,78.5,60.0,0.0,0.0,High Risk
+STU-MAT-132,Mathematics,2025-2026,Final Term,GP,F,15,U,GT3,T,1,1,1.5,0,no,yes,no,yes,yes,yes,yes,4,3,3,4,0,100.0,85.5,40.0,0.0,0.0,High Risk
+STU-MAT-133,Mathematics,2025-2026,Final Term,GP,F,17,U,LE3,T,2,2,1.5,0,no,yes,no,no,yes,yes,yes,3,4,4,5,12,80.0,81.5,50.0,65.0,60.0,Moderate Risk
+STU-MAT-134,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,A,3,4,1.5,0,no,no,no,no,yes,yes,no,3,2,1,5,16,73.33,81.5,60.0,55.0,55.0,Moderate Risk
+STU-MAT-135,Mathematics,2025-2026,Final Term,GP,M,15,R,GT3,T,3,4,3.5,0,no,yes,no,no,yes,no,yes,5,3,3,5,0,100.0,86.0,45.0,0.0,0.0,High Risk
+STU-MAT-136,Mathematics,2025-2026,Final Term,GP,F,15,U,GT3,T,4,4,7.5,0,no,yes,no,yes,yes,yes,yes,4,3,3,5,0,100.0,94.5,55.0,0.0,0.0,High Risk
+STU-MAT-137,Mathematics,2025-2026,Final Term,GP,M,17,R,GT3,T,3,4,3.5,0,no,no,no,no,yes,no,no,5,4,5,5,0,100.0,86.0,50.0,0.0,0.0,High Risk
+STU-MAT-138,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,A,3,3,1.5,2,no,yes,no,yes,yes,yes,yes,4,3,2,5,0,100.0,73.5,20.0,0.0,0.0,High Risk
+STU-MAT-139,Mathematics,2025-2026,Final Term,GP,M,16,U,LE3,T,1,1,3.5,1,no,no,no,no,yes,no,yes,4,4,4,5,0,100.0,80.0,70.0,60.0,60.0,Moderate Risk
+STU-MAT-140,Mathematics,2025-2026,Final Term,GP,F,15,U,GT3,T,4,4,1.5,0,no,no,no,yes,yes,yes,no,4,3,2,5,0,100.0,85.5,80.0,80.0,75.0,Low Risk / On Track
+STU-MAT-141,Mathematics,2025-2026,Final Term,GP,M,15,U,GT3,T,4,3,12.0,0,yes,yes,no,no,yes,yes,no,2,2,2,3,0,100.0,95.0,35.0,45.0,0.0,High Risk
+STU-MAT-142,Mathematics,2025-2026,Final Term,GP,M,16,U,LE3,T,2,2,1.5,2,no,yes,no,yes,yes,yes,no,2,3,3,2,8,86.67,73.5,45.0,45.0,45.0,High Risk
+STU-MAT-143,Mathematics,2025-2026,Final Term,GP,F,15,U,GT3,T,4,4,7.5,0,no,yes,yes,yes,yes,yes,no,4,2,2,5,2,96.67,94.5,45.0,55.0,55.0,Moderate Risk
+STU-MAT-144,Mathematics,2025-2026,Final Term,GP,F,16,U,LE3,T,1,1,1.5,0,no,no,no,no,yes,yes,no,3,4,4,1,2,96.67,81.5,70.0,70.0,65.0,Moderate Risk
+STU-MAT-145,Mathematics,2025-2026,Final Term,GP,M,17,U,GT3,T,2,1,1.5,3,no,yes,no,no,yes,yes,no,5,4,5,5,0,100.0,63.5,25.0,0.0,0.0,High Risk
+STU-MAT-146,Mathematics,2025-2026,Final Term,GP,F,15,U,GT3,T,1,1,3.5,0,no,yes,yes,no,yes,yes,no,4,4,2,5,0,100.0,86.0,40.0,55.0,55.0,Moderate Risk
+STU-MAT-147,Mathematics,2025-2026,Final Term,GP,F,15,U,GT3,T,3,2,3.5,3,no,yes,no,no,yes,yes,no,3,3,2,3,0,100.0,68.0,30.0,35.0,0.0,High Risk
+STU-MAT-148,Mathematics,2025-2026,Final Term,GP,F,15,U,GT3,T,1,2,3.5,0,no,yes,yes,no,yes,yes,no,4,3,2,5,2,96.67,86.0,50.0,55.0,55.0,Moderate Risk
+STU-MAT-149,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,4,4,1.5,0,no,yes,no,no,no,yes,yes,3,3,2,5,0,100.0,73.5,35.0,30.0,0.0,High Risk
+STU-MAT-150,Mathematics,2025-2026,Final Term,GP,M,15,U,LE3,A,2,1,1.5,3,no,no,no,no,yes,yes,no,4,5,5,5,0,100.0,63.5,40.0,45.0,50.0,Moderate Risk
+STU-MAT-151,Mathematics,2025-2026,Final Term,GP,M,18,U,LE3,T,1,1,1.5,3,no,no,no,no,no,yes,yes,2,3,5,4,0,100.0,55.5,30.0,25.0,0.0,High Risk
+STU-MAT-152,Mathematics,2025-2026,Final Term,GP,M,16,U,LE3,T,2,1,1.5,1,no,no,no,yes,yes,no,yes,4,4,4,5,6,90.0,79.5,60.0,65.0,70.0,Low Risk / On Track
+STU-MAT-153,Mathematics,2025-2026,Final Term,GP,F,15,R,GT3,T,3,3,7.5,2,no,yes,yes,yes,yes,yes,yes,4,2,1,3,8,86.67,82.5,50.0,50.0,50.0,Moderate Risk
+STU-MAT-154,Mathematics,2025-2026,Final Term,GP,M,19,U,GT3,T,3,2,1.5,3,no,yes,no,no,no,yes,yes,4,5,4,4,0,100.0,55.5,25.0,0.0,0.0,High Risk
+STU-MAT-155,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,4,4,1.5,0,yes,yes,no,no,yes,no,yes,4,2,1,4,0,100.0,81.5,55.0,55.0,60.0,Moderate Risk
+STU-MAT-156,Mathematics,2025-2026,Final Term,GP,M,15,R,GT3,T,2,3,3.5,0,yes,no,yes,yes,yes,no,no,4,4,4,1,2,96.67,90.0,55.0,40.0,40.0,High Risk
+STU-MAT-157,Mathematics,2025-2026,Final Term,GP,M,17,R,LE3,T,1,2,1.5,0,no,no,no,no,yes,no,no,2,2,2,5,8,86.67,81.5,80.0,60.0,65.0,Moderate Risk
+STU-MAT-158,Mathematics,2025-2026,Final Term,GP,F,18,R,GT3,T,1,1,1.5,3,no,yes,no,yes,yes,no,no,5,2,5,4,6,90.0,67.5,45.0,40.0,50.0,Moderate Risk
+STU-MAT-159,Mathematics,2025-2026,Final Term,GP,M,16,R,GT3,T,2,2,1.5,0,no,no,no,no,yes,no,no,4,2,2,3,2,96.67,81.5,85.0,75.0,75.0,Low Risk / On Track
+STU-MAT-160,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,3,3,3.5,1,no,yes,yes,no,yes,yes,yes,4,5,5,5,4,93.33,80.0,50.0,60.0,60.0,Moderate Risk
+STU-MAT-161,Mathematics,2025-2026,Final Term,GP,M,17,R,LE3,T,2,1,1.5,2,no,no,no,yes,no,yes,yes,3,3,2,5,0,100.0,65.5,35.0,30.0,0.0,High Risk
+STU-MAT-162,Mathematics,2025-2026,Final Term,GP,M,15,R,GT3,T,3,2,3.5,2,yes,yes,no,no,yes,yes,yes,4,4,4,3,6,90.0,74.0,25.0,45.0,35.0,High Risk
+STU-MAT-163,Mathematics,2025-2026,Final Term,GP,M,16,U,LE3,T,1,2,1.5,1,no,no,no,yes,yes,no,no,4,4,4,5,0,100.0,79.5,35.0,0.0,0.0,High Risk
+STU-MAT-164,Mathematics,2025-2026,Final Term,GP,M,17,U,GT3,T,1,3,1.5,0,no,no,no,no,no,yes,no,5,3,3,2,2,96.67,73.5,50.0,50.0,50.0,Moderate Risk
+STU-MAT-165,Mathematics,2025-2026,Final Term,GP,M,17,R,LE3,T,1,1,3.5,3,no,no,no,yes,no,no,yes,5,3,5,5,0,100.0,64.0,25.0,40.0,35.0,High Risk
+STU-MAT-166,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,3,2,1.5,1,no,yes,no,yes,no,no,no,4,5,2,2,16,73.33,71.5,60.0,55.0,60.0,Moderate Risk
+STU-MAT-167,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,2,2,3.5,0,no,no,no,no,no,yes,no,4,3,5,4,4,93.33,78.0,50.0,50.0,50.0,Moderate Risk
+STU-MAT-168,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,4,2,3.5,0,no,no,yes,no,yes,yes,yes,4,2,3,3,0,100.0,86.0,70.0,75.0,80.0,Low Risk / On Track
+STU-MAT-169,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,2,2,3.5,0,no,yes,yes,no,yes,yes,no,5,1,5,4,0,100.0,86.0,30.0,35.0,0.0,High Risk
+STU-MAT-170,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,4,4,3.5,0,no,yes,yes,no,yes,yes,yes,4,4,2,3,0,100.0,86.0,70.0,70.0,70.0,Low Risk / On Track
+STU-MAT-171,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,3,4,1.5,2,no,yes,no,yes,yes,yes,no,3,4,5,2,0,100.0,73.5,30.0,25.0,0.0,High Risk
+STU-MAT-172,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,1,0,3.5,0,no,yes,yes,yes,yes,yes,yes,4,3,2,3,2,96.67,90.0,65.0,75.0,80.0,Low Risk / On Track
+STU-MAT-173,Mathematics,2025-2026,Final Term,GP,M,17,U,LE3,T,4,4,3.5,0,no,yes,yes,yes,yes,yes,no,4,4,4,5,0,100.0,90.0,65.0,55.0,50.0,Moderate Risk
+STU-MAT-174,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,1,3,3.5,3,no,no,no,yes,yes,yes,yes,4,3,5,3,0,100.0,72.0,40.0,35.0,0.0,High Risk
+STU-MAT-175,Mathematics,2025-2026,Final Term,GP,F,16,U,LE3,T,3,3,3.5,0,no,yes,yes,yes,yes,yes,no,4,4,5,4,4,93.33,90.0,50.0,55.0,45.0,High Risk
+STU-MAT-176,Mathematics,2025-2026,Final Term,GP,M,17,U,LE3,T,4,3,3.5,0,no,no,yes,yes,yes,yes,no,4,4,4,4,4,93.33,90.0,50.0,45.0,45.0,High Risk
+STU-MAT-177,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,2,2,3.5,0,no,no,yes,yes,yes,yes,no,3,4,4,5,2,96.67,90.0,65.0,65.0,55.0,Moderate Risk
+STU-MAT-178,Mathematics,2025-2026,Final Term,GP,M,17,U,GT3,T,3,3,3.5,0,no,no,no,yes,yes,yes,no,4,3,4,4,4,93.33,90.0,30.0,25.0,30.0,High Risk
+STU-MAT-179,Mathematics,2025-2026,Final Term,GP,M,16,R,GT3,T,4,2,1.5,0,no,yes,no,yes,yes,yes,yes,4,3,3,3,10,83.33,85.5,50.0,40.0,45.0,High Risk
+STU-MAT-180,Mathematics,2025-2026,Final Term,GP,M,17,U,GT3,T,4,3,3.5,0,no,yes,no,yes,yes,yes,yes,5,2,3,2,4,93.33,90.0,50.0,50.0,55.0,Moderate Risk
+STU-MAT-181,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,4,3,3.5,0,no,yes,yes,yes,yes,yes,no,3,4,3,3,10,83.33,90.0,45.0,40.0,40.0,High Risk
+STU-MAT-182,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,3,3,3.5,0,no,no,yes,yes,yes,yes,yes,4,2,3,3,2,96.67,90.0,60.0,65.0,60.0,Moderate Risk
+STU-MAT-183,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,2,4,3.5,0,no,yes,no,yes,yes,no,no,5,4,2,5,0,100.0,90.0,80.0,85.0,85.0,Low Risk / On Track
+STU-MAT-184,Mathematics,2025-2026,Final Term,GP,F,17,U,LE3,T,3,3,3.5,0,no,yes,no,yes,yes,yes,yes,5,3,3,1,56,6.67,90.0,45.0,45.0,40.0,High Risk
+STU-MAT-185,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,3,2,3.5,0,no,yes,yes,no,yes,yes,no,1,2,2,1,14,76.67,86.0,60.0,65.0,60.0,Moderate Risk
+STU-MAT-186,Mathematics,2025-2026,Final Term,GP,M,17,U,GT3,T,3,3,3.5,0,no,yes,no,yes,yes,yes,yes,4,3,4,4,12,80.0,90.0,60.0,60.0,55.0,Moderate Risk
+STU-MAT-187,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,1,2,1.5,0,no,yes,yes,yes,yes,yes,yes,3,3,3,3,2,96.67,85.5,55.0,60.0,55.0,Moderate Risk
+STU-MAT-188,Mathematics,2025-2026,Final Term,GP,M,16,U,LE3,T,2,1,3.5,0,no,no,yes,yes,yes,yes,yes,4,2,3,5,0,100.0,90.0,75.0,75.0,75.0,Low Risk / On Track
+STU-MAT-189,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,A,3,3,3.5,0,no,yes,no,no,yes,yes,yes,3,3,3,3,6,90.0,86.0,40.0,35.0,45.0,High Risk
+STU-MAT-190,Mathematics,2025-2026,Final Term,GP,M,17,R,GT3,T,1,2,3.5,0,no,no,no,no,yes,no,no,3,1,3,3,4,93.33,86.0,40.0,45.0,50.0,Moderate Risk
+STU-MAT-191,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,2,3,3.5,0,no,no,no,no,yes,yes,no,4,3,3,2,10,83.33,86.0,55.0,60.0,65.0,Moderate Risk
+STU-MAT-192,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,1,1,3.5,0,no,no,no,yes,yes,yes,no,5,3,3,3,0,100.0,90.0,40.0,40.0,45.0,High Risk
+STU-MAT-193,Mathematics,2025-2026,Final Term,GP,M,17,U,GT3,T,1,2,3.5,0,no,no,yes,yes,yes,yes,no,4,4,4,5,12,80.0,90.0,35.0,40.0,40.0,High Risk
+STU-MAT-194,Mathematics,2025-2026,Final Term,GP,M,16,R,GT3,T,3,3,1.5,0,no,yes,no,yes,yes,yes,no,4,3,2,5,8,86.67,85.5,40.0,45.0,50.0,Moderate Risk
+STU-MAT-195,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,2,3,1.5,0,no,no,no,no,yes,yes,no,5,3,3,3,0,100.0,81.5,65.0,70.0,70.0,Low Risk / On Track
+STU-MAT-196,Mathematics,2025-2026,Final Term,GP,F,17,U,LE3,T,2,4,3.5,0,no,no,no,yes,yes,yes,yes,4,3,2,5,0,100.0,90.0,70.0,75.0,75.0,Low Risk / On Track
+STU-MAT-197,Mathematics,2025-2026,Final Term,GP,M,17,U,GT3,T,4,4,1.5,0,no,no,no,no,yes,yes,no,5,2,3,5,4,93.33,81.5,85.0,75.0,80.0,Low Risk / On Track
+STU-MAT-198,Mathematics,2025-2026,Final Term,GP,M,16,R,LE3,T,3,3,1.5,0,no,yes,yes,yes,yes,yes,no,3,3,4,3,8,86.67,85.5,45.0,45.0,50.0,Moderate Risk
+STU-MAT-199,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,4,4,1.5,1,no,yes,no,no,yes,yes,no,4,2,4,2,24,60.0,75.5,90.0,90.0,90.0,Low Risk / On Track
+STU-MAT-200,Mathematics,2025-2026,Final Term,GP,F,16,U,LE3,T,4,4,3.5,0,no,yes,yes,no,yes,yes,no,4,5,2,3,0,100.0,86.0,45.0,45.0,50.0,Moderate Risk
+STU-MAT-201,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,4,3,3.5,0,no,yes,no,yes,yes,yes,no,4,3,5,2,2,96.67,90.0,80.0,80.0,80.0,Low Risk / On Track
+STU-MAT-202,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,2,3,3.5,0,yes,yes,yes,yes,yes,no,no,4,4,3,4,6,90.0,90.0,40.0,50.0,50.0,Moderate Risk
+STU-MAT-203,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,1,1,3.5,0,no,yes,yes,no,yes,no,no,4,4,4,1,4,93.33,86.0,45.0,45.0,50.0,Moderate Risk
+STU-MAT-204,Mathematics,2025-2026,Final Term,GP,F,17,R,GT3,T,2,2,1.5,0,no,yes,no,no,yes,yes,no,5,3,2,3,18,70.0,81.5,35.0,30.0,30.0,High Risk
+STU-MAT-205,Mathematics,2025-2026,Final Term,GP,F,16,R,GT3,T,2,2,12.0,0,no,yes,yes,yes,yes,yes,no,5,3,5,5,6,90.0,99.0,50.0,50.0,55.0,Moderate Risk
+STU-MAT-206,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,3,4,7.5,1,no,yes,yes,no,yes,yes,yes,4,4,3,5,28,53.33,84.5,50.0,45.0,45.0,High Risk
+STU-MAT-207,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,A,3,1,3.5,3,no,yes,yes,no,yes,yes,no,2,3,3,4,5,91.67,68.0,35.0,35.0,35.0,High Risk
+STU-MAT-208,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,4,3,3.5,0,no,no,yes,yes,yes,yes,yes,1,3,2,1,10,83.33,90.0,55.0,60.0,65.0,Moderate Risk
+STU-MAT-209,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,1,1,1.5,0,no,yes,yes,no,yes,no,no,4,3,2,5,6,90.0,81.5,45.0,45.0,50.0,Moderate Risk
+STU-MAT-210,Mathematics,2025-2026,Final Term,GP,F,17,R,GT3,T,4,3,7.5,0,no,yes,yes,yes,yes,yes,yes,4,4,2,4,6,90.0,94.5,35.0,35.0,35.0,High Risk
+STU-MAT-211,Mathematics,2025-2026,Final Term,GP,F,19,U,GT3,T,3,3,12.0,0,no,yes,yes,yes,yes,yes,no,4,3,3,3,10,83.33,99.0,40.0,40.0,40.0,High Risk
+STU-MAT-212,Mathematics,2025-2026,Final Term,GP,M,17,U,LE3,T,4,4,3.5,0,no,yes,yes,no,yes,yes,yes,5,3,5,3,13,78.33,86.0,60.0,60.0,65.0,Moderate Risk
+STU-MAT-213,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,A,2,2,3.5,0,yes,yes,yes,no,yes,yes,no,3,3,4,4,0,100.0,86.0,60.0,65.0,70.0,Low Risk / On Track
+STU-MAT-214,Mathematics,2025-2026,Final Term,GP,M,18,U,GT3,T,2,2,3.5,1,no,yes,yes,yes,yes,yes,no,4,4,4,5,15,75.0,84.0,30.0,35.0,40.0,High Risk
+STU-MAT-215,Mathematics,2025-2026,Final Term,GP,F,17,R,LE3,T,4,4,1.5,0,no,yes,yes,no,yes,no,no,5,2,1,3,12,80.0,81.5,40.0,50.0,50.0,Moderate Risk
+STU-MAT-216,Mathematics,2025-2026,Final Term,GP,F,17,U,LE3,T,3,2,3.5,0,no,no,yes,no,yes,yes,no,4,4,4,1,2,96.67,86.0,70.0,75.0,75.0,Low Risk / On Track
+STU-MAT-217,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,4,3,3.5,2,no,no,yes,no,yes,yes,yes,3,4,5,1,22,63.33,74.0,30.0,30.0,20.0,High Risk
+STU-MAT-218,Mathematics,2025-2026,Final Term,GP,M,18,U,LE3,T,3,3,3.5,1,no,yes,yes,no,yes,yes,no,3,2,4,4,13,78.33,80.0,30.0,30.0,40.0,High Risk
+STU-MAT-219,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,2,3,1.5,0,no,yes,yes,no,yes,no,no,3,3,3,3,3,95.0,81.5,35.0,35.0,40.0,High Risk
+STU-MAT-220,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,2,2,7.5,0,no,yes,yes,yes,yes,yes,no,4,3,3,4,4,93.33,94.5,45.0,50.0,50.0,Moderate Risk
+STU-MAT-221,Mathematics,2025-2026,Final Term,GP,F,17,R,GT3,T,2,1,3.5,0,no,yes,no,yes,yes,yes,no,4,2,5,5,2,96.67,90.0,30.0,30.0,30.0,High Risk
+STU-MAT-222,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,1,1,7.5,1,no,yes,no,yes,yes,no,yes,4,3,4,5,0,100.0,88.5,30.0,25.0,0.0,High Risk
+STU-MAT-223,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,2,3,3.5,0,yes,no,no,no,yes,yes,no,2,3,1,3,2,96.67,86.0,80.0,80.0,85.0,Low Risk / On Track
+STU-MAT-224,Mathematics,2025-2026,Final Term,GP,M,18,U,GT3,T,2,2,3.5,0,no,yes,yes,no,yes,yes,no,3,3,3,4,0,100.0,86.0,60.0,65.0,65.0,Moderate Risk
+STU-MAT-225,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,4,4,7.5,0,no,yes,no,yes,yes,yes,no,5,3,2,5,0,100.0,94.5,65.0,65.0,70.0,Low Risk / On Track
+STU-MAT-226,Mathematics,2025-2026,Final Term,GP,F,18,R,GT3,T,3,1,3.5,1,no,no,no,yes,yes,yes,yes,5,3,3,4,16,73.33,84.0,45.0,40.0,35.0,High Risk
+STU-MAT-227,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,3,2,3.5,0,no,no,no,yes,yes,yes,no,5,3,4,3,10,83.33,90.0,80.0,75.0,75.0,Low Risk / On Track
+STU-MAT-228,Mathematics,2025-2026,Final Term,GP,M,17,U,LE3,T,2,3,3.5,0,no,yes,yes,no,yes,yes,no,5,3,3,3,2,96.67,86.0,60.0,55.0,60.0,Moderate Risk
+STU-MAT-229,Mathematics,2025-2026,Final Term,GP,M,18,U,LE3,T,2,1,3.5,0,yes,yes,yes,yes,yes,yes,yes,4,3,2,3,14,76.67,90.0,50.0,40.0,45.0,High Risk
+STU-MAT-230,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,A,2,1,7.5,0,no,no,no,yes,yes,yes,yes,3,2,3,3,10,83.33,94.5,60.0,50.0,60.0,Moderate Risk
+STU-MAT-231,Mathematics,2025-2026,Final Term,GP,F,17,U,LE3,T,4,3,3.5,0,no,no,no,yes,yes,yes,yes,3,2,3,3,14,76.67,90.0,65.0,65.0,70.0,Low Risk / On Track
+STU-MAT-232,Mathematics,2025-2026,Final Term,GP,M,17,R,GT3,T,2,2,3.5,0,no,yes,yes,yes,yes,yes,no,4,5,2,1,4,93.33,90.0,55.0,55.0,55.0,Moderate Risk
+STU-MAT-233,Mathematics,2025-2026,Final Term,GP,M,17,U,GT3,T,4,4,3.5,0,yes,yes,no,yes,yes,yes,yes,4,5,5,2,14,76.67,90.0,55.0,45.0,45.0,High Risk
+STU-MAT-234,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,4,4,3.5,0,no,yes,yes,yes,yes,yes,no,4,2,4,1,2,96.67,90.0,70.0,65.0,65.0,Moderate Risk
+STU-MAT-235,Mathematics,2025-2026,Final Term,GP,M,16,U,LE3,T,1,1,3.5,0,no,yes,yes,no,yes,yes,no,3,4,2,5,18,70.0,86.0,45.0,35.0,30.0,High Risk
+STU-MAT-236,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,3,2,7.5,0,no,no,no,yes,yes,yes,yes,5,3,3,2,10,83.33,94.5,55.0,45.0,50.0,Moderate Risk
+STU-MAT-237,Mathematics,2025-2026,Final Term,GP,M,17,U,LE3,T,2,2,3.5,0,no,no,yes,yes,yes,yes,yes,4,4,2,4,4,93.33,90.0,70.0,65.0,65.0,Moderate Risk
+STU-MAT-238,Mathematics,2025-2026,Final Term,GP,F,16,U,GT3,T,2,1,1.5,0,no,no,no,no,yes,yes,yes,4,5,2,5,20,66.67,81.5,65.0,60.0,60.0,Moderate Risk
+STU-MAT-239,Mathematics,2025-2026,Final Term,GP,F,17,R,GT3,T,2,1,3.5,0,no,no,no,yes,yes,no,no,2,1,1,3,2,96.67,90.0,65.0,55.0,55.0,Moderate Risk
+STU-MAT-240,Mathematics,2025-2026,Final Term,GP,M,18,U,GT3,T,2,2,3.5,1,no,no,no,no,no,yes,no,5,5,4,2,0,100.0,72.0,35.0,35.0,0.0,High Risk
+STU-MAT-241,Mathematics,2025-2026,Final Term,GP,M,17,U,LE3,T,4,3,3.5,0,no,no,no,yes,yes,yes,yes,2,5,5,5,14,76.67,90.0,60.0,60.0,60.0,Moderate Risk
+STU-MAT-242,Mathematics,2025-2026,Final Term,GP,M,17,R,LE3,A,4,4,3.5,0,no,yes,yes,no,yes,yes,no,3,3,3,4,2,96.67,86.0,50.0,55.0,60.0,Moderate Risk
+STU-MAT-243,Mathematics,2025-2026,Final Term,GP,M,16,U,LE3,T,4,3,1.5,0,no,no,no,yes,yes,yes,no,5,4,5,3,0,100.0,85.5,30.0,0.0,0.0,High Risk
+STU-MAT-244,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,4,4,1.5,0,no,no,no,yes,yes,yes,no,5,3,2,5,0,100.0,85.5,65.0,60.0,60.0,Moderate Risk
+STU-MAT-245,Mathematics,2025-2026,Final Term,GP,F,18,U,GT3,T,2,1,7.5,0,no,yes,yes,no,yes,yes,yes,4,4,4,3,0,100.0,90.5,35.0,0.0,0.0,High Risk
+STU-MAT-246,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,2,1,1.5,0,no,no,no,no,yes,yes,no,4,3,3,4,6,90.0,81.5,90.0,90.0,90.0,Low Risk / On Track
+STU-MAT-247,Mathematics,2025-2026,Final Term,GP,M,17,U,GT3,T,2,3,1.5,0,no,no,no,no,yes,yes,no,5,2,2,2,4,93.33,81.5,60.0,60.0,65.0,Moderate Risk
+STU-MAT-248,Mathematics,2025-2026,Final Term,GP,M,22,U,GT3,T,3,1,1.5,3,no,no,no,no,no,yes,yes,5,4,5,1,16,73.33,55.5,30.0,40.0,40.0,High Risk
+STU-MAT-249,Mathematics,2025-2026,Final Term,GP,M,18,R,LE3,T,3,3,3.5,1,no,yes,no,no,yes,yes,yes,4,3,3,5,8,86.67,80.0,15.0,25.0,25.0,High Risk
+STU-MAT-250,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,0,2,1.5,0,no,no,yes,no,yes,yes,no,4,3,2,5,0,100.0,81.5,65.0,75.0,75.0,Low Risk / On Track
+STU-MAT-251,Mathematics,2025-2026,Final Term,GP,M,18,U,GT3,T,3,2,1.5,1,no,no,no,no,no,yes,no,4,4,5,5,0,100.0,67.5,30.0,40.0,40.0,High Risk
+STU-MAT-252,Mathematics,2025-2026,Final Term,GP,M,16,U,GT3,T,3,3,3.5,0,yes,yes,no,no,yes,yes,no,5,3,3,2,6,90.0,86.0,35.0,50.0,50.0,Moderate Risk
+STU-MAT-253,Mathematics,2025-2026,Final Term,GP,M,18,U,GT3,T,2,1,1.5,1,no,no,no,no,no,yes,no,3,2,5,5,4,93.33,67.5,30.0,45.0,40.0,High Risk
+STU-MAT-254,Mathematics,2025-2026,Final Term,GP,M,16,R,GT3,T,2,1,1.5,0,no,no,no,yes,yes,no,no,3,3,2,3,0,100.0,85.5,40.0,45.0,40.0,High Risk
+STU-MAT-255,Mathematics,2025-2026,Final Term,GP,M,17,R,GT3,T,2,1,1.5,0,no,no,no,no,yes,yes,no,4,4,2,5,0,100.0,81.5,40.0,60.0,60.0,Moderate Risk
+STU-MAT-256,Mathematics,2025-2026,Final Term,GP,M,17,U,LE3,T,1,1,1.5,1,no,yes,no,yes,yes,yes,no,4,4,4,5,2,96.67,79.5,35.0,45.0,40.0,High Risk
+STU-MAT-257,Mathematics,2025-2026,Final Term,GP,F,17,U,LE3,T,4,2,12.0,0,no,yes,yes,yes,yes,yes,no,4,2,3,4,6,90.0,99.0,70.0,60.0,65.0,Moderate Risk
+STU-MAT-258,Mathematics,2025-2026,Final Term,GP,M,19,U,LE3,A,4,3,3.5,0,no,yes,no,no,yes,yes,no,4,3,1,1,12,80.0,86.0,55.0,55.0,55.0,Moderate Risk
+STU-MAT-259,Mathematics,2025-2026,Final Term,GP,M,18,U,GT3,T,2,1,3.5,0,no,no,no,yes,yes,yes,no,5,2,4,4,8,86.67,90.0,75.0,70.0,70.0,Low Risk / On Track
+STU-MAT-260,Mathematics,2025-2026,Final Term,GP,F,17,U,LE3,T,2,2,12.0,0,no,no,yes,yes,yes,yes,yes,3,4,1,2,0,100.0,99.0,50.0,45.0,0.0,High Risk
+STU-MAT-261,Mathematics,2025-2026,Final Term,GP,F,18,U,GT3,T,4,3,3.5,0,no,yes,yes,no,yes,yes,yes,3,1,2,2,21,65.0,86.0,85.0,90.0,90.0,Low Risk / On Track
+STU-MAT-262,Mathematics,2025-2026,Final Term,GP,M,18,U,GT3,T,4,3,3.5,0,no,yes,yes,no,yes,yes,no,4,3,2,3,2,96.67,86.0,40.0,40.0,40.0,High Risk
+STU-MAT-263,Mathematics,2025-2026,Final Term,GP,M,18,R,GT3,T,3,2,7.5,0,no,no,no,yes,yes,no,no,5,3,2,3,1,98.33,94.5,65.0,60.0,60.0,Moderate Risk
+STU-MAT-264,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,3,3,7.5,0,no,no,no,yes,yes,no,no,3,2,3,4,4,93.33,94.5,50.0,45.0,45.0,High Risk
+STU-MAT-265,Mathematics,2025-2026,Final Term,GP,F,18,U,GT3,T,2,2,7.5,0,no,yes,yes,yes,yes,yes,yes,4,3,3,3,0,100.0,94.5,45.0,50.0,0.0,High Risk
+STU-MAT-266,Mathematics,2025-2026,Final Term,GP,M,18,R,LE3,A,3,4,3.5,0,no,yes,yes,yes,yes,yes,no,4,2,5,1,13,78.33,90.0,85.0,85.0,85.0,Low Risk / On Track
+STU-MAT-267,Mathematics,2025-2026,Final Term,GP,M,17,U,GT3,T,3,1,3.5,0,no,no,yes,yes,yes,yes,yes,5,4,4,5,2,96.67,90.0,45.0,45.0,50.0,Moderate Risk
+STU-MAT-268,Mathematics,2025-2026,Final Term,GP,F,18,R,GT3,T,4,4,3.5,0,no,no,yes,yes,yes,yes,no,4,3,4,4,8,86.67,90.0,60.0,50.0,55.0,Moderate Risk
+STU-MAT-269,Mathematics,2025-2026,Final Term,GP,M,18,U,GT3,T,4,2,3.5,0,no,yes,yes,yes,yes,yes,yes,5,4,5,5,10,83.33,90.0,50.0,45.0,50.0,Moderate Risk
+STU-MAT-270,Mathematics,2025-2026,Final Term,GP,F,18,R,GT3,T,2,1,3.5,0,no,yes,no,no,no,yes,yes,4,3,5,3,0,100.0,78.0,30.0,0.0,0.0,High Risk
+STU-MAT-271,Mathematics,2025-2026,Final Term,GP,F,19,U,GT3,T,3,3,3.5,2,no,yes,yes,yes,yes,yes,no,4,3,5,5,15,75.0,78.0,45.0,45.0,45.0,High Risk
+STU-MAT-272,Mathematics,2025-2026,Final Term,GP,F,18,U,GT3,T,2,3,12.0,0,no,yes,yes,yes,yes,yes,yes,4,5,5,2,4,93.33,99.0,75.0,70.0,70.0,Low Risk / On Track
+STU-MAT-273,Mathematics,2025-2026,Final Term,GP,F,18,U,LE3,T,1,1,3.5,0,no,yes,yes,no,yes,no,no,4,4,3,3,2,96.67,86.0,55.0,55.0,55.0,Moderate Risk
+STU-MAT-274,Mathematics,2025-2026,Final Term,GP,M,17,R,GT3,T,1,2,3.5,0,no,yes,yes,yes,yes,no,yes,3,5,2,1,2,96.67,90.0,75.0,70.0,70.0,Low Risk / On Track
+STU-MAT-275,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,2,4,3.5,0,no,yes,yes,no,yes,yes,yes,4,3,3,1,2,96.67,86.0,50.0,50.0,50.0,Moderate Risk
+STU-MAT-276,Mathematics,2025-2026,Final Term,GP,F,17,U,LE3,T,2,2,3.5,0,yes,yes,yes,no,yes,yes,yes,4,4,4,5,6,90.0,86.0,60.0,60.0,60.0,Moderate Risk
+STU-MAT-277,Mathematics,2025-2026,Final Term,GP,F,18,R,GT3,A,3,2,3.5,0,no,no,no,no,no,yes,yes,4,1,1,5,75,0.0,78.0,50.0,45.0,45.0,High Risk
+STU-MAT-278,Mathematics,2025-2026,Final Term,GP,M,18,U,GT3,T,4,4,1.5,0,no,no,yes,yes,yes,yes,no,3,2,4,3,22,63.33,85.5,45.0,45.0,45.0,High Risk
+STU-MAT-279,Mathematics,2025-2026,Final Term,GP,F,18,U,GT3,T,4,4,3.5,1,yes,yes,no,yes,yes,yes,yes,2,4,4,4,15,75.0,84.0,45.0,40.0,40.0,High Risk
+STU-MAT-280,Mathematics,2025-2026,Final Term,GP,M,18,U,LE3,T,4,3,1.5,0,no,no,yes,yes,yes,yes,no,4,2,3,1,8,86.67,85.5,50.0,55.0,50.0,Moderate Risk
+STU-MAT-281,Mathematics,2025-2026,Final Term,GP,M,17,U,LE3,A,4,1,1.5,0,no,no,yes,yes,yes,yes,yes,4,5,4,5,30,50.0,85.5,40.0,40.0,40.0,High Risk
+STU-MAT-282,Mathematics,2025-2026,Final Term,GP,M,17,U,LE3,A,3,2,1.5,1,no,no,no,no,yes,yes,no,4,4,4,3,19,68.33,75.5,55.0,45.0,50.0,Moderate Risk
+STU-MAT-283,Mathematics,2025-2026,Final Term,GP,F,18,R,LE3,T,1,1,12.0,0,no,yes,yes,yes,yes,no,no,5,2,2,3,1,98.33,99.0,60.0,60.0,60.0,Moderate Risk
+STU-MAT-284,Mathematics,2025-2026,Final Term,GP,F,18,U,GT3,T,1,1,3.5,0,yes,no,no,yes,yes,yes,no,5,4,4,4,4,93.33,90.0,40.0,45.0,50.0,Moderate Risk
+STU-MAT-285,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,2,2,3.5,0,no,yes,no,no,yes,yes,no,5,4,5,5,4,93.33,86.0,50.0,45.0,55.0,Moderate Risk
+STU-MAT-286,Mathematics,2025-2026,Final Term,GP,M,17,U,GT3,T,1,1,3.5,0,no,no,yes,no,yes,yes,no,4,3,3,4,2,96.67,86.0,60.0,50.0,55.0,Moderate Risk
+STU-MAT-287,Mathematics,2025-2026,Final Term,GP,F,18,U,GT3,T,2,2,7.5,0,no,yes,yes,no,yes,yes,no,4,3,3,2,5,91.67,90.5,90.0,90.0,95.0,Low Risk / On Track
+STU-MAT-288,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,1,1,7.5,0,no,yes,yes,no,yes,yes,no,4,3,3,3,6,90.0,90.5,65.0,60.0,60.0,Moderate Risk
+STU-MAT-289,Mathematics,2025-2026,Final Term,GP,M,18,U,GT3,T,2,1,7.5,0,no,no,yes,yes,yes,yes,no,4,2,4,2,6,90.0,94.5,75.0,70.0,70.0,Low Risk / On Track
+STU-MAT-290,Mathematics,2025-2026,Final Term,GP,M,18,U,LE3,A,4,4,3.5,0,no,yes,yes,yes,yes,yes,no,5,4,3,2,9,85.0,90.0,75.0,65.0,75.0,Low Risk / On Track
+STU-MAT-291,Mathematics,2025-2026,Final Term,GP,M,18,U,GT3,T,4,2,3.5,0,no,yes,yes,yes,yes,yes,yes,4,3,2,5,11,81.67,90.0,60.0,55.0,55.0,Moderate Risk
+STU-MAT-292,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,4,3,7.5,0,no,yes,yes,no,yes,yes,no,4,2,2,3,0,100.0,90.5,75.0,75.0,75.0,Low Risk / On Track
+STU-MAT-293,Mathematics,2025-2026,Final Term,GP,F,18,U,LE3,T,2,1,3.5,1,no,no,no,no,yes,yes,yes,5,4,3,5,12,80.0,80.0,60.0,60.0,65.0,Moderate Risk
+STU-MAT-294,Mathematics,2025-2026,Final Term,GP,F,17,R,LE3,T,3,1,12.0,0,no,yes,yes,no,yes,no,no,3,1,2,3,6,90.0,95.0,90.0,90.0,90.0,Low Risk / On Track
+STU-MAT-295,Mathematics,2025-2026,Final Term,GP,M,18,R,LE3,T,3,2,7.5,0,no,yes,yes,yes,yes,yes,no,5,4,2,4,8,86.67,94.5,70.0,65.0,70.0,Low Risk / On Track
+STU-MAT-296,Mathematics,2025-2026,Final Term,GP,M,17,U,GT3,T,3,3,1.5,0,no,yes,yes,no,yes,yes,no,4,4,3,5,4,93.33,81.5,70.0,60.0,55.0,Moderate Risk
+STU-MAT-297,Mathematics,2025-2026,Final Term,GP,F,19,U,GT3,T,4,4,3.5,0,no,yes,yes,yes,yes,yes,no,2,3,4,2,0,100.0,90.0,50.0,45.0,0.0,High Risk
+STU-MAT-298,Mathematics,2025-2026,Final Term,GP,F,18,U,LE3,T,4,3,3.5,0,no,yes,yes,no,yes,yes,yes,4,4,5,2,10,83.33,86.0,50.0,40.0,40.0,High Risk
+STU-MAT-299,Mathematics,2025-2026,Final Term,GP,F,18,U,GT3,T,4,3,12.0,0,no,yes,yes,no,yes,yes,no,4,3,3,3,0,100.0,95.0,70.0,65.0,70.0,Low Risk / On Track
+STU-MAT-300,Mathematics,2025-2026,Final Term,GP,M,18,U,LE3,T,4,4,1.5,0,no,yes,yes,no,yes,yes,yes,1,4,2,1,5,91.67,81.5,80.0,75.0,80.0,Low Risk / On Track
+STU-MAT-301,Mathematics,2025-2026,Final Term,GP,F,18,U,LE3,A,4,4,3.5,0,no,yes,no,no,yes,yes,yes,4,2,4,4,14,76.67,86.0,60.0,50.0,55.0,Moderate Risk
+STU-MAT-302,Mathematics,2025-2026,Final Term,GP,M,17,U,LE3,T,4,4,1.5,0,no,no,yes,no,yes,yes,no,4,1,1,5,0,100.0,81.5,55.0,55.0,50.0,Moderate Risk
+STU-MAT-303,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,4,2,7.5,0,no,yes,yes,no,yes,yes,no,4,3,3,3,0,100.0,90.5,75.0,60.0,70.0,Low Risk / On Track
+STU-MAT-304,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,3,2,12.0,0,no,yes,yes,yes,yes,yes,no,5,2,2,5,0,100.0,99.0,85.0,85.0,90.0,Low Risk / On Track
+STU-MAT-305,Mathematics,2025-2026,Final Term,GP,M,19,U,GT3,T,3,3,3.5,1,no,yes,no,yes,yes,yes,yes,4,4,4,3,20,66.67,84.0,75.0,70.0,65.0,Moderate Risk
+STU-MAT-306,Mathematics,2025-2026,Final Term,GP,F,18,U,GT3,T,2,4,3.5,1,no,yes,yes,yes,yes,yes,no,4,4,3,3,8,86.67,84.0,70.0,60.0,60.0,Moderate Risk
+STU-MAT-307,Mathematics,2025-2026,Final Term,GP,M,20,U,GT3,A,3,2,1.5,0,no,no,no,yes,yes,no,no,5,5,3,5,0,100.0,85.5,85.0,90.0,90.0,Low Risk / On Track
+STU-MAT-308,Mathematics,2025-2026,Final Term,GP,M,19,U,GT3,T,4,4,1.5,1,no,yes,yes,no,yes,yes,yes,4,3,4,4,38,36.67,75.5,40.0,45.0,40.0,High Risk
+STU-MAT-309,Mathematics,2025-2026,Final Term,GP,M,19,R,GT3,T,3,3,3.5,1,no,no,no,yes,yes,no,yes,4,5,3,5,0,100.0,84.0,75.0,60.0,60.0,Moderate Risk
+STU-MAT-310,Mathematics,2025-2026,Final Term,GP,F,19,U,LE3,T,1,1,3.5,1,yes,yes,no,yes,yes,yes,no,4,4,3,3,18,70.0,84.0,60.0,50.0,50.0,Moderate Risk
+STU-MAT-311,Mathematics,2025-2026,Final Term,GP,F,19,U,LE3,T,1,2,3.5,1,no,no,no,yes,yes,no,yes,4,2,4,3,0,100.0,84.0,45.0,45.0,0.0,High Risk
+STU-MAT-312,Mathematics,2025-2026,Final Term,GP,F,19,U,GT3,T,2,1,3.5,0,no,yes,no,no,no,yes,yes,3,4,1,2,20,66.67,78.0,70.0,60.0,65.0,Moderate Risk
+STU-MAT-313,Mathematics,2025-2026,Final Term,GP,M,19,U,GT3,T,1,2,3.5,1,no,no,no,no,yes,yes,no,4,5,2,4,3,95.0,80.0,65.0,55.0,55.0,Moderate Risk
+STU-MAT-314,Mathematics,2025-2026,Final Term,GP,F,19,U,LE3,T,3,2,3.5,1,no,yes,yes,no,yes,yes,yes,4,2,2,1,22,63.33,80.0,65.0,50.0,55.0,Moderate Risk
+STU-MAT-315,Mathematics,2025-2026,Final Term,GP,F,19,U,GT3,T,1,1,7.5,2,no,no,no,no,yes,yes,yes,4,1,2,3,14,76.67,78.5,75.0,65.0,65.0,Moderate Risk
+STU-MAT-316,Mathematics,2025-2026,Final Term,GP,F,19,R,GT3,T,2,3,7.5,1,no,no,no,no,yes,yes,yes,4,1,2,3,40,33.33,84.5,65.0,55.0,55.0,Moderate Risk
+STU-MAT-317,Mathematics,2025-2026,Final Term,GP,F,18,U,GT3,T,2,1,3.5,0,no,yes,yes,yes,yes,yes,no,5,3,3,1,0,100.0,90.0,40.0,40.0,0.0,High Risk
+STU-MAT-318,Mathematics,2025-2026,Final Term,GP,F,18,U,GT3,T,4,3,7.5,0,no,yes,yes,yes,yes,yes,yes,4,3,4,5,9,85.0,94.5,45.0,50.0,45.0,High Risk
+STU-MAT-319,Mathematics,2025-2026,Final Term,GP,F,17,R,GT3,T,3,4,7.5,0,no,yes,yes,yes,yes,yes,no,4,3,4,5,0,100.0,94.5,55.0,55.0,50.0,Moderate Risk
+STU-MAT-320,Mathematics,2025-2026,Final Term,GP,F,18,U,GT3,T,4,4,3.5,0,no,yes,yes,no,yes,yes,no,4,4,4,5,2,96.67,86.0,55.0,55.0,55.0,Moderate Risk
+STU-MAT-321,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,A,4,3,3.5,0,no,yes,yes,no,yes,yes,yes,5,2,2,5,23,61.67,86.0,65.0,65.0,65.0,Moderate Risk
+STU-MAT-322,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,2,2,3.5,0,no,yes,no,no,yes,no,yes,4,2,2,3,12,80.0,86.0,55.0,45.0,45.0,High Risk
+STU-MAT-323,Mathematics,2025-2026,Final Term,GP,F,17,R,LE3,T,2,2,7.5,0,no,yes,yes,yes,yes,yes,no,3,3,2,3,3,95.0,94.5,55.0,55.0,55.0,Moderate Risk
+STU-MAT-324,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,3,1,7.5,0,no,yes,no,no,yes,yes,no,3,4,3,5,1,98.33,90.5,60.0,70.0,75.0,Low Risk / On Track
+STU-MAT-325,Mathematics,2025-2026,Final Term,GP,F,17,U,LE3,T,0,2,7.5,0,no,no,no,no,yes,yes,no,3,3,3,2,0,100.0,90.5,80.0,75.0,75.0,Low Risk / On Track
+STU-MAT-326,Mathematics,2025-2026,Final Term,GP,M,18,U,GT3,T,4,4,7.5,0,no,no,no,yes,yes,yes,no,4,3,3,3,3,95.0,94.5,45.0,60.0,55.0,Moderate Risk
+STU-MAT-327,Mathematics,2025-2026,Final Term,GP,M,17,U,GT3,T,3,3,1.5,0,no,no,no,yes,yes,yes,no,4,3,5,5,3,95.0,85.5,70.0,75.0,80.0,Low Risk / On Track
+STU-MAT-328,Mathematics,2025-2026,Final Term,GP,M,17,R,GT3,T,2,2,1.5,0,no,yes,no,no,yes,yes,no,4,4,5,4,8,86.67,81.5,55.0,50.0,50.0,Moderate Risk
+STU-MAT-329,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,4,4,7.5,0,no,yes,yes,yes,yes,yes,no,5,4,4,4,7,88.33,94.5,50.0,45.0,45.0,High Risk
+STU-MAT-330,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,4,4,7.5,0,no,yes,yes,no,yes,yes,yes,4,3,3,4,4,93.33,90.5,70.0,70.0,70.0,Low Risk / On Track
+STU-MAT-331,Mathematics,2025-2026,Final Term,GP,M,18,U,LE3,T,2,2,12.0,0,no,yes,no,yes,yes,yes,no,4,5,5,5,2,96.67,99.0,45.0,40.0,40.0,High Risk
+STU-MAT-332,Mathematics,2025-2026,Final Term,GP,F,17,R,GT3,T,2,4,7.5,0,no,yes,no,no,yes,yes,yes,4,4,3,5,7,88.33,90.5,60.0,70.0,70.0,Low Risk / On Track
+STU-MAT-333,Mathematics,2025-2026,Final Term,GP,F,18,U,GT3,T,3,3,3.5,0,no,no,no,yes,yes,yes,no,5,3,4,4,0,100.0,90.0,35.0,0.0,0.0,High Risk
+STU-MAT-334,Mathematics,2025-2026,Final Term,GP,F,18,U,LE3,T,2,2,3.5,0,no,no,no,yes,yes,yes,yes,4,3,3,2,0,100.0,90.0,40.0,40.0,0.0,High Risk
+STU-MAT-335,Mathematics,2025-2026,Final Term,GP,F,18,R,GT3,T,2,2,12.0,0,no,no,no,yes,yes,no,no,4,4,4,4,0,100.0,99.0,50.0,45.0,0.0,High Risk
+STU-MAT-336,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,3,4,7.5,0,no,no,no,no,yes,yes,no,4,4,5,5,16,73.33,90.5,80.0,75.0,75.0,Low Risk / On Track
+STU-MAT-337,Mathematics,2025-2026,Final Term,GP,F,19,R,GT3,A,3,1,7.5,1,no,no,yes,no,yes,no,no,5,4,3,5,12,80.0,84.5,70.0,65.0,65.0,Moderate Risk
+STU-MAT-338,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,3,2,3.5,0,no,yes,yes,no,yes,yes,yes,4,3,2,2,0,100.0,86.0,35.0,40.0,0.0,High Risk
+STU-MAT-339,Mathematics,2025-2026,Final Term,GP,F,18,U,LE3,T,3,3,12.0,0,no,yes,no,no,yes,yes,no,5,3,3,1,7,88.33,95.0,80.0,75.0,85.0,Low Risk / On Track
+STU-MAT-340,Mathematics,2025-2026,Final Term,GP,F,17,R,GT3,A,3,2,3.5,0,no,yes,yes,no,yes,yes,no,4,3,3,2,4,93.33,86.0,45.0,50.0,50.0,Moderate Risk
+STU-MAT-341,Mathematics,2025-2026,Final Term,GP,F,19,U,GT3,T,2,1,7.5,1,no,no,yes,yes,yes,yes,yes,4,3,4,3,4,93.33,88.5,55.0,60.0,55.0,Moderate Risk
+STU-MAT-342,Mathematics,2025-2026,Final Term,GP,M,18,U,GT3,T,4,4,3.5,1,no,yes,no,yes,yes,yes,no,4,3,3,2,0,100.0,84.0,50.0,50.0,0.0,High Risk
+STU-MAT-343,Mathematics,2025-2026,Final Term,GP,M,18,U,LE3,T,3,4,3.5,0,no,no,no,yes,yes,yes,yes,4,3,3,5,11,81.67,90.0,80.0,75.0,75.0,Low Risk / On Track
+STU-MAT-344,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,A,2,2,3.5,1,no,yes,no,no,yes,yes,yes,3,3,1,4,0,100.0,80.0,45.0,40.0,0.0,High Risk
+STU-MAT-345,Mathematics,2025-2026,Final Term,GP,F,18,U,GT3,T,2,3,7.5,0,no,yes,no,no,yes,yes,no,4,3,3,3,4,93.33,90.5,55.0,50.0,50.0,Moderate Risk
+STU-MAT-346,Mathematics,2025-2026,Final Term,GP,F,18,U,GT3,T,3,2,7.5,0,no,no,no,no,yes,yes,yes,5,4,3,1,7,88.33,90.5,65.0,65.0,70.0,Low Risk / On Track
+STU-MAT-347,Mathematics,2025-2026,Final Term,GP,M,18,R,GT3,T,4,3,7.5,0,no,no,no,no,yes,yes,yes,5,3,2,4,9,85.0,90.5,80.0,75.0,80.0,Low Risk / On Track
+STU-MAT-348,Mathematics,2025-2026,Final Term,GP,M,18,U,GT3,T,4,3,7.5,0,no,yes,yes,no,yes,yes,yes,5,4,5,5,0,100.0,90.5,50.0,50.0,45.0,High Risk
+STU-MAT-349,Mathematics,2025-2026,Final Term,GP,F,17,U,GT3,T,4,3,7.5,0,no,yes,yes,yes,yes,yes,yes,4,4,3,4,0,100.0,94.5,65.0,75.0,75.0,Low Risk / On Track
+STU-MAT-350,Mathematics,2025-2026,Final Term,MS,M,18,R,GT3,T,3,2,1.5,1,no,yes,no,no,yes,yes,no,2,5,5,5,10,83.33,75.5,55.0,65.0,65.0,Moderate Risk
+STU-MAT-351,Mathematics,2025-2026,Final Term,MS,M,19,R,GT3,T,1,1,3.5,3,no,no,no,no,yes,yes,no,5,4,4,2,8,86.67,68.0,40.0,35.0,40.0,High Risk
+STU-MAT-352,Mathematics,2025-2026,Final Term,MS,M,17,U,GT3,T,3,3,3.5,0,no,yes,yes,no,yes,yes,no,4,5,4,3,2,96.67,86.0,65.0,65.0,65.0,Moderate Risk
+STU-MAT-353,Mathematics,2025-2026,Final Term,MS,M,18,U,LE3,T,1,3,1.5,1,no,no,no,no,no,yes,yes,4,3,3,3,7,88.33,67.5,40.0,35.0,40.0,High Risk
+STU-MAT-354,Mathematics,2025-2026,Final Term,MS,M,19,R,GT3,T,1,1,1.5,1,no,yes,no,no,yes,yes,no,4,4,4,5,4,93.33,75.5,40.0,40.0,40.0,High Risk
+STU-MAT-355,Mathematics,2025-2026,Final Term,MS,M,17,R,GT3,T,4,3,3.5,0,no,yes,yes,yes,yes,yes,yes,4,5,5,2,4,93.33,90.0,65.0,55.0,55.0,Moderate Risk
+STU-MAT-356,Mathematics,2025-2026,Final Term,MS,F,18,U,GT3,T,3,3,3.5,0,no,yes,no,no,yes,no,yes,5,3,4,5,0,100.0,86.0,50.0,45.0,45.0,High Risk
+STU-MAT-357,Mathematics,2025-2026,Final Term,MS,F,17,R,GT3,T,4,4,3.5,0,no,yes,yes,yes,yes,yes,no,4,3,3,5,4,93.33,90.0,60.0,65.0,65.0,Moderate Risk
+STU-MAT-358,Mathematics,2025-2026,Final Term,MS,F,17,U,LE3,A,3,2,3.5,0,no,no,no,no,yes,no,yes,1,2,3,5,2,96.67,86.0,60.0,60.0,55.0,Moderate Risk
+STU-MAT-359,Mathematics,2025-2026,Final Term,MS,M,18,U,LE3,T,1,1,1.5,0,no,no,no,no,yes,yes,yes,3,3,2,3,4,93.33,81.5,50.0,50.0,50.0,Moderate Risk
+STU-MAT-360,Mathematics,2025-2026,Final Term,MS,F,18,U,LE3,T,1,1,7.5,0,no,no,no,no,yes,yes,no,5,3,2,4,0,100.0,90.5,90.0,80.0,80.0,Low Risk / On Track
+STU-MAT-361,Mathematics,2025-2026,Final Term,MS,F,18,R,LE3,A,1,4,3.5,0,no,no,no,no,yes,no,yes,4,3,4,5,0,100.0,86.0,65.0,65.0,65.0,Moderate Risk
+STU-MAT-362,Mathematics,2025-2026,Final Term,MS,M,18,R,LE3,T,1,1,3.5,1,no,no,no,yes,no,no,no,4,4,3,5,2,96.67,76.0,65.0,60.0,60.0,Moderate Risk
+STU-MAT-363,Mathematics,2025-2026,Final Term,MS,F,18,U,GT3,T,3,3,3.5,0,no,yes,no,no,yes,yes,yes,4,3,2,3,0,100.0,86.0,55.0,55.0,50.0,Moderate Risk
+STU-MAT-364,Mathematics,2025-2026,Final Term,MS,F,17,U,LE3,T,4,4,3.5,0,no,yes,yes,yes,yes,yes,yes,2,3,4,1,0,100.0,90.0,80.0,75.0,75.0,Low Risk / On Track
+STU-MAT-365,Mathematics,2025-2026,Final Term,MS,F,17,R,GT3,T,1,2,3.5,0,no,no,no,no,yes,no,no,3,2,2,3,0,100.0,86.0,60.0,55.0,60.0,Moderate Risk
+STU-MAT-366,Mathematics,2025-2026,Final Term,MS,M,18,R,GT3,T,1,3,3.5,0,no,yes,yes,no,yes,no,no,3,3,4,3,4,93.33,86.0,50.0,50.0,50.0,Moderate Risk
+STU-MAT-367,Mathematics,2025-2026,Final Term,MS,M,18,U,LE3,T,4,4,7.5,0,no,no,yes,no,yes,yes,yes,4,2,2,5,0,100.0,90.5,65.0,65.0,65.0,Moderate Risk
+STU-MAT-368,Mathematics,2025-2026,Final Term,MS,F,17,R,GT3,T,1,1,1.5,1,no,yes,yes,no,yes,yes,yes,5,2,1,1,0,100.0,75.5,35.0,30.0,0.0,High Risk
+STU-MAT-369,Mathematics,2025-2026,Final Term,MS,F,18,U,GT3,T,2,3,1.5,0,no,yes,yes,no,yes,yes,yes,5,2,3,4,0,100.0,81.5,55.0,50.0,50.0,Moderate Risk
+STU-MAT-370,Mathematics,2025-2026,Final Term,MS,F,18,R,GT3,T,4,4,3.5,0,no,yes,yes,no,yes,yes,yes,3,2,2,5,10,83.33,86.0,70.0,60.0,55.0,Moderate Risk
+STU-MAT-371,Mathematics,2025-2026,Final Term,MS,F,19,U,LE3,T,3,2,3.5,2,no,no,no,yes,yes,no,yes,3,2,2,3,4,93.33,78.0,35.0,35.0,45.0,High Risk
+STU-MAT-372,Mathematics,2025-2026,Final Term,MS,M,18,R,LE3,T,1,2,1.5,0,no,yes,yes,yes,no,yes,yes,4,3,3,3,3,95.0,77.5,70.0,60.0,60.0,Moderate Risk
+STU-MAT-373,Mathematics,2025-2026,Final Term,MS,F,17,U,GT3,T,2,2,7.5,0,no,no,no,yes,yes,no,yes,3,4,3,3,8,86.67,94.5,65.0,55.0,55.0,Moderate Risk
+STU-MAT-374,Mathematics,2025-2026,Final Term,MS,F,17,R,GT3,T,1,2,1.5,0,no,no,no,yes,yes,yes,no,3,5,5,1,14,76.67,85.5,30.0,25.0,25.0,High Risk
+STU-MAT-375,Mathematics,2025-2026,Final Term,MS,F,18,R,LE3,T,4,4,7.5,0,no,no,no,no,yes,yes,no,5,4,4,1,0,100.0,90.5,95.0,90.0,95.0,Low Risk / On Track
+STU-MAT-376,Mathematics,2025-2026,Final Term,MS,F,18,R,GT3,T,1,1,7.5,0,no,no,no,no,yes,yes,no,4,3,2,4,2,96.67,90.5,40.0,40.0,50.0,Moderate Risk
+STU-MAT-377,Mathematics,2025-2026,Final Term,MS,F,20,U,GT3,T,4,2,7.5,2,no,yes,yes,no,yes,yes,yes,5,4,3,3,4,93.33,78.5,75.0,70.0,75.0,Low Risk / On Track
+STU-MAT-378,Mathematics,2025-2026,Final Term,MS,F,18,R,LE3,T,4,4,3.5,0,no,no,yes,yes,yes,yes,no,5,4,3,2,4,93.33,90.0,40.0,45.0,50.0,Moderate Risk
+STU-MAT-379,Mathematics,2025-2026,Final Term,MS,F,18,U,GT3,T,3,3,3.5,0,no,no,yes,no,yes,yes,yes,4,1,3,1,0,100.0,86.0,75.0,75.0,75.0,Low Risk / On Track
+STU-MAT-380,Mathematics,2025-2026,Final Term,MS,F,17,R,GT3,T,3,1,3.5,0,no,yes,yes,yes,yes,yes,no,4,5,4,1,17,71.67,90.0,50.0,50.0,50.0,Moderate Risk
+STU-MAT-381,Mathematics,2025-2026,Final Term,MS,M,18,U,GT3,T,4,4,3.5,0,no,no,yes,yes,yes,yes,no,3,2,4,2,4,93.33,90.0,75.0,70.0,70.0,Low Risk / On Track
+STU-MAT-382,Mathematics,2025-2026,Final Term,MS,M,18,R,GT3,T,2,1,1.5,0,no,no,no,yes,yes,yes,yes,4,4,3,5,5,91.67,85.5,35.0,30.0,35.0,High Risk
+STU-MAT-383,Mathematics,2025-2026,Final Term,MS,M,17,U,GT3,T,2,3,3.5,0,no,no,no,yes,yes,yes,no,4,4,3,3,2,96.67,90.0,55.0,55.0,50.0,Moderate Risk
+STU-MAT-384,Mathematics,2025-2026,Final Term,MS,M,19,R,GT3,T,1,1,1.5,1,no,no,no,no,yes,no,no,4,3,2,5,0,100.0,75.5,30.0,25.0,0.0,High Risk
+STU-MAT-385,Mathematics,2025-2026,Final Term,MS,M,18,R,GT3,T,4,2,1.5,1,no,no,yes,no,yes,no,no,5,4,3,3,14,76.67,75.5,30.0,25.0,25.0,High Risk
+STU-MAT-386,Mathematics,2025-2026,Final Term,MS,F,18,R,GT3,T,2,2,7.5,0,no,no,yes,no,yes,no,no,5,3,3,4,2,96.67,90.5,50.0,45.0,50.0,Moderate Risk
+STU-MAT-387,Mathematics,2025-2026,Final Term,MS,F,18,R,GT3,T,4,4,1.5,0,no,yes,yes,yes,yes,yes,yes,4,4,3,5,7,88.33,85.5,30.0,25.0,30.0,High Risk
+STU-MAT-388,Mathematics,2025-2026,Final Term,MS,F,19,R,GT3,T,2,3,7.5,1,no,no,no,yes,yes,yes,no,5,4,2,5,0,100.0,88.5,35.0,25.0,0.0,High Risk
+STU-MAT-389,Mathematics,2025-2026,Final Term,MS,F,18,U,LE3,T,3,1,3.5,0,no,yes,yes,no,yes,yes,no,4,3,4,1,0,100.0,86.0,35.0,45.0,40.0,High Risk
+STU-MAT-390,Mathematics,2025-2026,Final Term,MS,F,18,U,GT3,T,1,1,3.5,1,no,no,no,yes,yes,no,no,1,1,1,5,0,100.0,84.0,30.0,25.0,0.0,High Risk
+STU-MAT-391,Mathematics,2025-2026,Final Term,MS,M,20,U,LE3,A,2,2,3.5,2,no,yes,yes,no,yes,no,no,5,5,4,4,11,81.67,74.0,45.0,45.0,45.0,High Risk
+STU-MAT-392,Mathematics,2025-2026,Final Term,MS,M,17,U,LE3,T,3,1,1.5,0,no,no,no,no,yes,yes,no,2,4,5,2,3,95.0,81.5,70.0,80.0,80.0,Low Risk / On Track
+STU-MAT-393,Mathematics,2025-2026,Final Term,MS,M,21,R,GT3,T,1,1,1.5,3,no,no,no,no,yes,no,no,5,5,3,3,3,95.0,63.5,50.0,40.0,35.0,High Risk
+STU-MAT-394,Mathematics,2025-2026,Final Term,MS,M,18,R,LE3,T,3,2,1.5,0,no,no,no,no,yes,yes,no,4,4,1,5,0,100.0,81.5,55.0,60.0,50.0,Moderate Risk
+STU-MAT-395,Mathematics,2025-2026,Final Term,MS,M,19,U,LE3,T,1,1,1.5,0,no,no,no,no,yes,yes,no,3,2,3,5,5,91.67,81.5,40.0,45.0,45.0,High Risk
+STU-POR-001,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,A,4,4,3.5,0,yes,no,no,no,yes,no,no,4,3,4,3,4,93.33,86.0,0.0,55.0,55.0,Moderate Risk
+STU-POR-002,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,1,1,3.5,0,no,yes,no,no,yes,yes,no,5,3,3,3,2,96.67,86.0,45.0,55.0,55.0,Moderate Risk
+STU-POR-003,Portuguese Language,2025-2026,Final Term,GP,F,15,U,LE3,T,1,1,3.5,0,yes,no,no,no,yes,yes,no,4,3,2,3,6,90.0,86.0,60.0,65.0,60.0,Moderate Risk
+STU-POR-004,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,T,4,2,7.5,0,no,yes,no,yes,yes,yes,yes,3,2,2,5,0,100.0,94.5,70.0,70.0,70.0,Low Risk / On Track
+STU-POR-005,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,3,3,3.5,0,no,yes,no,no,yes,no,no,4,3,2,5,0,100.0,86.0,55.0,65.0,65.0,Moderate Risk
+STU-POR-006,Portuguese Language,2025-2026,Final Term,GP,M,16,U,LE3,T,4,3,3.5,0,no,yes,no,yes,yes,yes,no,5,4,2,5,6,90.0,90.0,60.0,60.0,65.0,Moderate Risk
+STU-POR-007,Portuguese Language,2025-2026,Final Term,GP,M,16,U,LE3,T,2,2,3.5,0,no,no,no,no,yes,yes,no,4,4,4,3,0,100.0,86.0,65.0,60.0,65.0,Moderate Risk
+STU-POR-008,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,A,4,4,3.5,0,yes,yes,no,no,yes,no,no,4,1,4,1,2,96.67,86.0,50.0,65.0,65.0,Moderate Risk
+STU-POR-009,Portuguese Language,2025-2026,Final Term,GP,M,15,U,LE3,A,3,2,3.5,0,no,yes,no,no,yes,yes,no,4,2,2,1,0,100.0,86.0,75.0,80.0,85.0,Low Risk / On Track
+STU-POR-010,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,T,3,4,3.5,0,no,yes,no,yes,yes,yes,no,5,5,1,5,0,100.0,90.0,60.0,60.0,65.0,Moderate Risk
+STU-POR-011,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,T,4,4,3.5,0,no,yes,no,no,yes,yes,no,3,3,3,2,2,96.67,86.0,70.0,70.0,70.0,Low Risk / On Track
+STU-POR-012,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,T,2,1,7.5,0,no,yes,no,yes,yes,yes,no,5,2,2,4,0,100.0,94.5,50.0,60.0,65.0,Moderate Risk
+STU-POR-013,Portuguese Language,2025-2026,Final Term,GP,M,15,U,LE3,T,4,4,1.5,0,no,yes,no,yes,yes,yes,no,4,3,3,5,0,100.0,85.5,60.0,65.0,60.0,Moderate Risk
+STU-POR-014,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,T,4,3,3.5,0,no,yes,no,no,yes,yes,no,5,4,3,3,0,100.0,86.0,60.0,60.0,65.0,Moderate Risk
+STU-POR-015,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,A,2,2,7.5,0,no,yes,no,no,yes,yes,yes,4,5,2,3,0,100.0,90.5,70.0,70.0,75.0,Low Risk / On Track
+STU-POR-016,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,4,4,1.5,0,no,yes,no,no,yes,yes,no,4,4,4,2,6,90.0,81.5,85.0,85.0,85.0,Low Risk / On Track
+STU-POR-017,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,4,4,7.5,0,no,yes,no,yes,yes,yes,no,3,2,3,2,10,83.33,94.5,65.0,65.0,70.0,Low Risk / On Track
+STU-POR-018,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,3,3,3.5,0,yes,yes,no,yes,yes,no,no,5,3,2,4,2,96.67,90.0,65.0,70.0,70.0,Low Risk / On Track
+STU-POR-019,Portuguese Language,2025-2026,Final Term,GP,M,17,U,GT3,T,3,2,1.5,3,no,yes,yes,yes,yes,yes,no,5,5,5,5,2,96.67,67.5,40.0,40.0,35.0,High Risk
+STU-POR-020,Portuguese Language,2025-2026,Final Term,GP,M,16,U,LE3,T,4,3,1.5,0,no,no,no,yes,yes,yes,no,3,1,3,5,6,90.0,85.5,60.0,60.0,60.0,Moderate Risk
+STU-POR-021,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,T,4,3,3.5,0,no,no,no,no,yes,yes,no,4,4,1,1,0,100.0,86.0,60.0,65.0,70.0,Low Risk / On Track
+STU-POR-022,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,T,4,4,1.5,0,no,yes,yes,no,yes,yes,no,5,4,2,5,0,100.0,81.5,55.0,60.0,60.0,Moderate Risk
+STU-POR-023,Portuguese Language,2025-2026,Final Term,GP,M,16,U,LE3,T,4,2,3.5,0,no,no,no,yes,yes,yes,no,4,5,1,5,0,100.0,90.0,60.0,65.0,70.0,Low Risk / On Track
+STU-POR-024,Portuguese Language,2025-2026,Final Term,GP,M,16,U,LE3,T,2,2,3.5,0,no,yes,no,yes,yes,yes,no,5,4,4,5,2,96.67,90.0,50.0,50.0,50.0,Moderate Risk
+STU-POR-025,Portuguese Language,2025-2026,Final Term,GP,F,15,R,GT3,T,2,4,7.5,0,yes,yes,no,yes,yes,yes,no,4,3,2,5,2,96.67,94.5,50.0,55.0,50.0,Moderate Risk
+STU-POR-026,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,2,2,1.5,0,no,yes,no,no,yes,yes,no,1,2,2,5,6,90.0,81.5,50.0,55.0,60.0,Moderate Risk
+STU-POR-027,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,T,2,2,1.5,0,no,yes,no,no,yes,yes,no,4,2,2,5,8,86.67,81.5,55.0,60.0,60.0,Moderate Risk
+STU-POR-028,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,T,4,2,1.5,0,no,no,no,no,yes,yes,no,2,2,4,1,0,100.0,81.5,55.0,55.0,55.0,Moderate Risk
+STU-POR-029,Portuguese Language,2025-2026,Final Term,GP,M,16,U,LE3,A,3,4,3.5,0,yes,yes,yes,yes,yes,yes,no,5,3,3,5,2,96.67,90.0,60.0,60.0,65.0,Moderate Risk
+STU-POR-030,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,4,4,3.5,0,no,yes,yes,yes,yes,yes,yes,4,4,5,5,4,93.33,90.0,60.0,55.0,60.0,Moderate Risk
+STU-POR-031,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,T,4,4,3.5,0,no,yes,yes,no,yes,yes,no,5,4,2,5,0,100.0,86.0,50.0,55.0,55.0,Moderate Risk
+STU-POR-032,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,T,4,4,3.5,0,no,yes,no,yes,yes,yes,no,4,3,1,5,2,96.67,90.0,75.0,75.0,75.0,Low Risk / On Track
+STU-POR-033,Portuguese Language,2025-2026,Final Term,GP,M,15,R,GT3,T,4,3,3.5,0,no,yes,no,yes,yes,yes,yes,4,5,2,5,0,100.0,90.0,65.0,70.0,75.0,Low Risk / On Track
+STU-POR-034,Portuguese Language,2025-2026,Final Term,GP,M,15,U,LE3,T,3,3,3.5,0,no,no,no,yes,yes,yes,no,5,3,2,2,0,100.0,90.0,65.0,60.0,60.0,Moderate Risk
+STU-POR-035,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,3,2,1.5,0,no,yes,no,no,yes,yes,no,5,4,3,5,4,93.33,81.5,60.0,60.0,60.0,Moderate Risk
+STU-POR-036,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,T,2,3,1.5,0,no,yes,no,yes,yes,no,no,3,5,1,5,4,93.33,85.5,55.0,55.0,55.0,Moderate Risk
+STU-POR-037,Portuguese Language,2025-2026,Final Term,GP,M,15,U,LE3,T,4,3,7.5,0,no,yes,no,yes,yes,yes,no,5,4,3,4,0,100.0,94.5,70.0,70.0,70.0,Low Risk / On Track
+STU-POR-038,Portuguese Language,2025-2026,Final Term,GP,M,16,R,GT3,A,4,4,7.5,0,no,yes,no,yes,yes,yes,yes,2,4,3,5,4,93.33,94.5,65.0,65.0,65.0,Moderate Risk
+STU-POR-039,Portuguese Language,2025-2026,Final Term,GP,F,15,R,GT3,T,3,4,7.5,0,yes,yes,no,yes,yes,yes,no,4,3,2,5,2,96.67,94.5,55.0,60.0,60.0,Moderate Risk
+STU-POR-040,Portuguese Language,2025-2026,Final Term,GP,F,15,R,GT3,T,2,2,1.5,0,yes,yes,no,yes,yes,no,no,4,3,1,2,8,86.67,85.5,70.0,65.0,60.0,Moderate Risk
+STU-POR-041,Portuguese Language,2025-2026,Final Term,GP,F,16,U,LE3,T,2,2,3.5,0,no,yes,no,yes,yes,yes,yes,3,3,3,3,16,73.33,90.0,55.0,55.0,50.0,Moderate Risk
+STU-POR-042,Portuguese Language,2025-2026,Final Term,GP,M,15,U,LE3,T,4,4,1.5,0,no,yes,no,no,yes,yes,yes,5,4,3,5,8,86.67,81.5,50.0,55.0,55.0,Moderate Risk
+STU-POR-043,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,T,4,4,3.5,0,no,yes,no,yes,yes,yes,no,4,3,3,5,0,100.0,90.0,70.0,75.0,75.0,Low Risk / On Track
+STU-POR-044,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,T,2,2,1.5,0,yes,yes,no,no,yes,yes,no,5,4,1,1,0,100.0,81.5,45.0,50.0,50.0,Moderate Risk
+STU-POR-045,Portuguese Language,2025-2026,Final Term,GP,F,16,U,LE3,T,2,2,3.5,1,yes,no,no,yes,yes,yes,no,4,3,3,5,14,76.67,84.0,50.0,55.0,55.0,Moderate Risk
+STU-POR-046,Portuguese Language,2025-2026,Final Term,GP,F,15,U,LE3,A,4,3,3.5,0,yes,yes,yes,yes,yes,yes,yes,5,2,2,5,4,93.33,90.0,50.0,55.0,55.0,Moderate Risk
+STU-POR-047,Portuguese Language,2025-2026,Final Term,GP,F,16,U,LE3,A,3,3,3.5,0,no,yes,no,no,yes,yes,no,2,3,5,3,6,90.0,86.0,65.0,60.0,65.0,Moderate Risk
+STU-POR-048,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,4,3,12.0,0,no,no,no,yes,yes,yes,no,4,2,2,2,2,96.67,99.0,85.0,85.0,85.0,Low Risk / On Track
+STU-POR-049,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,T,4,2,3.5,0,no,yes,no,no,yes,no,no,4,3,3,5,4,93.33,86.0,55.0,60.0,65.0,Moderate Risk
+STU-POR-050,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,T,4,4,3.5,0,yes,yes,no,yes,yes,yes,no,4,4,4,3,2,96.67,90.0,65.0,60.0,60.0,Moderate Risk
+STU-POR-051,Portuguese Language,2025-2026,Final Term,GP,F,16,U,LE3,T,2,2,3.5,0,no,yes,no,no,yes,yes,no,4,3,3,4,0,100.0,86.0,70.0,65.0,65.0,Moderate Risk
+STU-POR-052,Portuguese Language,2025-2026,Final Term,GP,F,15,U,LE3,T,4,2,3.5,0,no,yes,no,no,yes,yes,no,4,3,3,5,0,100.0,86.0,80.0,70.0,80.0,Low Risk / On Track
+STU-POR-053,Portuguese Language,2025-2026,Final Term,GP,M,15,U,LE3,A,4,2,1.5,0,no,no,no,no,yes,no,no,5,5,5,5,4,93.33,81.5,50.0,45.0,45.0,High Risk
+STU-POR-054,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,T,4,4,1.5,0,yes,yes,no,no,yes,yes,no,3,3,4,5,0,100.0,81.5,65.0,60.0,60.0,Moderate Risk
+STU-POR-055,Portuguese Language,2025-2026,Final Term,GP,F,15,U,LE3,A,3,3,1.5,0,no,no,no,no,yes,yes,no,5,3,4,1,0,100.0,81.5,65.0,60.0,65.0,Moderate Risk
+STU-POR-056,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,A,2,1,3.5,0,no,no,no,yes,yes,yes,yes,5,3,4,2,2,96.67,90.0,60.0,65.0,60.0,Moderate Risk
+STU-POR-057,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,A,4,3,3.5,0,no,yes,no,yes,yes,yes,no,4,3,2,1,0,100.0,90.0,75.0,70.0,75.0,Low Risk / On Track
+STU-POR-058,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,T,4,4,3.5,0,no,yes,no,yes,yes,no,no,3,2,2,5,8,86.67,90.0,75.0,75.0,80.0,Low Risk / On Track
+STU-POR-059,Portuguese Language,2025-2026,Final Term,GP,M,15,U,LE3,T,1,2,3.5,0,yes,yes,no,yes,yes,yes,no,4,3,2,5,0,100.0,90.0,70.0,65.0,70.0,Low Risk / On Track
+STU-POR-060,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,4,2,3.5,0,no,yes,yes,no,yes,yes,no,4,2,3,5,2,96.67,86.0,80.0,75.0,80.0,Low Risk / On Track
+STU-POR-061,Portuguese Language,2025-2026,Final Term,GP,F,16,R,GT3,T,4,4,3.5,0,no,yes,no,yes,yes,no,no,2,4,4,4,0,100.0,90.0,85.0,80.0,80.0,Low Risk / On Track
+STU-POR-062,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,1,1,1.5,0,yes,yes,no,yes,yes,yes,yes,5,5,5,5,0,100.0,85.5,50.0,50.0,80.0,Low Risk / On Track
+STU-POR-063,Portuguese Language,2025-2026,Final Term,GP,F,16,U,LE3,T,1,2,3.5,0,yes,no,no,yes,yes,yes,no,4,4,3,1,0,100.0,90.0,65.0,65.0,50.0,Moderate Risk
+STU-POR-064,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,4,3,7.5,0,yes,yes,no,yes,yes,yes,no,3,4,4,4,0,100.0,94.5,70.0,65.0,65.0,Moderate Risk
+STU-POR-065,Portuguese Language,2025-2026,Final Term,GP,F,15,U,LE3,T,4,3,3.5,0,yes,no,no,yes,yes,yes,yes,4,4,4,2,0,100.0,90.0,65.0,60.0,60.0,Moderate Risk
+STU-POR-066,Portuguese Language,2025-2026,Final Term,GP,F,16,U,LE3,T,4,3,3.5,0,no,yes,no,yes,yes,yes,no,5,4,3,1,2,96.67,90.0,80.0,75.0,80.0,Low Risk / On Track
+STU-POR-067,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,A,4,4,12.0,0,no,yes,no,yes,yes,yes,yes,1,3,3,3,0,100.0,99.0,55.0,60.0,60.0,Moderate Risk
+STU-POR-068,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,3,1,12.0,0,yes,yes,no,no,yes,yes,no,4,3,3,5,0,100.0,95.0,50.0,45.0,50.0,Moderate Risk
+STU-POR-069,Portuguese Language,2025-2026,Final Term,GP,F,15,R,LE3,T,2,2,3.5,0,yes,yes,no,no,yes,yes,no,4,1,3,4,0,100.0,86.0,55.0,50.0,55.0,Moderate Risk
+STU-POR-070,Portuguese Language,2025-2026,Final Term,GP,F,15,R,LE3,T,3,1,12.0,0,no,yes,no,no,yes,yes,no,4,4,2,3,6,90.0,95.0,75.0,75.0,75.0,Low Risk / On Track
+STU-POR-071,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,3,1,12.0,0,no,yes,no,no,yes,yes,no,4,3,2,5,2,96.67,95.0,65.0,55.0,55.0,Moderate Risk
+STU-POR-072,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,T,4,2,12.0,0,no,no,no,no,yes,yes,no,3,3,3,3,0,100.0,95.0,55.0,45.0,50.0,Moderate Risk
+STU-POR-073,Portuguese Language,2025-2026,Final Term,GP,F,15,R,GT3,T,1,1,3.5,0,yes,yes,no,no,yes,yes,yes,3,3,4,5,2,96.67,86.0,65.0,55.0,55.0,Moderate Risk
+STU-POR-074,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,3,1,1.5,0,no,no,no,yes,yes,no,no,5,3,2,5,0,100.0,85.5,65.0,65.0,70.0,Low Risk / On Track
+STU-POR-075,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,3,3,3.5,0,yes,yes,no,yes,yes,yes,no,4,3,3,5,4,93.33,90.0,55.0,55.0,55.0,Moderate Risk
+STU-POR-076,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,T,4,3,3.5,0,no,yes,no,yes,yes,yes,no,4,3,3,5,0,100.0,90.0,55.0,55.0,55.0,Moderate Risk
+STU-POR-077,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,T,4,0,12.0,0,no,no,no,yes,yes,yes,no,3,4,3,1,0,100.0,99.0,60.0,55.0,55.0,Moderate Risk
+STU-POR-078,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,2,2,12.0,0,no,no,no,no,yes,yes,yes,5,2,3,3,1,98.33,95.0,65.0,65.0,65.0,Moderate Risk
+STU-POR-079,Portuguese Language,2025-2026,Final Term,GP,M,17,U,GT3,T,2,1,1.5,3,yes,yes,no,yes,no,yes,no,4,5,1,3,0,100.0,59.5,45.0,45.0,50.0,Moderate Risk
+STU-POR-080,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,3,4,3.5,0,no,yes,no,no,yes,yes,no,2,4,3,3,14,76.67,86.0,60.0,55.0,55.0,Moderate Risk
+STU-POR-081,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,T,2,3,1.5,0,yes,yes,no,yes,yes,yes,yes,3,2,2,3,0,100.0,85.5,55.0,55.0,60.0,Moderate Risk
+STU-POR-082,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,T,2,3,7.5,0,yes,no,no,no,yes,yes,no,5,3,2,5,2,96.67,90.5,50.0,45.0,45.0,High Risk
+STU-POR-083,Portuguese Language,2025-2026,Final Term,GP,F,15,U,LE3,T,3,2,3.5,0,no,yes,no,no,yes,yes,no,4,4,4,5,4,93.33,86.0,60.0,55.0,55.0,Moderate Risk
+STU-POR-084,Portuguese Language,2025-2026,Final Term,GP,M,15,U,LE3,T,2,2,3.5,0,no,no,yes,yes,yes,yes,no,5,3,3,4,2,96.67,90.0,65.0,60.0,65.0,Moderate Risk
+STU-POR-085,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,T,1,1,3.5,0,no,yes,no,yes,yes,yes,no,4,3,2,4,2,96.67,90.0,65.0,60.0,60.0,Moderate Risk
+STU-POR-086,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,T,4,4,3.5,0,no,no,no,no,yes,yes,yes,4,4,4,5,4,93.33,86.0,60.0,55.0,60.0,Moderate Risk
+STU-POR-087,Portuguese Language,2025-2026,Final Term,GP,F,16,U,LE3,T,2,2,3.5,0,no,yes,no,no,yes,no,no,4,3,4,2,6,90.0,86.0,65.0,55.0,55.0,Moderate Risk
+STU-POR-088,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,T,4,2,7.5,0,no,yes,no,yes,yes,yes,no,5,3,3,1,4,93.33,94.5,75.0,75.0,75.0,Low Risk / On Track
+STU-POR-089,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,2,2,3.5,0,no,no,no,yes,yes,yes,no,4,4,2,3,6,90.0,90.0,60.0,50.0,55.0,Moderate Risk
+STU-POR-090,Portuguese Language,2025-2026,Final Term,GP,M,16,U,LE3,A,4,4,3.5,0,no,yes,no,no,yes,no,no,4,1,3,5,6,90.0,86.0,45.0,45.0,50.0,Moderate Risk
+STU-POR-091,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,3,3,7.5,0,no,yes,no,no,yes,yes,yes,4,3,3,4,2,96.67,90.5,45.0,55.0,55.0,Moderate Risk
+STU-POR-092,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,T,4,3,1.5,0,no,no,no,yes,yes,yes,no,4,5,5,1,6,90.0,85.5,70.0,65.0,65.0,Moderate Risk
+STU-POR-093,Portuguese Language,2025-2026,Final Term,GP,F,16,U,LE3,T,3,1,3.5,0,yes,yes,no,no,yes,no,no,3,3,3,2,0,100.0,86.0,60.0,65.0,60.0,Moderate Risk
+STU-POR-094,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,4,2,3.5,0,no,yes,no,yes,yes,yes,no,5,3,3,1,2,96.67,90.0,65.0,70.0,70.0,Low Risk / On Track
+STU-POR-095,Portuguese Language,2025-2026,Final Term,GP,M,15,U,LE3,T,2,2,12.0,0,no,yes,no,yes,yes,yes,no,4,3,4,4,2,96.67,99.0,55.0,60.0,60.0,Moderate Risk
+STU-POR-096,Portuguese Language,2025-2026,Final Term,GP,F,15,R,GT3,T,1,1,12.0,0,yes,yes,yes,yes,yes,yes,no,3,1,2,1,4,93.33,99.0,65.0,65.0,65.0,Moderate Risk
+STU-POR-097,Portuguese Language,2025-2026,Final Term,GP,M,16,R,GT3,T,4,3,1.5,0,yes,yes,yes,yes,yes,yes,no,3,3,3,4,6,90.0,85.5,45.0,55.0,55.0,Moderate Risk
+STU-POR-098,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,2,1,3.5,0,no,yes,no,no,yes,no,yes,4,3,5,5,0,100.0,86.0,65.0,60.0,60.0,Moderate Risk
+STU-POR-099,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,4,4,1.5,0,no,no,no,yes,yes,yes,no,5,3,4,1,4,93.33,85.5,60.0,65.0,65.0,Moderate Risk
+STU-POR-100,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,4,3,7.5,0,yes,yes,no,no,yes,yes,no,5,3,5,3,2,96.67,90.5,60.0,65.0,65.0,Moderate Risk
+STU-POR-101,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,4,4,1.5,0,yes,yes,no,yes,yes,yes,no,4,5,5,4,12,80.0,85.5,45.0,45.0,40.0,High Risk
+STU-POR-102,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,4,4,7.5,0,no,yes,no,yes,yes,yes,yes,4,4,3,4,0,100.0,94.5,80.0,80.0,80.0,Low Risk / On Track
+STU-POR-103,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,T,4,4,1.5,0,no,yes,yes,yes,yes,yes,no,5,3,3,5,2,96.67,85.5,60.0,65.0,60.0,Moderate Risk
+STU-POR-104,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,T,3,2,3.5,0,yes,yes,no,no,yes,yes,no,4,3,5,2,16,73.33,86.0,55.0,50.0,50.0,Moderate Risk
+STU-POR-105,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,A,3,4,3.5,0,no,yes,no,yes,yes,yes,no,5,4,4,1,0,100.0,90.0,80.0,80.0,80.0,Low Risk / On Track
+STU-POR-106,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,A,3,3,12.0,0,yes,no,no,no,yes,no,no,4,3,3,4,10,83.33,95.0,50.0,50.0,50.0,Moderate Risk
+STU-POR-107,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,T,2,2,12.0,0,yes,yes,no,no,yes,yes,no,5,1,2,3,4,93.33,95.0,50.0,50.0,50.0,Moderate Risk
+STU-POR-108,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,3,3,7.5,0,no,yes,no,yes,yes,yes,no,5,3,3,5,4,93.33,94.5,65.0,70.0,70.0,Low Risk / On Track
+STU-POR-109,Portuguese Language,2025-2026,Final Term,GP,M,15,R,GT3,T,4,4,12.0,0,no,yes,no,yes,yes,yes,yes,1,3,5,1,8,86.67,99.0,60.0,50.0,55.0,Moderate Risk
+STU-POR-110,Portuguese Language,2025-2026,Final Term,GP,F,16,U,LE3,T,4,4,7.5,0,no,yes,no,yes,yes,yes,yes,5,4,5,4,2,96.67,94.5,75.0,75.0,70.0,Low Risk / On Track
+STU-POR-111,Portuguese Language,2025-2026,Final Term,GP,M,15,U,LE3,A,4,4,1.5,0,no,no,no,yes,yes,yes,no,5,5,3,4,4,93.33,85.5,65.0,70.0,70.0,Low Risk / On Track
+STU-POR-112,Portuguese Language,2025-2026,Final Term,GP,F,16,R,GT3,T,3,3,7.5,0,yes,yes,no,yes,yes,yes,no,4,1,2,2,4,93.33,94.5,55.0,55.0,55.0,Moderate Risk
+STU-POR-113,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,2,2,3.5,1,yes,no,no,yes,yes,yes,no,3,1,2,5,12,80.0,84.0,40.0,50.0,50.0,Moderate Risk
+STU-POR-114,Portuguese Language,2025-2026,Final Term,GP,M,15,U,LE3,T,4,2,1.5,0,no,no,no,no,yes,yes,no,3,5,2,3,10,83.33,81.5,90.0,85.0,90.0,Low Risk / On Track
+STU-POR-115,Portuguese Language,2025-2026,Final Term,GP,M,15,R,GT3,T,2,1,3.5,0,no,no,no,yes,yes,yes,yes,5,4,2,5,4,93.33,90.0,50.0,45.0,50.0,Moderate Risk
+STU-POR-116,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,4,4,3.5,0,no,yes,no,yes,yes,yes,no,5,4,4,5,6,90.0,90.0,80.0,70.0,70.0,Low Risk / On Track
+STU-POR-117,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,T,4,4,3.5,0,no,yes,no,yes,yes,no,no,4,4,3,2,4,93.33,90.0,80.0,75.0,80.0,Low Risk / On Track
+STU-POR-118,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,3,3,1.5,0,no,no,no,yes,yes,yes,no,5,4,2,5,6,90.0,85.5,70.0,70.0,75.0,Low Risk / On Track
+STU-POR-119,Portuguese Language,2025-2026,Final Term,GP,M,17,R,GT3,T,1,3,3.5,1,no,yes,no,yes,yes,yes,no,5,2,4,5,14,76.67,84.0,60.0,55.0,55.0,Moderate Risk
+STU-POR-120,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,T,3,4,1.5,0,no,no,no,no,yes,yes,no,3,4,3,4,2,96.67,81.5,70.0,65.0,70.0,Low Risk / On Track
+STU-POR-121,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,T,1,2,3.5,0,no,no,no,no,yes,yes,no,3,2,3,1,0,100.0,86.0,70.0,70.0,70.0,Low Risk / On Track
+STU-POR-122,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,T,2,2,12.0,0,no,yes,no,yes,yes,yes,no,5,5,4,5,6,90.0,99.0,70.0,65.0,65.0,Moderate Risk
+STU-POR-123,Portuguese Language,2025-2026,Final Term,GP,F,16,U,LE3,T,2,4,3.5,0,no,yes,no,yes,yes,yes,yes,4,2,2,5,2,96.67,90.0,70.0,60.0,65.0,Moderate Risk
+STU-POR-124,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,4,4,1.5,0,no,yes,no,yes,yes,yes,no,3,4,4,5,4,93.33,85.5,60.0,65.0,65.0,Moderate Risk
+STU-POR-125,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,2,2,3.5,0,no,no,no,no,yes,yes,yes,5,4,4,5,0,100.0,86.0,60.0,55.0,55.0,Moderate Risk
+STU-POR-126,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,T,3,4,1.5,0,yes,no,no,no,yes,yes,no,5,5,5,5,2,96.67,81.5,45.0,45.0,45.0,High Risk
+STU-POR-127,Portuguese Language,2025-2026,Final Term,GP,F,15,U,LE3,A,3,4,3.5,0,yes,no,no,yes,yes,yes,yes,5,3,2,1,0,100.0,90.0,50.0,55.0,55.0,Moderate Risk
+STU-POR-128,Portuguese Language,2025-2026,Final Term,GP,F,19,U,GT3,T,0,1,3.5,2,no,yes,no,no,no,no,no,3,4,2,5,0,100.0,66.0,45.0,50.0,55.0,Moderate Risk
+STU-POR-129,Portuguese Language,2025-2026,Final Term,GP,M,16,R,GT3,T,4,4,1.5,0,no,no,no,yes,yes,yes,no,3,5,5,4,8,86.67,85.5,70.0,70.0,75.0,Low Risk / On Track
+STU-POR-130,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,2,3,7.5,0,no,yes,no,no,yes,yes,yes,3,2,3,1,4,93.33,90.5,65.0,60.0,65.0,Moderate Risk
+STU-POR-131,Portuguese Language,2025-2026,Final Term,GP,F,15,R,GT3,T,3,4,7.5,0,no,yes,no,no,yes,yes,yes,4,2,2,5,0,100.0,90.5,50.0,55.0,60.0,Moderate Risk
+STU-POR-132,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,2,1,3.5,3,no,yes,no,yes,no,yes,yes,5,4,5,5,10,83.33,64.0,50.0,45.0,40.0,High Risk
+STU-POR-133,Portuguese Language,2025-2026,Final Term,GP,F,17,U,LE3,A,2,1,1.5,0,no,yes,no,no,yes,yes,no,3,2,2,5,8,86.67,81.5,55.0,50.0,55.0,Moderate Risk
+STU-POR-134,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,T,1,1,1.5,0,no,yes,no,yes,yes,yes,yes,4,3,3,4,6,90.0,85.5,55.0,60.0,65.0,Moderate Risk
+STU-POR-135,Portuguese Language,2025-2026,Final Term,GP,F,17,U,LE3,T,2,2,1.5,0,no,yes,no,no,yes,yes,yes,3,4,4,5,2,96.67,81.5,65.0,60.0,60.0,Moderate Risk
+STU-POR-136,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,A,3,4,1.5,0,no,no,no,no,yes,yes,no,3,2,1,5,12,80.0,81.5,75.0,65.0,70.0,Low Risk / On Track
+STU-POR-137,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,2,1,1.5,0,no,no,no,no,yes,no,no,3,2,1,2,4,93.33,81.5,45.0,45.0,55.0,Moderate Risk
+STU-POR-138,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,A,2,2,1.5,1,no,no,no,no,yes,no,no,5,3,4,5,12,80.0,75.5,65.0,55.0,55.0,Moderate Risk
+STU-POR-139,Portuguese Language,2025-2026,Final Term,GP,M,15,R,GT3,T,3,4,3.5,0,no,yes,no,no,yes,no,yes,5,3,3,5,2,96.67,86.0,60.0,55.0,55.0,Moderate Risk
+STU-POR-140,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,T,4,4,7.5,0,no,yes,no,yes,yes,yes,yes,4,3,3,5,4,93.33,94.5,65.0,70.0,75.0,Low Risk / On Track
+STU-POR-141,Portuguese Language,2025-2026,Final Term,GP,M,17,R,GT3,T,3,4,3.5,0,no,no,no,no,yes,no,no,5,4,5,5,2,96.67,86.0,50.0,45.0,50.0,Moderate Risk
+STU-POR-142,Portuguese Language,2025-2026,Final Term,GP,F,16,R,GT3,T,1,1,3.5,0,no,yes,no,no,yes,no,no,5,1,3,3,0,100.0,86.0,70.0,65.0,65.0,Moderate Risk
+STU-POR-143,Portuguese Language,2025-2026,Final Term,GP,M,18,U,LE3,T,3,1,1.5,0,no,no,no,yes,yes,yes,yes,3,3,4,4,2,96.67,85.5,55.0,55.0,60.0,Moderate Risk
+STU-POR-144,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,A,3,2,7.5,0,no,yes,no,yes,yes,yes,yes,4,3,3,5,10,83.33,94.5,60.0,55.0,55.0,Moderate Risk
+STU-POR-145,Portuguese Language,2025-2026,Final Term,GP,F,16,R,GT3,T,1,1,1.5,0,no,yes,no,yes,yes,no,yes,3,3,3,1,8,86.67,85.5,60.0,55.0,55.0,Moderate Risk
+STU-POR-146,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,A,3,3,1.5,0,no,yes,no,yes,yes,yes,yes,4,3,2,5,4,93.33,85.5,45.0,45.0,50.0,Moderate Risk
+STU-POR-147,Portuguese Language,2025-2026,Final Term,GP,M,16,U,LE3,T,1,1,3.5,2,no,no,no,no,yes,no,yes,4,4,4,5,0,100.0,74.0,50.0,50.0,50.0,Moderate Risk
+STU-POR-148,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,T,4,4,1.5,0,no,no,no,yes,yes,yes,no,4,3,2,5,6,90.0,85.5,65.0,70.0,70.0,Low Risk / On Track
+STU-POR-149,Portuguese Language,2025-2026,Final Term,GP,F,15,R,GT3,T,1,1,1.5,1,no,no,no,yes,yes,yes,yes,5,5,5,1,2,96.67,79.5,40.0,45.0,45.0,High Risk
+STU-POR-150,Portuguese Language,2025-2026,Final Term,GP,M,15,U,GT3,T,4,3,12.0,0,yes,yes,no,no,yes,yes,no,2,2,2,3,6,90.0,95.0,45.0,55.0,55.0,Moderate Risk
+STU-POR-151,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,A,3,3,3.5,0,no,no,no,no,yes,no,yes,1,3,2,1,24,60.0,86.0,45.0,40.0,45.0,High Risk
+STU-POR-152,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,4,4,7.5,0,no,yes,no,yes,yes,yes,no,5,3,3,5,0,100.0,94.5,75.0,65.0,65.0,Moderate Risk
+STU-POR-153,Portuguese Language,2025-2026,Final Term,GP,M,16,U,LE3,T,2,2,1.5,0,no,yes,no,yes,yes,yes,no,2,3,3,2,4,93.33,85.5,60.0,55.0,55.0,Moderate Risk
+STU-POR-154,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,T,4,4,7.5,0,no,yes,no,yes,yes,yes,no,4,2,2,5,2,96.67,94.5,65.0,65.0,65.0,Moderate Risk
+STU-POR-155,Portuguese Language,2025-2026,Final Term,GP,F,16,U,LE3,T,1,1,1.5,0,no,no,no,no,yes,yes,no,3,4,4,1,4,93.33,81.5,50.0,55.0,55.0,Moderate Risk
+STU-POR-156,Portuguese Language,2025-2026,Final Term,GP,M,17,U,GT3,T,2,1,1.5,0,no,yes,no,no,yes,yes,no,5,4,5,5,22,63.33,81.5,45.0,35.0,30.0,High Risk
+STU-POR-157,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,T,1,1,3.5,0,no,yes,no,no,yes,yes,no,4,4,2,5,0,100.0,86.0,60.0,60.0,60.0,Moderate Risk
+STU-POR-158,Portuguese Language,2025-2026,Final Term,GP,F,15,U,LE3,A,2,1,1.5,0,no,yes,no,yes,no,yes,yes,4,4,2,5,0,100.0,77.5,55.0,50.0,50.0,Moderate Risk
+STU-POR-159,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,T,3,2,3.5,1,no,yes,no,no,yes,yes,no,3,3,2,3,2,96.67,80.0,55.0,55.0,55.0,Moderate Risk
+STU-POR-160,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,T,1,2,3.5,0,no,yes,no,no,yes,yes,no,4,3,2,5,6,90.0,86.0,65.0,60.0,65.0,Moderate Risk
+STU-POR-161,Portuguese Language,2025-2026,Final Term,GP,F,15,U,GT3,T,1,2,3.5,0,no,no,no,no,yes,no,yes,2,3,4,1,6,90.0,86.0,55.0,55.0,55.0,Moderate Risk
+STU-POR-162,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,4,4,1.5,0,no,yes,no,no,no,yes,yes,3,3,2,5,16,73.33,73.5,45.0,45.0,40.0,High Risk
+STU-POR-163,Portuguese Language,2025-2026,Final Term,GP,M,15,U,LE3,A,2,1,1.5,0,no,no,no,no,yes,yes,no,4,5,5,5,0,100.0,81.5,60.0,55.0,55.0,Moderate Risk
+STU-POR-164,Portuguese Language,2025-2026,Final Term,GP,M,18,U,LE3,T,1,1,1.5,2,no,no,no,no,no,yes,yes,2,3,5,4,0,100.0,61.5,55.0,45.0,0.0,High Risk
+STU-POR-165,Portuguese Language,2025-2026,Final Term,GP,M,16,U,LE3,T,2,1,1.5,1,no,no,no,yes,yes,no,yes,4,4,4,5,6,90.0,79.5,45.0,50.0,50.0,Moderate Risk
+STU-POR-166,Portuguese Language,2025-2026,Final Term,GP,F,15,R,GT3,T,3,3,7.5,0,no,yes,yes,yes,yes,yes,yes,4,2,1,3,2,96.67,94.5,65.0,65.0,65.0,Moderate Risk
+STU-POR-167,Portuguese Language,2025-2026,Final Term,GP,M,19,U,GT3,T,3,2,1.5,0,no,yes,no,no,no,yes,yes,4,5,4,4,6,90.0,73.5,55.0,45.0,55.0,Moderate Risk
+STU-POR-168,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,4,4,1.5,0,yes,yes,no,no,yes,no,yes,4,2,1,4,0,100.0,81.5,65.0,65.0,65.0,Moderate Risk
+STU-POR-169,Portuguese Language,2025-2026,Final Term,GP,M,15,R,GT3,T,2,3,3.5,0,yes,no,yes,yes,yes,no,no,4,4,4,1,0,100.0,90.0,35.0,40.0,40.0,High Risk
+STU-POR-170,Portuguese Language,2025-2026,Final Term,GP,M,17,R,LE3,T,1,2,1.5,3,no,no,no,no,yes,no,no,2,2,2,5,14,76.67,63.5,45.0,40.0,50.0,Moderate Risk
+STU-POR-171,Portuguese Language,2025-2026,Final Term,GP,F,18,R,GT3,T,1,1,1.5,3,no,yes,no,yes,yes,no,no,5,2,5,4,6,90.0,67.5,55.0,50.0,55.0,Moderate Risk
+STU-POR-172,Portuguese Language,2025-2026,Final Term,GP,M,16,R,GT3,T,2,2,1.5,0,no,no,no,no,yes,no,no,4,2,2,3,4,93.33,81.5,60.0,50.0,55.0,Moderate Risk
+STU-POR-173,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,3,3,3.5,1,no,yes,no,no,yes,yes,yes,4,5,5,5,0,100.0,80.0,50.0,50.0,5.0,High Risk
+STU-POR-174,Portuguese Language,2025-2026,Final Term,GP,M,16,U,LE3,T,1,2,1.5,2,no,no,no,no,yes,yes,no,4,4,5,5,0,100.0,69.5,45.0,40.0,50.0,Moderate Risk
+STU-POR-175,Portuguese Language,2025-2026,Final Term,GP,M,17,R,LE3,T,2,1,1.5,1,no,no,yes,yes,no,yes,yes,3,3,2,5,8,86.67,71.5,40.0,40.0,45.0,High Risk
+STU-POR-176,Portuguese Language,2025-2026,Final Term,GP,M,17,R,GT3,T,3,2,3.5,2,yes,yes,no,no,yes,yes,yes,4,4,4,3,4,93.33,74.0,35.0,30.0,40.0,High Risk
+STU-POR-177,Portuguese Language,2025-2026,Final Term,GP,M,15,U,LE3,T,1,2,1.5,0,no,no,no,yes,yes,no,no,4,4,4,5,2,96.67,85.5,40.0,45.0,50.0,Moderate Risk
+STU-POR-178,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,1,3,1.5,1,no,no,no,no,no,yes,no,5,3,3,2,2,96.67,67.5,45.0,40.0,40.0,High Risk
+STU-POR-179,Portuguese Language,2025-2026,Final Term,GP,M,17,R,LE3,T,1,1,3.5,0,no,no,no,yes,no,no,yes,5,3,5,5,0,100.0,82.0,40.0,40.0,40.0,High Risk
+STU-POR-180,Portuguese Language,2025-2026,Final Term,GP,M,17,U,GT3,T,3,2,1.5,3,no,yes,no,yes,no,no,no,4,5,2,2,10,83.33,59.5,40.0,35.0,40.0,High Risk
+STU-POR-181,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,2,2,3.5,0,no,no,no,no,no,yes,no,4,3,5,4,0,100.0,78.0,45.0,50.0,55.0,Moderate Risk
+STU-POR-182,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,4,2,3.5,0,no,no,no,no,yes,yes,yes,4,2,3,3,0,100.0,86.0,85.0,85.0,90.0,Low Risk / On Track
+STU-POR-183,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,2,2,3.5,0,no,yes,no,no,yes,yes,no,5,1,5,4,0,100.0,86.0,60.0,60.0,65.0,Moderate Risk
+STU-POR-184,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,4,4,3.5,0,no,yes,no,no,yes,yes,yes,4,4,2,3,0,100.0,86.0,80.0,80.0,85.0,Low Risk / On Track
+STU-POR-185,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,3,4,1.5,1,no,yes,no,yes,yes,yes,no,3,4,5,2,4,93.33,79.5,45.0,45.0,50.0,Moderate Risk
+STU-POR-186,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,1,0,3.5,0,no,yes,no,yes,yes,yes,yes,4,3,2,3,0,100.0,90.0,80.0,85.0,90.0,Low Risk / On Track
+STU-POR-187,Portuguese Language,2025-2026,Final Term,GP,M,17,U,LE3,T,4,4,3.5,0,no,yes,no,yes,yes,yes,no,4,4,4,5,0,100.0,90.0,55.0,45.0,50.0,Moderate Risk
+STU-POR-188,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,1,3,3.5,0,no,no,no,yes,yes,yes,yes,4,3,5,3,0,100.0,90.0,70.0,65.0,65.0,Moderate Risk
+STU-POR-189,Portuguese Language,2025-2026,Final Term,GP,F,16,U,LE3,T,3,3,3.5,0,no,yes,no,yes,yes,yes,no,4,4,5,4,0,100.0,90.0,70.0,70.0,75.0,Low Risk / On Track
+STU-POR-190,Portuguese Language,2025-2026,Final Term,GP,M,17,U,LE3,T,4,3,3.5,0,no,no,no,yes,yes,yes,no,4,4,4,4,0,100.0,90.0,50.0,55.0,55.0,Moderate Risk
+STU-POR-191,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,2,2,3.5,0,no,no,no,yes,yes,yes,no,3,4,4,5,0,100.0,90.0,65.0,60.0,70.0,Low Risk / On Track
+STU-POR-192,Portuguese Language,2025-2026,Final Term,GP,M,17,U,GT3,T,3,3,3.5,0,no,no,no,yes,yes,yes,no,4,3,4,4,4,93.33,90.0,55.0,45.0,50.0,Moderate Risk
+STU-POR-193,Portuguese Language,2025-2026,Final Term,GP,M,16,R,GT3,T,4,2,1.5,0,no,yes,no,yes,yes,yes,yes,4,3,3,3,8,86.67,85.5,50.0,45.0,55.0,Moderate Risk
+STU-POR-194,Portuguese Language,2025-2026,Final Term,GP,M,17,U,GT3,T,4,3,3.5,0,no,yes,yes,yes,yes,yes,yes,5,2,3,2,4,93.33,90.0,55.0,55.0,65.0,Moderate Risk
+STU-POR-195,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,4,3,3.5,0,no,yes,yes,yes,yes,yes,no,3,4,3,3,4,93.33,90.0,55.0,50.0,55.0,Moderate Risk
+STU-POR-196,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,3,3,3.5,0,no,no,no,yes,yes,yes,yes,4,2,3,3,0,100.0,90.0,55.0,60.0,65.0,Moderate Risk
+STU-POR-197,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,2,4,3.5,0,no,yes,no,yes,yes,no,no,5,4,2,5,0,100.0,90.0,85.0,90.0,85.0,Low Risk / On Track
+STU-POR-198,Portuguese Language,2025-2026,Final Term,GP,F,17,U,LE3,T,3,3,3.5,0,no,yes,no,yes,yes,yes,yes,5,3,3,1,32,46.67,90.0,70.0,65.0,70.0,Low Risk / On Track
+STU-POR-199,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,3,2,3.5,0,no,yes,no,no,yes,yes,no,1,2,2,1,8,86.67,86.0,70.0,75.0,80.0,Low Risk / On Track
+STU-POR-200,Portuguese Language,2025-2026,Final Term,GP,M,17,U,GT3,T,3,3,3.5,0,no,yes,no,yes,yes,yes,yes,4,3,4,4,6,90.0,90.0,55.0,65.0,70.0,Low Risk / On Track
+STU-POR-201,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,1,2,1.5,0,no,yes,no,yes,yes,yes,yes,3,3,3,3,0,100.0,85.5,50.0,45.0,55.0,Moderate Risk
+STU-POR-202,Portuguese Language,2025-2026,Final Term,GP,M,16,U,LE3,T,2,1,3.5,0,no,no,no,yes,yes,yes,yes,4,2,3,5,0,100.0,90.0,65.0,70.0,80.0,Low Risk / On Track
+STU-POR-203,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,A,3,3,3.5,0,no,yes,no,no,yes,yes,yes,3,3,3,3,10,83.33,86.0,60.0,65.0,70.0,Low Risk / On Track
+STU-POR-204,Portuguese Language,2025-2026,Final Term,GP,M,17,R,GT3,T,1,2,3.5,0,no,no,no,no,yes,no,no,3,1,3,3,6,90.0,86.0,45.0,45.0,50.0,Moderate Risk
+STU-POR-205,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,2,3,3.5,0,no,no,no,no,yes,yes,no,4,3,3,2,6,90.0,86.0,60.0,60.0,65.0,Moderate Risk
+STU-POR-206,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,1,1,3.5,0,no,no,no,yes,yes,yes,no,5,3,3,3,0,100.0,90.0,60.0,55.0,60.0,Moderate Risk
+STU-POR-207,Portuguese Language,2025-2026,Final Term,GP,M,17,U,GT3,T,1,2,3.5,0,no,no,no,yes,yes,yes,no,4,4,4,5,16,73.33,90.0,50.0,55.0,60.0,Moderate Risk
+STU-POR-208,Portuguese Language,2025-2026,Final Term,GP,M,16,R,GT3,T,3,3,1.5,0,no,yes,no,yes,yes,yes,no,4,3,2,5,0,100.0,85.5,55.0,50.0,50.0,Moderate Risk
+STU-POR-209,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,2,3,1.5,0,no,no,no,no,yes,yes,no,5,3,3,3,0,100.0,81.5,65.0,60.0,60.0,Moderate Risk
+STU-POR-210,Portuguese Language,2025-2026,Final Term,GP,F,17,U,LE3,T,2,4,3.5,0,no,no,no,yes,yes,yes,yes,4,3,2,5,8,86.67,90.0,70.0,75.0,80.0,Low Risk / On Track
+STU-POR-211,Portuguese Language,2025-2026,Final Term,GP,M,17,U,GT3,T,4,4,1.5,0,no,no,no,no,yes,yes,no,5,2,3,5,4,93.33,81.5,65.0,65.0,70.0,Low Risk / On Track
+STU-POR-212,Portuguese Language,2025-2026,Final Term,GP,M,16,R,LE3,T,3,3,1.5,0,no,yes,no,yes,yes,yes,no,3,3,4,3,16,73.33,85.5,50.0,55.0,60.0,Moderate Risk
+STU-POR-213,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,4,4,1.5,1,no,yes,no,no,yes,yes,no,4,2,4,2,30,50.0,75.5,70.0,75.0,80.0,Low Risk / On Track
+STU-POR-214,Portuguese Language,2025-2026,Final Term,GP,F,16,U,LE3,T,4,4,3.5,0,no,yes,no,no,yes,yes,no,4,5,2,3,0,100.0,86.0,55.0,50.0,55.0,Moderate Risk
+STU-POR-215,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,4,3,3.5,0,no,yes,no,yes,yes,yes,no,4,3,5,2,2,96.67,90.0,70.0,70.0,75.0,Low Risk / On Track
+STU-POR-216,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,2,3,3.5,0,yes,yes,no,yes,yes,no,no,4,4,3,4,4,93.33,90.0,55.0,60.0,60.0,Moderate Risk
+STU-POR-217,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,1,1,3.5,0,no,yes,no,no,yes,no,no,4,4,4,1,0,100.0,86.0,70.0,75.0,75.0,Low Risk / On Track
+STU-POR-218,Portuguese Language,2025-2026,Final Term,GP,F,17,R,GT3,T,2,2,1.5,0,no,yes,no,no,yes,yes,no,5,3,2,3,21,65.0,81.5,65.0,65.0,65.0,Moderate Risk
+STU-POR-219,Portuguese Language,2025-2026,Final Term,GP,F,16,R,GT3,T,2,2,12.0,0,no,yes,no,yes,yes,yes,no,5,3,5,5,6,90.0,99.0,65.0,65.0,65.0,Moderate Risk
+STU-POR-220,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,3,4,7.5,1,no,yes,yes,no,yes,yes,yes,4,4,3,5,14,76.67,84.5,40.0,45.0,40.0,High Risk
+STU-POR-221,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,A,3,1,3.5,0,no,yes,no,no,yes,yes,no,2,3,3,4,2,96.67,86.0,55.0,55.0,60.0,Moderate Risk
+STU-POR-222,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,4,3,3.5,0,no,no,no,yes,yes,yes,yes,1,3,2,1,4,93.33,90.0,70.0,75.0,75.0,Low Risk / On Track
+STU-POR-223,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,1,1,1.5,0,no,yes,no,no,yes,no,no,4,3,2,5,2,96.67,81.5,60.0,65.0,65.0,Moderate Risk
+STU-POR-224,Portuguese Language,2025-2026,Final Term,GP,F,17,R,GT3,T,4,3,7.5,0,no,yes,no,yes,yes,yes,yes,4,4,2,4,0,100.0,94.5,55.0,60.0,60.0,Moderate Risk
+STU-POR-225,Portuguese Language,2025-2026,Final Term,GP,F,19,U,GT3,T,3,3,12.0,0,no,yes,no,yes,yes,yes,no,4,3,3,3,4,93.33,99.0,60.0,60.0,60.0,Moderate Risk
+STU-POR-226,Portuguese Language,2025-2026,Final Term,GP,M,17,U,LE3,T,4,4,3.5,0,no,yes,no,no,yes,yes,yes,5,3,5,3,15,75.0,86.0,65.0,60.0,60.0,Moderate Risk
+STU-POR-227,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,A,2,2,3.5,0,yes,yes,no,no,yes,yes,no,3,3,4,4,0,100.0,86.0,65.0,65.0,65.0,Moderate Risk
+STU-POR-228,Portuguese Language,2025-2026,Final Term,GP,M,18,U,GT3,T,2,2,3.5,0,no,yes,no,yes,yes,yes,no,4,4,4,5,10,83.33,90.0,60.0,55.0,55.0,Moderate Risk
+STU-POR-229,Portuguese Language,2025-2026,Final Term,GP,F,17,R,LE3,T,4,4,1.5,0,no,yes,no,no,yes,no,no,5,2,1,3,6,90.0,81.5,60.0,55.0,55.0,Moderate Risk
+STU-POR-230,Portuguese Language,2025-2026,Final Term,GP,F,17,U,LE3,T,3,2,3.5,0,no,no,no,no,yes,yes,no,4,4,4,1,2,96.67,86.0,70.0,80.0,75.0,Low Risk / On Track
+STU-POR-231,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,4,3,3.5,0,no,no,no,no,yes,yes,yes,3,4,5,1,16,73.33,86.0,55.0,45.0,50.0,Moderate Risk
+STU-POR-232,Portuguese Language,2025-2026,Final Term,GP,M,18,U,LE3,T,3,3,3.5,0,no,yes,no,no,yes,yes,no,3,2,4,4,10,83.33,86.0,50.0,50.0,50.0,Moderate Risk
+STU-POR-233,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,2,3,1.5,0,no,yes,no,no,yes,no,no,3,3,3,3,4,93.33,81.5,60.0,65.0,65.0,Moderate Risk
+STU-POR-234,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,2,2,7.5,0,no,yes,no,yes,yes,yes,no,4,3,3,4,0,100.0,94.5,60.0,60.0,65.0,Moderate Risk
+STU-POR-235,Portuguese Language,2025-2026,Final Term,GP,F,17,R,GT3,T,2,1,3.5,0,no,yes,no,yes,yes,yes,no,4,2,5,5,0,100.0,90.0,55.0,50.0,55.0,Moderate Risk
+STU-POR-236,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,1,1,7.5,0,no,yes,no,yes,yes,no,yes,4,3,4,5,12,80.0,94.5,60.0,60.0,60.0,Moderate Risk
+STU-POR-237,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,2,3,3.5,0,yes,no,no,no,yes,yes,no,2,3,1,3,0,100.0,86.0,65.0,65.0,70.0,Low Risk / On Track
+STU-POR-238,Portuguese Language,2025-2026,Final Term,GP,M,18,U,GT3,T,2,2,3.5,3,no,yes,yes,no,yes,yes,no,3,3,3,4,9,85.0,68.0,50.0,45.0,50.0,Moderate Risk
+STU-POR-239,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,4,4,7.5,0,no,yes,no,yes,yes,yes,no,5,3,2,5,4,93.33,94.5,75.0,80.0,80.0,Low Risk / On Track
+STU-POR-240,Portuguese Language,2025-2026,Final Term,GP,F,18,R,GT3,T,3,1,3.5,0,no,no,no,yes,yes,yes,yes,5,3,3,4,4,93.33,90.0,40.0,40.0,40.0,High Risk
+STU-POR-241,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,3,2,3.5,0,no,no,no,yes,yes,yes,no,5,3,4,3,2,96.67,90.0,85.0,90.0,85.0,Low Risk / On Track
+STU-POR-242,Portuguese Language,2025-2026,Final Term,GP,M,17,U,LE3,T,2,3,3.5,0,no,yes,no,no,yes,yes,no,5,3,3,3,0,100.0,86.0,50.0,55.0,55.0,Moderate Risk
+STU-POR-243,Portuguese Language,2025-2026,Final Term,GP,M,18,U,LE3,T,2,1,3.5,0,yes,yes,no,yes,yes,yes,yes,4,3,2,3,2,96.67,90.0,45.0,50.0,55.0,Moderate Risk
+STU-POR-244,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,A,2,1,7.5,0,no,no,no,yes,yes,yes,yes,3,2,3,3,0,100.0,94.5,75.0,75.0,80.0,Low Risk / On Track
+STU-POR-245,Portuguese Language,2025-2026,Final Term,GP,F,17,U,LE3,T,4,3,3.5,0,no,no,no,yes,yes,yes,yes,3,2,3,3,0,100.0,90.0,70.0,60.0,60.0,Moderate Risk
+STU-POR-246,Portuguese Language,2025-2026,Final Term,GP,M,17,R,GT3,T,2,2,3.5,0,no,yes,no,yes,yes,yes,no,4,5,2,1,0,100.0,90.0,60.0,65.0,65.0,Moderate Risk
+STU-POR-247,Portuguese Language,2025-2026,Final Term,GP,M,17,U,GT3,T,4,4,3.5,0,yes,yes,no,yes,yes,yes,yes,4,5,5,2,0,100.0,90.0,65.0,65.0,65.0,Moderate Risk
+STU-POR-248,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,4,4,3.5,0,no,yes,no,yes,yes,yes,no,4,2,4,1,0,100.0,90.0,65.0,65.0,70.0,Low Risk / On Track
+STU-POR-249,Portuguese Language,2025-2026,Final Term,GP,M,16,U,LE3,T,1,1,3.5,0,no,yes,no,no,yes,yes,no,3,4,2,5,2,96.67,86.0,45.0,45.0,45.0,High Risk
+STU-POR-250,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,3,2,7.5,0,no,no,no,yes,yes,yes,yes,5,3,3,2,0,100.0,94.5,60.0,60.0,60.0,Moderate Risk
+STU-POR-251,Portuguese Language,2025-2026,Final Term,GP,M,17,U,LE3,T,2,2,3.5,0,no,no,no,yes,yes,yes,yes,4,4,2,4,0,100.0,90.0,80.0,80.0,80.0,Low Risk / On Track
+STU-POR-252,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,2,1,1.5,0,no,no,no,no,yes,yes,yes,4,5,2,5,4,93.33,81.5,45.0,50.0,50.0,Moderate Risk
+STU-POR-253,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,A,4,1,3.5,0,no,no,no,yes,yes,yes,yes,5,3,3,5,0,100.0,90.0,70.0,65.0,65.0,Moderate Risk
+STU-POR-254,Portuguese Language,2025-2026,Final Term,GP,F,18,U,LE3,A,2,4,3.5,1,no,yes,no,no,yes,yes,no,4,3,3,3,18,70.0,80.0,50.0,50.0,50.0,Moderate Risk
+STU-POR-255,Portuguese Language,2025-2026,Final Term,GP,F,18,U,LE3,T,2,2,3.5,1,no,yes,no,no,yes,yes,yes,5,3,1,5,16,73.33,80.0,45.0,40.0,50.0,Moderate Risk
+STU-POR-256,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,3,3,1.5,1,no,no,no,no,no,yes,no,4,1,1,3,14,76.67,67.5,40.0,35.0,35.0,High Risk
+STU-POR-257,Portuguese Language,2025-2026,Final Term,GP,M,18,U,GT3,T,2,2,1.5,1,no,yes,no,yes,no,yes,yes,4,4,3,1,26,56.67,71.5,35.0,40.0,40.0,High Risk
+STU-POR-258,Portuguese Language,2025-2026,Final Term,GP,M,17,U,GT3,T,4,4,1.5,0,no,yes,no,yes,yes,yes,no,4,2,1,5,6,90.0,85.5,50.0,40.0,45.0,High Risk
+STU-POR-259,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,3,2,3.5,0,no,no,no,yes,yes,no,no,5,4,2,3,4,93.33,90.0,70.0,70.0,75.0,Low Risk / On Track
+STU-POR-260,Portuguese Language,2025-2026,Final Term,GP,F,17,U,LE3,T,1,1,7.5,0,no,yes,no,yes,yes,yes,yes,4,3,2,4,10,83.33,94.5,55.0,50.0,50.0,Moderate Risk
+STU-POR-261,Portuguese Language,2025-2026,Final Term,GP,F,16,U,GT3,T,1,2,1.5,0,no,no,no,no,no,yes,no,5,3,5,5,4,93.33,73.5,60.0,55.0,55.0,Moderate Risk
+STU-POR-262,Portuguese Language,2025-2026,Final Term,GP,F,17,R,GT3,T,2,1,3.5,0,no,no,no,yes,yes,no,no,2,1,1,3,2,96.67,90.0,65.0,65.0,65.0,Moderate Risk
+STU-POR-263,Portuguese Language,2025-2026,Final Term,GP,F,17,R,LE3,A,1,4,1.5,1,no,yes,no,no,yes,yes,no,5,5,4,5,14,76.67,75.5,45.0,45.0,40.0,High Risk
+STU-POR-264,Portuguese Language,2025-2026,Final Term,GP,M,18,U,GT3,T,2,2,3.5,0,no,no,no,no,no,yes,no,5,5,4,2,16,73.33,78.0,40.0,35.0,40.0,High Risk
+STU-POR-265,Portuguese Language,2025-2026,Final Term,GP,F,17,U,LE3,A,2,2,1.5,1,no,yes,no,no,no,yes,no,3,1,2,1,8,86.67,67.5,55.0,45.0,50.0,Moderate Risk
+STU-POR-266,Portuguese Language,2025-2026,Final Term,GP,F,17,R,LE3,T,1,1,7.5,0,no,no,no,yes,yes,yes,no,4,3,3,5,4,93.33,94.5,75.0,70.0,75.0,Low Risk / On Track
+STU-POR-267,Portuguese Language,2025-2026,Final Term,GP,F,17,U,LE3,A,4,2,3.5,0,no,yes,no,yes,yes,no,no,4,3,2,4,4,93.33,90.0,75.0,70.0,70.0,Low Risk / On Track
+STU-POR-268,Portuguese Language,2025-2026,Final Term,GP,M,17,U,LE3,T,4,3,3.5,0,no,no,no,yes,yes,yes,yes,2,5,5,5,8,86.67,90.0,75.0,75.0,75.0,Low Risk / On Track
+STU-POR-269,Portuguese Language,2025-2026,Final Term,GP,M,17,R,LE3,A,4,4,3.5,0,no,yes,no,no,yes,yes,no,3,3,3,4,0,100.0,86.0,60.0,60.0,60.0,Moderate Risk
+STU-POR-270,Portuguese Language,2025-2026,Final Term,GP,M,16,U,LE3,T,4,3,1.5,0,no,no,no,yes,yes,yes,no,5,4,5,3,7,88.33,85.5,70.0,70.0,75.0,Low Risk / On Track
+STU-POR-271,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,4,4,1.5,0,no,no,yes,yes,yes,yes,no,5,3,2,5,4,93.33,85.5,70.0,75.0,75.0,Low Risk / On Track
+STU-POR-272,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,4,4,3.5,0,no,yes,yes,no,yes,yes,yes,5,3,1,5,2,96.67,86.0,55.0,55.0,60.0,Moderate Risk
+STU-POR-273,Portuguese Language,2025-2026,Final Term,GP,M,17,R,GT3,T,1,1,7.5,0,no,no,no,no,yes,yes,yes,4,3,3,1,2,96.67,90.5,65.0,70.0,75.0,Low Risk / On Track
+STU-POR-274,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,3,3,7.5,0,no,yes,no,no,yes,yes,yes,4,2,2,5,10,83.33,90.5,55.0,55.0,55.0,Moderate Risk
+STU-POR-275,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,1,1,3.5,0,yes,no,no,no,yes,no,yes,4,3,2,4,10,83.33,86.0,50.0,45.0,50.0,Moderate Risk
+STU-POR-276,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,2,1,7.5,0,no,yes,no,no,yes,yes,yes,4,4,4,3,10,83.33,90.5,60.0,50.0,55.0,Moderate Risk
+STU-POR-277,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,2,1,1.5,0,no,no,no,no,yes,yes,no,4,3,3,4,7,88.33,81.5,75.0,80.0,80.0,Low Risk / On Track
+STU-POR-278,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,1,1,3.5,0,no,yes,no,no,yes,no,no,4,3,4,5,4,93.33,86.0,55.0,50.0,55.0,Moderate Risk
+STU-POR-279,Portuguese Language,2025-2026,Final Term,GP,M,17,U,GT3,T,2,3,1.5,0,no,no,no,no,yes,yes,no,5,2,2,2,2,96.67,81.5,45.0,60.0,65.0,Moderate Risk
+STU-POR-280,Portuguese Language,2025-2026,Final Term,GP,M,22,U,GT3,T,3,1,1.5,3,no,no,no,no,no,yes,yes,5,4,5,1,12,80.0,55.5,35.0,40.0,25.0,High Risk
+STU-POR-281,Portuguese Language,2025-2026,Final Term,GP,M,18,R,LE3,T,3,3,3.5,0,no,yes,no,no,yes,yes,yes,4,3,3,5,8,86.67,86.0,50.0,45.0,50.0,Moderate Risk
+STU-POR-282,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,0,2,1.5,0,no,no,no,no,yes,yes,no,4,3,2,5,0,100.0,81.5,55.0,60.0,55.0,Moderate Risk
+STU-POR-283,Portuguese Language,2025-2026,Final Term,GP,M,18,U,GT3,T,3,2,1.5,0,no,no,no,no,no,yes,no,4,4,5,5,8,86.67,73.5,35.0,40.0,35.0,High Risk
+STU-POR-284,Portuguese Language,2025-2026,Final Term,GP,M,16,U,GT3,T,3,3,3.5,1,yes,yes,no,no,yes,yes,no,5,3,3,2,4,93.33,80.0,45.0,55.0,50.0,Moderate Risk
+STU-POR-285,Portuguese Language,2025-2026,Final Term,GP,M,18,U,GT3,T,2,1,1.5,2,no,no,no,no,no,yes,no,3,2,5,5,4,93.33,61.5,35.0,40.0,30.0,High Risk
+STU-POR-286,Portuguese Language,2025-2026,Final Term,GP,M,16,R,GT3,T,2,1,1.5,0,no,no,no,yes,yes,no,no,3,3,2,3,2,96.67,85.5,70.0,65.0,60.0,Moderate Risk
+STU-POR-287,Portuguese Language,2025-2026,Final Term,GP,M,17,R,GT3,T,2,1,1.5,0,no,no,no,no,yes,yes,no,4,4,2,5,0,100.0,81.5,60.0,60.0,65.0,Moderate Risk
+STU-POR-288,Portuguese Language,2025-2026,Final Term,GP,M,17,U,LE3,T,1,1,1.5,1,no,yes,no,yes,yes,yes,no,4,4,4,5,0,100.0,79.5,45.0,50.0,50.0,Moderate Risk
+STU-POR-289,Portuguese Language,2025-2026,Final Term,GP,F,18,U,LE3,A,2,1,3.5,0,no,yes,no,no,yes,yes,yes,4,3,4,5,2,96.67,86.0,60.0,60.0,65.0,Moderate Risk
+STU-POR-290,Portuguese Language,2025-2026,Final Term,GP,F,17,U,LE3,T,4,2,12.0,0,no,yes,no,yes,yes,yes,no,4,2,3,4,2,96.67,99.0,70.0,75.0,85.0,Low Risk / On Track
+STU-POR-291,Portuguese Language,2025-2026,Final Term,GP,F,19,U,GT3,T,2,2,3.5,0,no,yes,no,no,yes,yes,no,4,3,3,5,0,100.0,86.0,50.0,50.0,55.0,Moderate Risk
+STU-POR-292,Portuguese Language,2025-2026,Final Term,GP,M,18,U,LE3,T,2,1,3.5,1,no,no,no,yes,no,yes,no,4,4,5,5,4,93.33,76.0,55.0,50.0,55.0,Moderate Risk
+STU-POR-293,Portuguese Language,2025-2026,Final Term,GP,F,17,R,GT3,T,4,2,7.5,0,no,yes,no,yes,yes,yes,no,4,3,4,5,2,96.67,94.5,55.0,60.0,70.0,Low Risk / On Track
+STU-POR-294,Portuguese Language,2025-2026,Final Term,GP,F,18,U,LE3,T,1,1,7.5,0,no,yes,no,no,yes,no,no,4,4,3,3,4,93.33,90.5,55.0,60.0,70.0,Low Risk / On Track
+STU-POR-295,Portuguese Language,2025-2026,Final Term,GP,F,18,R,GT3,T,2,2,3.5,0,yes,no,no,no,yes,no,no,3,2,3,5,4,93.33,86.0,55.0,55.0,65.0,Moderate Risk
+STU-POR-296,Portuguese Language,2025-2026,Final Term,GP,M,19,U,LE3,A,4,3,3.5,0,no,yes,no,no,yes,yes,no,4,3,1,1,4,93.33,86.0,55.0,65.0,70.0,Low Risk / On Track
+STU-POR-297,Portuguese Language,2025-2026,Final Term,GP,M,18,U,GT3,T,2,1,3.5,0,no,no,no,yes,yes,yes,no,5,2,4,4,2,96.67,90.0,80.0,80.0,80.0,Low Risk / On Track
+STU-POR-298,Portuguese Language,2025-2026,Final Term,GP,M,17,R,GT3,T,2,2,1.5,0,no,no,no,no,no,no,no,5,2,2,4,0,100.0,73.5,45.0,50.0,50.0,Moderate Risk
+STU-POR-299,Portuguese Language,2025-2026,Final Term,GP,F,17,U,LE3,T,2,2,12.0,0,no,no,no,yes,yes,yes,yes,3,4,1,2,2,96.67,99.0,50.0,55.0,60.0,Moderate Risk
+STU-POR-300,Portuguese Language,2025-2026,Final Term,GP,F,20,R,GT3,T,2,1,3.5,0,no,yes,yes,yes,no,yes,yes,1,2,3,2,8,86.67,82.0,50.0,60.0,60.0,Moderate Risk
+STU-POR-301,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,4,3,3.5,0,no,yes,no,no,yes,yes,yes,3,1,2,2,2,96.67,86.0,75.0,75.0,75.0,Low Risk / On Track
+STU-POR-302,Portuguese Language,2025-2026,Final Term,GP,M,18,U,GT3,T,4,3,3.5,0,no,yes,no,no,yes,yes,no,4,3,2,3,2,96.67,86.0,50.0,50.0,55.0,Moderate Risk
+STU-POR-303,Portuguese Language,2025-2026,Final Term,GP,M,18,R,GT3,T,3,2,7.5,0,no,no,no,yes,yes,no,no,5,3,2,3,2,96.67,94.5,50.0,55.0,60.0,Moderate Risk
+STU-POR-304,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,3,3,7.5,0,no,no,no,yes,yes,no,no,3,2,3,4,2,96.67,94.5,75.0,60.0,65.0,Moderate Risk
+STU-POR-305,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,2,2,7.5,0,no,yes,no,yes,yes,yes,yes,4,3,3,3,0,100.0,94.5,55.0,60.0,65.0,Moderate Risk
+STU-POR-306,Portuguese Language,2025-2026,Final Term,GP,M,17,U,GT3,T,2,2,1.5,0,no,no,no,no,no,yes,no,4,4,4,4,8,86.67,73.5,40.0,40.0,45.0,High Risk
+STU-POR-307,Portuguese Language,2025-2026,Final Term,GP,M,18,R,LE3,A,3,4,3.5,0,no,yes,no,yes,yes,yes,no,4,2,5,1,6,90.0,90.0,75.0,80.0,80.0,Low Risk / On Track
+STU-POR-308,Portuguese Language,2025-2026,Final Term,GP,M,17,U,GT3,T,3,1,3.5,0,no,no,no,yes,yes,yes,yes,5,4,4,5,0,100.0,90.0,55.0,55.0,70.0,Low Risk / On Track
+STU-POR-309,Portuguese Language,2025-2026,Final Term,GP,F,18,R,GT3,T,4,4,3.5,0,no,no,no,yes,yes,yes,no,4,3,4,4,8,86.67,90.0,50.0,55.0,60.0,Moderate Risk
+STU-POR-310,Portuguese Language,2025-2026,Final Term,GP,M,18,U,GT3,T,4,2,3.5,0,no,yes,no,yes,yes,yes,yes,5,4,5,5,4,93.33,90.0,50.0,60.0,70.0,Low Risk / On Track
+STU-POR-311,Portuguese Language,2025-2026,Final Term,GP,F,18,R,GT3,T,2,1,3.5,0,no,yes,no,no,no,yes,yes,4,3,5,3,12,80.0,78.0,40.0,45.0,50.0,Moderate Risk
+STU-POR-312,Portuguese Language,2025-2026,Final Term,GP,F,19,U,GT3,T,3,3,3.5,0,no,yes,no,yes,yes,yes,no,4,3,5,5,16,73.33,90.0,55.0,60.0,60.0,Moderate Risk
+STU-POR-313,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,2,3,12.0,0,no,yes,no,yes,yes,yes,yes,4,5,5,2,10,83.33,99.0,80.0,80.0,80.0,Low Risk / On Track
+STU-POR-314,Portuguese Language,2025-2026,Final Term,GP,F,18,U,LE3,T,1,1,3.5,0,no,yes,no,no,yes,no,no,4,4,3,3,2,96.67,86.0,65.0,65.0,65.0,Moderate Risk
+STU-POR-315,Portuguese Language,2025-2026,Final Term,GP,M,17,R,GT3,T,1,2,3.5,0,no,yes,no,yes,yes,no,yes,3,5,2,1,2,96.67,90.0,80.0,85.0,90.0,Low Risk / On Track
+STU-POR-316,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,2,1,3.5,0,no,yes,no,no,yes,yes,yes,4,2,5,1,8,86.67,86.0,70.0,70.0,75.0,Low Risk / On Track
+STU-POR-317,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,2,4,3.5,0,no,yes,no,no,yes,yes,yes,4,3,3,1,6,90.0,86.0,75.0,80.0,80.0,Low Risk / On Track
+STU-POR-318,Portuguese Language,2025-2026,Final Term,GP,F,17,U,LE3,T,2,2,3.5,0,yes,yes,no,no,yes,yes,yes,4,4,4,5,6,90.0,86.0,60.0,60.0,60.0,Moderate Risk
+STU-POR-319,Portuguese Language,2025-2026,Final Term,GP,F,18,R,GT3,A,3,2,3.5,0,no,no,no,no,no,yes,yes,4,1,1,5,15,75.0,78.0,60.0,45.0,50.0,Moderate Risk
+STU-POR-320,Portuguese Language,2025-2026,Final Term,GP,M,18,U,GT3,T,4,4,1.5,0,no,no,no,yes,yes,yes,no,3,2,4,3,6,90.0,85.5,55.0,60.0,60.0,Moderate Risk
+STU-POR-321,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,4,4,3.5,1,yes,yes,no,yes,yes,yes,yes,2,4,4,4,2,96.67,84.0,70.0,60.0,65.0,Moderate Risk
+STU-POR-322,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,2,2,7.5,0,no,yes,no,no,yes,yes,yes,4,2,3,1,8,86.67,90.5,65.0,75.0,75.0,Low Risk / On Track
+STU-POR-323,Portuguese Language,2025-2026,Final Term,GP,F,19,R,GT3,T,3,2,3.5,1,yes,yes,no,no,no,yes,no,3,3,3,3,0,100.0,72.0,45.0,40.0,50.0,Moderate Risk
+STU-POR-324,Portuguese Language,2025-2026,Final Term,GP,M,18,U,LE3,T,4,3,1.5,0,no,no,no,yes,yes,yes,no,4,2,3,1,0,100.0,85.5,50.0,50.0,50.0,Moderate Risk
+STU-POR-325,Portuguese Language,2025-2026,Final Term,GP,M,18,U,GT3,T,1,2,1.5,0,no,no,no,no,no,yes,no,3,4,4,4,10,83.33,73.5,50.0,50.0,55.0,Moderate Risk
+STU-POR-326,Portuguese Language,2025-2026,Final Term,GP,M,17,U,LE3,A,4,1,1.5,0,no,no,no,yes,yes,yes,yes,4,5,4,5,22,63.33,85.5,55.0,55.0,50.0,Moderate Risk
+STU-POR-327,Portuguese Language,2025-2026,Final Term,GP,M,17,U,LE3,A,3,2,1.5,0,no,no,no,no,yes,yes,no,4,4,4,3,18,70.0,81.5,65.0,65.0,65.0,Moderate Risk
+STU-POR-328,Portuguese Language,2025-2026,Final Term,GP,F,18,R,LE3,T,1,1,12.0,0,no,yes,no,yes,yes,no,no,5,2,2,3,2,96.67,99.0,85.0,85.0,90.0,Low Risk / On Track
+STU-POR-329,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,1,1,3.5,0,yes,no,no,yes,yes,yes,no,5,4,4,4,0,100.0,90.0,60.0,65.0,65.0,Moderate Risk
+STU-POR-330,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,2,2,3.5,0,no,yes,no,no,yes,yes,no,5,4,5,5,12,80.0,86.0,60.0,60.0,70.0,Low Risk / On Track
+STU-POR-331,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,2,1,3.5,0,no,no,no,yes,yes,yes,yes,4,3,1,5,10,83.33,90.0,60.0,65.0,70.0,Low Risk / On Track
+STU-POR-332,Portuguese Language,2025-2026,Final Term,GP,M,17,U,GT3,T,1,1,3.5,0,no,no,no,no,yes,yes,no,4,3,3,4,0,100.0,86.0,60.0,60.0,60.0,Moderate Risk
+STU-POR-333,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,2,2,7.5,0,no,yes,no,no,yes,yes,no,4,3,3,2,0,100.0,90.5,90.0,90.0,90.0,Low Risk / On Track
+STU-POR-334,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,1,1,7.5,0,no,yes,no,no,yes,yes,no,4,3,3,3,0,100.0,90.5,65.0,65.0,70.0,Low Risk / On Track
+STU-POR-335,Portuguese Language,2025-2026,Final Term,GP,M,18,U,GT3,T,2,1,7.5,0,no,no,no,yes,yes,yes,no,4,2,4,2,0,100.0,94.5,70.0,75.0,75.0,Low Risk / On Track
+STU-POR-336,Portuguese Language,2025-2026,Final Term,GP,M,18,U,LE3,A,4,4,3.5,0,no,yes,no,yes,yes,yes,no,5,4,3,2,0,100.0,90.0,85.0,85.0,85.0,Low Risk / On Track
+STU-POR-337,Portuguese Language,2025-2026,Final Term,GP,M,18,U,GT3,T,4,2,3.5,0,no,yes,no,yes,yes,yes,yes,4,3,2,5,2,96.67,90.0,75.0,80.0,80.0,Low Risk / On Track
+STU-POR-338,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,4,3,7.5,0,no,yes,no,no,yes,yes,no,4,2,2,3,0,100.0,90.5,85.0,90.0,90.0,Low Risk / On Track
+STU-POR-339,Portuguese Language,2025-2026,Final Term,GP,F,17,R,LE3,T,3,1,12.0,0,no,yes,no,no,yes,no,no,3,1,2,3,0,100.0,95.0,90.0,95.0,95.0,Low Risk / On Track
+STU-POR-340,Portuguese Language,2025-2026,Final Term,GP,M,18,R,LE3,T,3,2,7.5,0,no,yes,no,yes,yes,yes,no,5,4,2,4,0,100.0,94.5,70.0,75.0,75.0,Low Risk / On Track
+STU-POR-341,Portuguese Language,2025-2026,Final Term,GP,M,17,U,GT3,T,3,3,1.5,0,no,yes,no,no,yes,yes,no,4,4,3,5,0,100.0,81.5,70.0,75.0,75.0,Low Risk / On Track
+STU-POR-342,Portuguese Language,2025-2026,Final Term,GP,F,19,U,GT3,T,4,4,3.5,0,no,yes,no,yes,yes,yes,no,2,3,4,2,2,96.67,90.0,70.0,65.0,65.0,Moderate Risk
+STU-POR-343,Portuguese Language,2025-2026,Final Term,GP,F,18,U,LE3,T,4,3,3.5,0,no,yes,no,no,yes,yes,yes,4,4,5,2,0,100.0,86.0,65.0,70.0,70.0,Low Risk / On Track
+STU-POR-344,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,4,3,12.0,0,no,yes,no,no,yes,yes,no,4,3,3,3,0,100.0,95.0,80.0,85.0,85.0,Low Risk / On Track
+STU-POR-345,Portuguese Language,2025-2026,Final Term,GP,M,18,U,LE3,T,4,4,1.5,0,no,yes,no,no,yes,yes,yes,1,4,2,1,0,100.0,81.5,90.0,90.0,85.0,Low Risk / On Track
+STU-POR-346,Portuguese Language,2025-2026,Final Term,GP,F,18,U,LE3,A,4,4,3.5,0,no,yes,yes,no,yes,yes,yes,4,2,4,4,0,100.0,86.0,70.0,75.0,75.0,Low Risk / On Track
+STU-POR-347,Portuguese Language,2025-2026,Final Term,GP,M,17,U,LE3,T,4,4,1.5,0,no,no,no,no,yes,yes,no,4,1,1,5,0,100.0,81.5,60.0,65.0,65.0,Moderate Risk
+STU-POR-348,Portuguese Language,2025-2026,Final Term,GP,F,17,R,GT3,T,4,4,7.5,0,no,yes,no,yes,yes,yes,no,5,3,4,5,0,100.0,94.5,35.0,35.0,40.0,High Risk
+STU-POR-349,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,4,2,7.5,0,no,yes,no,no,yes,yes,no,4,3,3,3,0,100.0,90.5,80.0,80.0,80.0,Low Risk / On Track
+STU-POR-350,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,3,2,12.0,0,no,yes,no,yes,yes,yes,no,5,2,2,5,0,100.0,99.0,90.0,90.0,90.0,Low Risk / On Track
+STU-POR-351,Portuguese Language,2025-2026,Final Term,GP,M,19,R,LE3,T,2,1,7.5,1,no,no,no,yes,yes,yes,yes,4,3,1,5,0,100.0,88.5,45.0,50.0,55.0,Moderate Risk
+STU-POR-352,Portuguese Language,2025-2026,Final Term,GP,M,20,U,GT3,A,3,2,1.5,2,no,no,no,yes,yes,no,no,5,5,3,5,0,100.0,73.5,70.0,75.0,75.0,Low Risk / On Track
+STU-POR-353,Portuguese Language,2025-2026,Final Term,GP,M,19,R,GT3,T,3,3,3.5,0,no,no,no,yes,yes,no,yes,4,5,3,5,0,100.0,90.0,50.0,50.0,55.0,Moderate Risk
+STU-POR-354,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,1,4,3.5,0,yes,yes,no,no,yes,no,yes,3,4,4,5,2,96.67,86.0,50.0,50.0,55.0,Moderate Risk
+STU-POR-355,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,2,1,3.5,0,no,yes,no,yes,yes,yes,no,5,3,3,1,2,96.67,90.0,60.0,60.0,75.0,Low Risk / On Track
+STU-POR-356,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,2,3,3.5,0,no,no,no,yes,yes,yes,yes,4,2,1,3,2,96.67,90.0,55.0,60.0,70.0,Low Risk / On Track
+STU-POR-357,Portuguese Language,2025-2026,Final Term,GP,F,17,R,GT3,T,4,4,1.5,0,no,no,no,yes,yes,yes,no,4,4,4,5,2,96.67,85.5,75.0,80.0,85.0,Low Risk / On Track
+STU-POR-358,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,4,3,7.5,0,no,yes,no,yes,yes,yes,yes,4,3,4,5,2,96.67,94.5,70.0,75.0,85.0,Low Risk / On Track
+STU-POR-359,Portuguese Language,2025-2026,Final Term,GP,F,18,U,LE3,T,4,3,1.5,0,no,yes,no,no,yes,yes,no,3,2,4,1,8,86.67,81.5,60.0,60.0,75.0,Low Risk / On Track
+STU-POR-360,Portuguese Language,2025-2026,Final Term,GP,F,17,R,GT3,T,3,4,7.5,0,no,yes,no,yes,yes,yes,no,4,3,4,5,2,96.67,94.5,75.0,75.0,85.0,Low Risk / On Track
+STU-POR-361,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,3,3,3.5,0,no,yes,no,no,yes,yes,no,4,1,4,3,8,86.67,86.0,55.0,60.0,70.0,Low Risk / On Track
+STU-POR-362,Portuguese Language,2025-2026,Final Term,GP,M,19,U,GT3,T,4,2,3.5,0,no,yes,no,yes,yes,yes,yes,5,4,4,1,9,85.0,90.0,55.0,50.0,50.0,Moderate Risk
+STU-POR-363,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,4,4,3.5,0,no,yes,no,no,yes,yes,no,4,4,4,5,0,100.0,86.0,60.0,55.0,65.0,Moderate Risk
+STU-POR-364,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,3,4,1.5,0,no,yes,no,yes,yes,yes,yes,5,4,4,1,4,93.33,85.5,55.0,60.0,70.0,Low Risk / On Track
+STU-POR-365,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,4,4,1.5,0,no,no,no,yes,yes,yes,no,5,3,4,5,2,96.67,85.5,70.0,75.0,85.0,Low Risk / On Track
+STU-POR-366,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,A,4,3,3.5,0,no,yes,no,no,yes,yes,yes,5,2,2,5,14,76.67,86.0,75.0,70.0,85.0,Low Risk / On Track
+STU-POR-367,Portuguese Language,2025-2026,Final Term,GP,F,17,U,LE3,A,3,3,3.5,0,yes,yes,no,no,yes,yes,no,5,3,3,5,0,100.0,86.0,60.0,60.0,65.0,Moderate Risk
+STU-POR-368,Portuguese Language,2025-2026,Final Term,GP,F,17,U,LE3,T,2,1,3.5,0,no,no,no,yes,yes,yes,no,4,2,3,2,2,96.67,90.0,55.0,60.0,70.0,Low Risk / On Track
+STU-POR-369,Portuguese Language,2025-2026,Final Term,GP,M,18,U,LE3,T,4,4,1.5,0,no,yes,no,no,yes,yes,no,4,2,5,5,2,96.67,81.5,40.0,45.0,55.0,Moderate Risk
+STU-POR-370,Portuguese Language,2025-2026,Final Term,GP,F,19,U,GT3,T,1,1,7.5,0,no,no,no,yes,no,no,yes,1,5,5,5,12,80.0,86.5,50.0,50.0,55.0,Moderate Risk
+STU-POR-371,Portuguese Language,2025-2026,Final Term,GP,F,19,U,LE3,A,1,1,3.5,2,no,yes,no,no,yes,yes,yes,5,3,4,4,2,96.67,74.0,40.0,40.0,45.0,High Risk
+STU-POR-372,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,2,2,1.5,0,no,yes,no,yes,yes,yes,yes,4,3,5,5,2,96.67,85.5,50.0,50.0,50.0,Moderate Risk
+STU-POR-373,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,2,2,3.5,0,no,yes,no,no,yes,no,yes,4,2,2,3,4,93.33,86.0,70.0,65.0,65.0,Moderate Risk
+STU-POR-374,Portuguese Language,2025-2026,Final Term,GP,F,17,R,LE3,T,2,2,7.5,0,no,yes,no,yes,yes,yes,no,3,3,2,3,0,100.0,94.5,55.0,55.0,50.0,Moderate Risk
+STU-POR-375,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,3,1,7.5,0,no,yes,no,no,yes,yes,no,3,4,3,5,0,100.0,90.5,85.0,90.0,85.0,Low Risk / On Track
+STU-POR-376,Portuguese Language,2025-2026,Final Term,GP,F,17,U,LE3,T,0,2,7.5,0,no,no,no,no,yes,yes,no,3,3,3,2,0,100.0,90.5,70.0,70.0,75.0,Low Risk / On Track
+STU-POR-377,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,1,1,7.5,0,no,no,no,yes,yes,yes,no,4,5,5,2,0,100.0,94.5,70.0,70.0,70.0,Low Risk / On Track
+STU-POR-378,Portuguese Language,2025-2026,Final Term,GP,M,18,U,GT3,T,4,4,7.5,0,no,no,no,yes,yes,yes,no,4,3,3,3,0,100.0,94.5,65.0,70.0,65.0,Moderate Risk
+STU-POR-379,Portuguese Language,2025-2026,Final Term,GP,M,17,U,GT3,T,3,3,1.5,0,no,no,no,yes,yes,yes,no,4,3,5,5,0,100.0,85.5,85.0,90.0,85.0,Low Risk / On Track
+STU-POR-380,Portuguese Language,2025-2026,Final Term,GP,M,17,R,GT3,T,2,2,1.5,0,no,yes,no,no,yes,yes,no,4,4,5,4,2,96.67,81.5,55.0,50.0,50.0,Moderate Risk
+STU-POR-381,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,4,4,7.5,0,no,yes,no,yes,yes,yes,no,5,4,4,4,0,100.0,94.5,65.0,60.0,65.0,Moderate Risk
+STU-POR-382,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,4,4,7.5,0,no,yes,no,no,yes,yes,yes,4,3,3,4,4,93.33,90.5,75.0,70.0,75.0,Low Risk / On Track
+STU-POR-383,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,3,3,1.5,0,no,yes,yes,yes,yes,yes,no,4,2,5,5,2,96.67,85.5,55.0,60.0,55.0,Moderate Risk
+STU-POR-384,Portuguese Language,2025-2026,Final Term,GP,M,18,U,LE3,T,2,2,12.0,0,no,yes,yes,yes,yes,yes,no,4,5,5,5,0,100.0,99.0,55.0,55.0,60.0,Moderate Risk
+STU-POR-385,Portuguese Language,2025-2026,Final Term,GP,M,19,R,GT3,T,3,2,1.5,0,no,yes,no,no,yes,no,yes,5,3,4,5,0,100.0,81.5,55.0,50.0,50.0,Moderate Risk
+STU-POR-386,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,2,2,3.5,0,no,no,no,yes,yes,no,yes,4,2,5,2,2,96.67,90.0,50.0,45.0,50.0,Moderate Risk
+STU-POR-387,Portuguese Language,2025-2026,Final Term,GP,F,17,R,GT3,T,2,4,7.5,0,no,yes,no,no,yes,yes,yes,4,4,3,5,0,100.0,90.5,75.0,75.0,75.0,Low Risk / On Track
+STU-POR-388,Portuguese Language,2025-2026,Final Term,GP,M,18,U,GT3,T,2,2,1.5,0,no,no,no,no,yes,yes,no,5,4,2,5,6,90.0,81.5,75.0,70.0,75.0,Low Risk / On Track
+STU-POR-389,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,3,3,3.5,0,no,no,no,yes,yes,yes,no,5,3,4,4,8,86.67,90.0,50.0,55.0,60.0,Moderate Risk
+STU-POR-390,Portuguese Language,2025-2026,Final Term,GP,F,18,U,LE3,T,2,2,3.5,0,no,no,no,yes,yes,yes,yes,4,3,3,2,0,100.0,90.0,50.0,45.0,60.0,Moderate Risk
+STU-POR-391,Portuguese Language,2025-2026,Final Term,GP,F,18,R,GT3,T,2,2,12.0,0,no,no,no,yes,yes,no,no,4,4,4,4,6,90.0,99.0,70.0,65.0,70.0,Low Risk / On Track
+STU-POR-392,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,3,4,7.5,0,no,no,no,no,yes,yes,no,4,4,5,5,8,86.67,90.5,55.0,65.0,70.0,Low Risk / On Track
+STU-POR-393,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,3,2,3.5,0,no,yes,no,no,yes,yes,yes,4,3,2,2,0,100.0,86.0,60.0,65.0,75.0,Low Risk / On Track
+STU-POR-394,Portuguese Language,2025-2026,Final Term,GP,F,18,U,LE3,T,3,3,12.0,0,no,yes,no,no,yes,yes,no,5,3,3,1,4,93.33,95.0,70.0,70.0,75.0,Low Risk / On Track
+STU-POR-395,Portuguese Language,2025-2026,Final Term,GP,F,17,R,GT3,A,3,2,3.5,0,no,yes,no,no,yes,yes,no,4,3,3,2,0,100.0,86.0,70.0,70.0,80.0,Low Risk / On Track
+STU-POR-396,Portuguese Language,2025-2026,Final Term,GP,M,18,U,GT3,T,4,4,3.5,0,no,yes,no,yes,yes,yes,no,4,3,3,2,0,100.0,90.0,60.0,60.0,65.0,Moderate Risk
+STU-POR-397,Portuguese Language,2025-2026,Final Term,GP,M,18,U,LE3,T,3,4,3.5,0,no,no,no,yes,yes,yes,yes,4,3,3,5,6,90.0,90.0,80.0,80.0,85.0,Low Risk / On Track
+STU-POR-398,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,A,2,2,3.5,0,no,yes,no,no,yes,yes,yes,3,3,1,4,18,70.0,86.0,50.0,60.0,70.0,Low Risk / On Track
+STU-POR-399,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,2,3,7.5,0,no,yes,no,no,yes,yes,no,4,3,3,3,0,100.0,90.5,55.0,60.0,70.0,Low Risk / On Track
+STU-POR-400,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,3,2,7.5,0,no,no,no,no,yes,yes,yes,5,4,3,1,4,93.33,90.5,70.0,80.0,85.0,Low Risk / On Track
+STU-POR-401,Portuguese Language,2025-2026,Final Term,GP,M,18,R,GT3,T,4,3,7.5,0,no,no,no,no,yes,yes,yes,5,3,2,4,4,93.33,90.5,75.0,70.0,85.0,Low Risk / On Track
+STU-POR-402,Portuguese Language,2025-2026,Final Term,GP,M,18,U,GT3,T,4,3,7.5,0,no,yes,no,no,yes,yes,yes,5,4,5,5,0,100.0,90.5,70.0,65.0,70.0,Low Risk / On Track
+STU-POR-403,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,4,3,7.5,0,no,yes,no,yes,yes,yes,yes,4,4,3,4,0,100.0,94.5,55.0,60.0,65.0,Moderate Risk
+STU-POR-404,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,2,1,3.5,0,no,yes,no,yes,yes,yes,yes,4,3,4,1,10,83.33,90.0,60.0,75.0,75.0,Low Risk / On Track
+STU-POR-405,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,2,1,3.5,0,no,yes,no,yes,yes,yes,no,4,3,5,4,4,93.33,90.0,60.0,80.0,80.0,Low Risk / On Track
+STU-POR-406,Portuguese Language,2025-2026,Final Term,GP,F,19,U,LE3,A,2,3,1.5,1,no,no,no,no,no,yes,no,2,2,3,5,16,73.33,67.5,50.0,55.0,55.0,Moderate Risk
+STU-POR-407,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,3,1,1.5,1,no,yes,yes,no,yes,yes,yes,4,1,2,3,6,90.0,75.5,50.0,65.0,65.0,Moderate Risk
+STU-POR-408,Portuguese Language,2025-2026,Final Term,GP,F,21,U,LE3,T,4,4,7.5,2,no,no,yes,yes,yes,yes,no,3,3,2,5,0,100.0,82.5,45.0,60.0,60.0,Moderate Risk
+STU-POR-409,Portuguese Language,2025-2026,Final Term,GP,M,18,U,LE3,T,2,2,3.5,0,no,yes,no,yes,no,yes,no,4,4,4,3,11,81.67,82.0,45.0,55.0,60.0,Moderate Risk
+STU-POR-410,Portuguese Language,2025-2026,Final Term,GP,M,18,U,LE3,A,3,4,3.5,0,no,no,no,yes,yes,yes,yes,4,3,5,2,9,85.0,90.0,65.0,70.0,75.0,Low Risk / On Track
+STU-POR-411,Portuguese Language,2025-2026,Final Term,GP,F,17,U,GT3,T,2,2,3.5,0,no,yes,no,yes,yes,yes,no,4,3,4,4,0,100.0,90.0,65.0,85.0,85.0,Low Risk / On Track
+STU-POR-412,Portuguese Language,2025-2026,Final Term,GP,M,17,U,LE3,A,4,4,7.5,0,no,yes,no,no,yes,yes,no,4,4,2,4,2,96.67,90.5,60.0,75.0,75.0,Low Risk / On Track
+STU-POR-413,Portuguese Language,2025-2026,Final Term,GP,F,18,U,LE3,T,4,2,3.5,0,no,yes,no,yes,yes,yes,no,4,2,2,3,0,100.0,90.0,70.0,85.0,85.0,Low Risk / On Track
+STU-POR-414,Portuguese Language,2025-2026,Final Term,GP,M,21,R,LE3,T,1,1,3.5,2,no,yes,no,yes,no,yes,yes,5,3,3,4,21,65.0,70.0,45.0,50.0,50.0,Moderate Risk
+STU-POR-415,Portuguese Language,2025-2026,Final Term,GP,F,20,R,GT3,T,1,1,7.5,0,no,no,no,no,yes,yes,yes,3,2,2,3,8,86.67,90.5,55.0,75.0,75.0,Low Risk / On Track
+STU-POR-416,Portuguese Language,2025-2026,Final Term,GP,F,19,U,GT3,T,4,4,1.5,1,no,yes,no,no,yes,yes,yes,3,2,5,5,5,91.67,75.5,45.0,50.0,55.0,Moderate Risk
+STU-POR-417,Portuguese Language,2025-2026,Final Term,GP,M,17,U,LE3,A,3,2,3.5,0,no,yes,no,no,yes,yes,no,4,4,4,5,10,83.33,86.0,80.0,90.0,90.0,Low Risk / On Track
+STU-POR-418,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,3,2,7.5,0,no,yes,no,no,yes,yes,yes,4,3,4,2,5,91.67,90.5,70.0,85.0,85.0,Low Risk / On Track
+STU-POR-419,Portuguese Language,2025-2026,Final Term,GP,M,18,R,GT3,T,2,3,1.5,0,no,no,no,no,yes,yes,no,3,1,3,4,13,78.33,81.5,65.0,70.0,70.0,Low Risk / On Track
+STU-POR-420,Portuguese Language,2025-2026,Final Term,GP,M,19,U,GT3,T,2,1,1.5,0,no,no,no,no,yes,yes,no,5,3,4,4,10,83.33,81.5,35.0,55.0,55.0,Moderate Risk
+STU-POR-421,Portuguese Language,2025-2026,Final Term,GP,F,18,U,LE3,A,2,2,3.5,0,no,yes,no,no,yes,yes,no,4,1,4,4,10,83.33,86.0,70.0,85.0,85.0,Low Risk / On Track
+STU-POR-422,Portuguese Language,2025-2026,Final Term,GP,F,20,U,GT3,T,1,0,1.5,1,yes,no,no,no,yes,yes,yes,5,3,1,5,5,91.67,75.5,40.0,50.0,50.0,Moderate Risk
+STU-POR-423,Portuguese Language,2025-2026,Final Term,GP,F,18,U,GT3,T,3,2,3.5,0,no,yes,no,yes,yes,yes,yes,3,1,2,1,4,93.33,90.0,50.0,65.0,65.0,Moderate Risk
+STU-POR-424,Portuguese Language,2025-2026,Final Term,MS,F,16,U,GT3,T,1,3,1.5,0,no,yes,no,no,no,yes,yes,4,3,3,5,11,81.67,73.5,50.0,55.0,55.0,Moderate Risk
+STU-POR-425,Portuguese Language,2025-2026,Final Term,MS,F,16,R,GT3,T,2,2,3.5,0,no,yes,no,yes,yes,yes,no,4,4,4,5,0,100.0,90.0,60.0,60.0,60.0,Moderate Risk
+STU-POR-426,Portuguese Language,2025-2026,Final Term,MS,F,15,R,GT3,T,1,1,1.5,1,no,yes,no,no,yes,no,yes,4,1,3,2,6,90.0,75.5,50.0,50.0,50.0,Moderate Risk
+STU-POR-427,Portuguese Language,2025-2026,Final Term,MS,F,15,R,GT3,T,3,3,1.5,0,no,yes,no,no,yes,yes,no,5,4,4,5,4,93.33,81.5,50.0,50.0,55.0,Moderate Risk
+STU-POR-428,Portuguese Language,2025-2026,Final Term,MS,F,16,R,GT3,T,2,3,3.5,0,no,no,no,no,yes,no,no,4,5,2,5,0,100.0,86.0,80.0,85.0,85.0,Low Risk / On Track
+STU-POR-429,Portuguese Language,2025-2026,Final Term,MS,F,15,R,LE3,T,2,1,1.5,0,no,no,no,no,no,no,no,1,3,4,1,0,100.0,73.5,30.0,40.0,45.0,High Risk
+STU-POR-430,Portuguese Language,2025-2026,Final Term,MS,M,16,R,LE3,A,4,4,3.5,0,no,yes,no,no,yes,no,no,5,3,2,2,5,91.67,86.0,50.0,55.0,55.0,Moderate Risk
+STU-POR-431,Portuguese Language,2025-2026,Final Term,MS,M,16,U,GT3,A,1,2,7.5,0,yes,no,no,no,yes,yes,no,4,4,3,5,0,100.0,90.5,50.0,55.0,55.0,Moderate Risk
+STU-POR-432,Portuguese Language,2025-2026,Final Term,MS,F,17,R,GT3,T,3,2,3.5,1,no,no,no,no,yes,no,yes,4,5,4,5,0,100.0,80.0,50.0,50.0,50.0,Moderate Risk
+STU-POR-433,Portuguese Language,2025-2026,Final Term,MS,F,17,R,GT3,T,1,1,1.5,1,no,yes,no,no,no,yes,no,5,4,4,5,0,100.0,67.5,30.0,30.0,35.0,High Risk
+STU-POR-434,Portuguese Language,2025-2026,Final Term,MS,F,15,R,GT3,T,4,4,1.5,0,no,no,no,no,yes,yes,yes,1,5,1,5,0,100.0,81.5,65.0,70.0,70.0,Low Risk / On Track
+STU-POR-435,Portuguese Language,2025-2026,Final Term,MS,F,16,U,LE3,A,2,2,12.0,0,no,no,no,yes,no,no,yes,1,2,1,1,4,93.33,91.0,50.0,45.0,55.0,Moderate Risk
+STU-POR-436,Portuguese Language,2025-2026,Final Term,MS,F,15,R,LE3,T,1,1,3.5,0,no,yes,no,no,yes,yes,no,5,4,3,4,0,100.0,86.0,50.0,50.0,50.0,Moderate Risk
+STU-POR-437,Portuguese Language,2025-2026,Final Term,MS,F,15,R,LE3,T,1,1,1.5,1,no,yes,no,no,yes,yes,yes,4,4,3,2,4,93.33,75.5,30.0,35.0,40.0,High Risk
+STU-POR-438,Portuguese Language,2025-2026,Final Term,MS,F,16,R,GT3,T,0,2,1.5,0,no,yes,no,yes,yes,no,no,3,2,3,2,0,100.0,85.5,60.0,55.0,60.0,Moderate Risk
+STU-POR-439,Portuguese Language,2025-2026,Final Term,MS,F,17,R,GT3,T,2,3,1.5,0,no,yes,no,no,yes,yes,no,5,5,5,3,2,96.67,81.5,50.0,55.0,60.0,Moderate Risk
+STU-POR-440,Portuguese Language,2025-2026,Final Term,MS,F,15,R,GT3,T,3,3,1.5,0,no,no,no,no,yes,yes,no,4,1,3,4,0,100.0,81.5,70.0,80.0,80.0,Low Risk / On Track
+STU-POR-441,Portuguese Language,2025-2026,Final Term,MS,M,16,U,GT3,T,1,1,3.5,0,no,yes,no,yes,yes,no,yes,5,4,5,3,0,100.0,90.0,35.0,0.0,0.0,High Risk
+STU-POR-442,Portuguese Language,2025-2026,Final Term,MS,M,17,U,GT3,T,1,1,3.5,0,no,no,yes,no,yes,yes,no,4,4,3,5,4,93.33,86.0,40.0,45.0,45.0,High Risk
+STU-POR-443,Portuguese Language,2025-2026,Final Term,MS,M,15,R,LE3,T,4,1,3.5,0,no,yes,no,yes,yes,yes,no,5,3,4,2,0,100.0,90.0,60.0,65.0,70.0,Low Risk / On Track
+STU-POR-444,Portuguese Language,2025-2026,Final Term,MS,M,15,R,LE3,T,4,1,3.5,0,no,yes,no,yes,yes,yes,no,5,3,4,2,7,88.33,90.0,35.0,45.0,40.0,High Risk
+STU-POR-445,Portuguese Language,2025-2026,Final Term,MS,M,16,R,GT3,T,3,4,3.5,0,no,no,no,no,yes,no,no,3,4,5,5,4,93.33,86.0,45.0,50.0,55.0,Moderate Risk
+STU-POR-446,Portuguese Language,2025-2026,Final Term,MS,M,15,R,GT3,T,1,1,3.5,0,no,yes,no,yes,yes,no,yes,5,4,5,4,8,86.67,90.0,35.0,45.0,45.0,High Risk
+STU-POR-447,Portuguese Language,2025-2026,Final Term,MS,M,15,U,LE3,T,3,3,3.5,0,no,yes,no,yes,yes,yes,no,5,3,3,5,0,100.0,90.0,55.0,55.0,55.0,Moderate Risk
+STU-POR-448,Portuguese Language,2025-2026,Final Term,MS,M,17,R,GT3,T,2,1,1.5,0,no,no,no,yes,no,no,yes,5,5,5,3,8,86.67,77.5,40.0,50.0,45.0,High Risk
+STU-POR-449,Portuguese Language,2025-2026,Final Term,MS,F,16,R,GT3,T,4,4,7.5,0,no,no,no,yes,yes,yes,yes,4,2,2,4,6,90.0,94.5,80.0,80.0,85.0,Low Risk / On Track
+STU-POR-450,Portuguese Language,2025-2026,Final Term,MS,F,15,R,GT3,T,1,2,1.5,0,no,no,no,no,yes,no,no,5,1,2,1,3,95.0,81.5,55.0,65.0,65.0,Moderate Risk
+STU-POR-451,Portuguese Language,2025-2026,Final Term,MS,F,16,R,GT3,T,2,3,3.5,0,no,yes,no,no,yes,yes,no,4,5,4,1,2,96.67,86.0,75.0,75.0,75.0,Low Risk / On Track
+STU-POR-452,Portuguese Language,2025-2026,Final Term,MS,M,16,R,GT3,T,1,2,3.5,0,no,no,no,no,yes,no,no,4,3,3,5,0,100.0,86.0,50.0,55.0,55.0,Moderate Risk
+STU-POR-453,Portuguese Language,2025-2026,Final Term,MS,F,16,R,GT3,T,2,2,3.5,0,no,yes,no,no,yes,yes,no,4,4,5,4,4,93.33,86.0,45.0,50.0,55.0,Moderate Risk
+STU-POR-454,Portuguese Language,2025-2026,Final Term,MS,F,16,U,GT3,T,1,2,7.5,1,no,yes,no,no,yes,no,no,1,3,2,4,0,100.0,84.5,50.0,40.0,40.0,High Risk
+STU-POR-455,Portuguese Language,2025-2026,Final Term,MS,F,16,U,GT3,T,1,2,7.5,1,no,yes,no,no,yes,no,no,1,3,2,4,3,95.0,84.5,45.0,40.0,40.0,High Risk
+STU-POR-456,Portuguese Language,2025-2026,Final Term,MS,F,15,U,GT3,T,2,1,3.5,0,yes,yes,no,no,yes,yes,no,4,4,2,2,0,100.0,86.0,45.0,50.0,45.0,High Risk
+STU-POR-457,Portuguese Language,2025-2026,Final Term,MS,F,16,U,GT3,T,1,1,3.5,0,no,yes,no,no,yes,no,yes,5,4,3,2,0,100.0,86.0,65.0,70.0,75.0,Low Risk / On Track
+STU-POR-458,Portuguese Language,2025-2026,Final Term,MS,M,17,R,LE3,T,1,2,1.5,0,no,yes,no,yes,yes,yes,no,5,5,5,3,4,93.33,85.5,50.0,55.0,55.0,Moderate Risk
+STU-POR-459,Portuguese Language,2025-2026,Final Term,MS,F,16,R,GT3,T,1,1,12.0,0,no,yes,no,no,yes,yes,no,4,3,2,1,0,100.0,95.0,65.0,50.0,65.0,Moderate Risk
+STU-POR-460,Portuguese Language,2025-2026,Final Term,MS,F,16,R,GT3,T,1,1,7.5,0,yes,yes,no,no,yes,no,no,4,4,3,5,2,96.67,90.5,50.0,45.0,50.0,Moderate Risk
+STU-POR-461,Portuguese Language,2025-2026,Final Term,MS,F,15,R,GT3,T,1,1,3.5,0,no,yes,no,yes,yes,yes,no,4,3,3,2,1,98.33,90.0,55.0,50.0,55.0,Moderate Risk
+STU-POR-462,Portuguese Language,2025-2026,Final Term,MS,F,16,R,GT3,T,1,1,1.5,0,no,no,no,yes,yes,yes,yes,4,2,2,2,0,100.0,85.5,65.0,60.0,70.0,Low Risk / On Track
+STU-POR-463,Portuguese Language,2025-2026,Final Term,MS,F,15,R,GT3,T,1,1,3.5,0,no,yes,no,no,yes,no,no,4,2,1,2,0,100.0,86.0,65.0,70.0,70.0,Low Risk / On Track
+STU-POR-464,Portuguese Language,2025-2026,Final Term,MS,F,15,R,LE3,T,2,2,7.5,0,yes,yes,no,no,yes,no,no,4,4,3,5,2,96.67,90.5,70.0,55.0,60.0,Moderate Risk
+STU-POR-465,Portuguese Language,2025-2026,Final Term,MS,M,16,R,GT3,T,1,1,1.5,0,no,no,no,yes,yes,no,no,3,4,4,5,6,90.0,85.5,55.0,55.0,55.0,Moderate Risk
+STU-POR-466,Portuguese Language,2025-2026,Final Term,MS,F,18,U,GT3,T,1,2,3.5,1,no,yes,no,yes,yes,yes,yes,3,4,4,5,9,85.0,84.0,45.0,40.0,40.0,High Risk
+STU-POR-467,Portuguese Language,2025-2026,Final Term,MS,M,15,U,GT3,T,3,1,1.5,0,no,yes,no,no,yes,no,no,3,2,3,4,0,100.0,81.5,50.0,45.0,55.0,Moderate Risk
+STU-POR-468,Portuguese Language,2025-2026,Final Term,MS,F,16,R,GT3,T,2,2,3.5,0,no,yes,no,yes,yes,yes,no,5,3,4,2,1,98.33,90.0,70.0,65.0,70.0,Low Risk / On Track
+STU-POR-469,Portuguese Language,2025-2026,Final Term,MS,M,15,U,GT3,T,2,2,1.5,0,no,no,no,no,yes,no,no,4,3,3,4,1,98.33,81.5,65.0,60.0,65.0,Moderate Risk
+STU-POR-470,Portuguese Language,2025-2026,Final Term,MS,M,16,U,GT3,T,4,4,3.5,0,no,yes,no,yes,yes,no,yes,4,3,1,3,0,100.0,90.0,65.0,60.0,65.0,Moderate Risk
+STU-POR-471,Portuguese Language,2025-2026,Final Term,MS,F,15,R,GT3,T,3,3,3.5,0,no,yes,no,no,yes,yes,yes,4,5,4,1,4,93.33,86.0,65.0,60.0,60.0,Moderate Risk
+STU-POR-472,Portuguese Language,2025-2026,Final Term,MS,F,16,R,GT3,T,2,2,3.5,1,no,yes,no,yes,yes,no,no,4,4,4,5,2,96.67,84.0,60.0,55.0,60.0,Moderate Risk
+STU-POR-473,Portuguese Language,2025-2026,Final Term,MS,F,16,R,LE3,T,2,2,1.5,0,no,yes,no,yes,yes,no,yes,4,3,2,4,0,100.0,85.5,70.0,70.0,80.0,Low Risk / On Track
+STU-POR-474,Portuguese Language,2025-2026,Final Term,MS,M,16,U,LE3,T,2,1,1.5,0,no,yes,no,yes,yes,yes,no,2,4,3,4,4,93.33,85.5,50.0,40.0,50.0,Moderate Risk
+STU-POR-475,Portuguese Language,2025-2026,Final Term,MS,M,15,R,LE3,T,1,3,1.5,0,no,yes,no,yes,yes,yes,no,4,2,4,3,2,96.67,85.5,50.0,55.0,55.0,Moderate Risk
+STU-POR-476,Portuguese Language,2025-2026,Final Term,MS,F,15,U,GT3,T,2,2,7.5,0,no,yes,no,yes,yes,no,no,5,3,2,4,0,100.0,94.5,60.0,65.0,70.0,Low Risk / On Track
+STU-POR-477,Portuguese Language,2025-2026,Final Term,MS,F,16,R,LE3,T,2,1,1.5,0,no,yes,no,no,yes,yes,yes,5,4,3,5,2,96.67,81.5,50.0,40.0,40.0,High Risk
+STU-POR-478,Portuguese Language,2025-2026,Final Term,MS,M,15,U,GT3,T,3,3,1.5,0,no,yes,no,yes,yes,yes,no,4,3,3,3,11,81.67,85.5,60.0,50.0,55.0,Moderate Risk
+STU-POR-479,Portuguese Language,2025-2026,Final Term,MS,F,16,R,GT3,T,1,1,3.5,3,yes,yes,no,no,yes,no,no,3,4,3,1,0,100.0,68.0,35.0,35.0,40.0,High Risk
+STU-POR-480,Portuguese Language,2025-2026,Final Term,MS,F,17,U,GT3,T,2,2,1.5,0,no,yes,no,yes,no,no,no,4,5,3,5,4,93.33,77.5,45.0,45.0,50.0,Moderate Risk
+STU-POR-481,Portuguese Language,2025-2026,Final Term,MS,F,19,U,GT3,T,2,3,1.5,1,no,no,no,no,no,yes,yes,4,4,4,2,0,100.0,67.5,45.0,45.0,50.0,Moderate Risk
+STU-POR-482,Portuguese Language,2025-2026,Final Term,MS,F,17,R,GT3,T,2,1,1.5,0,no,yes,no,yes,no,no,yes,5,5,3,3,2,96.67,77.5,45.0,50.0,55.0,Moderate Risk
+STU-POR-483,Portuguese Language,2025-2026,Final Term,MS,F,15,R,LE3,T,1,1,1.5,0,no,yes,no,no,no,no,yes,5,2,1,4,0,100.0,73.5,45.0,50.0,45.0,High Risk
+STU-POR-484,Portuguese Language,2025-2026,Final Term,MS,F,16,R,GT3,T,2,2,3.5,0,no,yes,no,no,no,yes,no,3,4,5,1,1,98.33,78.0,45.0,50.0,55.0,Moderate Risk
+STU-POR-485,Portuguese Language,2025-2026,Final Term,MS,F,16,U,LE3,A,2,2,1.5,0,no,yes,no,no,no,no,no,4,3,4,1,6,90.0,73.5,35.0,35.0,40.0,High Risk
+STU-POR-486,Portuguese Language,2025-2026,Final Term,MS,F,17,R,GT3,T,2,2,3.5,0,no,yes,no,no,yes,yes,no,4,3,5,4,0,100.0,86.0,55.0,50.0,55.0,Moderate Risk
+STU-POR-487,Portuguese Language,2025-2026,Final Term,MS,F,16,U,GT3,T,2,2,1.5,1,no,yes,yes,yes,yes,yes,no,4,4,3,3,1,98.33,79.5,45.0,50.0,50.0,Moderate Risk
+STU-POR-488,Portuguese Language,2025-2026,Final Term,MS,F,18,R,LE3,A,3,2,7.5,2,no,yes,no,no,no,no,yes,3,3,2,2,6,90.0,70.5,35.0,45.0,50.0,Moderate Risk
+STU-POR-489,Portuguese Language,2025-2026,Final Term,MS,F,19,U,GT3,T,1,1,7.5,1,no,no,no,yes,no,no,yes,5,3,1,3,6,90.0,80.5,35.0,45.0,45.0,High Risk
+STU-POR-490,Portuguese Language,2025-2026,Final Term,MS,M,18,R,GT3,T,1,1,1.5,1,no,no,no,yes,no,yes,no,4,4,3,4,0,100.0,71.5,40.0,45.0,50.0,Moderate Risk
+STU-POR-491,Portuguese Language,2025-2026,Final Term,MS,F,18,R,GT3,T,1,1,1.5,1,no,no,no,no,no,yes,yes,3,2,3,2,4,93.33,67.5,45.0,55.0,50.0,Moderate Risk
+STU-POR-492,Portuguese Language,2025-2026,Final Term,MS,F,19,U,GT3,T,1,1,3.5,1,no,yes,no,no,yes,yes,yes,1,1,4,1,12,80.0,80.0,35.0,40.0,45.0,High Risk
+STU-POR-493,Portuguese Language,2025-2026,Final Term,MS,F,16,R,GT3,A,2,2,3.5,0,no,no,no,no,yes,no,yes,3,3,2,3,2,96.67,86.0,40.0,50.0,50.0,Moderate Risk
+STU-POR-494,Portuguese Language,2025-2026,Final Term,MS,F,17,U,GT3,T,0,1,1.5,0,no,no,no,yes,yes,no,no,2,4,4,5,5,91.67,85.5,45.0,45.0,50.0,Moderate Risk
+STU-POR-495,Portuguese Language,2025-2026,Final Term,MS,F,16,R,LE3,T,1,2,3.5,0,no,no,no,yes,no,yes,no,4,4,5,3,0,100.0,82.0,40.0,45.0,45.0,High Risk
+STU-POR-496,Portuguese Language,2025-2026,Final Term,MS,F,16,U,GT3,T,3,3,1.5,0,no,no,no,yes,no,yes,yes,4,5,4,4,0,100.0,77.5,70.0,65.0,65.0,Moderate Risk
+STU-POR-497,Portuguese Language,2025-2026,Final Term,MS,F,16,R,LE3,T,1,1,1.5,0,no,yes,no,yes,yes,yes,yes,4,4,4,4,2,96.67,85.5,70.0,70.0,70.0,Low Risk / On Track
+STU-POR-498,Portuguese Language,2025-2026,Final Term,MS,M,17,U,GT3,T,3,3,12.0,1,no,yes,yes,yes,yes,no,no,5,4,5,5,0,100.0,93.0,50.0,55.0,50.0,Moderate Risk
+STU-POR-499,Portuguese Language,2025-2026,Final Term,MS,F,16,U,GT3,T,2,1,3.5,0,no,yes,no,yes,yes,yes,no,5,3,3,1,0,100.0,90.0,70.0,65.0,70.0,Low Risk / On Track
+STU-POR-500,Portuguese Language,2025-2026,Final Term,MS,F,16,U,GT3,T,2,2,1.5,0,no,yes,yes,yes,yes,no,yes,4,2,5,5,0,100.0,85.5,85.0,80.0,80.0,Low Risk / On Track
+STU-POR-501,Portuguese Language,2025-2026,Final Term,MS,M,17,U,GT3,T,1,2,1.5,1,no,yes,no,yes,no,yes,yes,5,3,5,1,12,80.0,71.5,30.0,35.0,35.0,High Risk
+STU-POR-502,Portuguese Language,2025-2026,Final Term,MS,M,16,U,LE3,T,4,3,1.5,0,no,no,no,yes,yes,yes,no,4,2,5,5,8,86.67,85.5,70.0,60.0,65.0,Moderate Risk
+STU-POR-503,Portuguese Language,2025-2026,Final Term,MS,M,17,R,LE3,T,2,2,12.0,1,no,yes,no,no,yes,no,no,1,3,5,3,2,96.67,89.0,50.0,40.0,45.0,High Risk
+STU-POR-504,Portuguese Language,2025-2026,Final Term,MS,F,16,U,GT3,T,1,1,12.0,0,yes,yes,no,yes,yes,yes,no,2,2,1,5,0,100.0,99.0,70.0,70.0,70.0,Low Risk / On Track
+STU-POR-505,Portuguese Language,2025-2026,Final Term,MS,F,19,U,LE3,T,2,2,7.5,0,no,no,no,no,yes,yes,yes,5,4,5,1,0,100.0,90.5,60.0,65.0,65.0,Moderate Risk
+STU-POR-506,Portuguese Language,2025-2026,Final Term,MS,F,17,R,GT3,T,1,1,1.5,0,no,yes,no,yes,yes,yes,yes,4,4,5,5,0,100.0,85.5,55.0,55.0,55.0,Moderate Risk
+STU-POR-507,Portuguese Language,2025-2026,Final Term,MS,F,20,U,GT3,T,3,3,3.5,1,no,no,no,yes,yes,yes,yes,3,3,4,3,8,86.67,84.0,55.0,45.0,50.0,Moderate Risk
+STU-POR-508,Portuguese Language,2025-2026,Final Term,MS,F,17,U,LE3,T,1,1,7.5,0,no,yes,no,no,yes,no,yes,4,3,3,3,0,100.0,90.5,55.0,55.0,50.0,Moderate Risk
+STU-POR-509,Portuguese Language,2025-2026,Final Term,MS,M,17,R,GT3,T,2,2,1.5,1,no,yes,no,no,yes,yes,no,4,4,5,5,0,100.0,75.5,50.0,45.0,45.0,High Risk
+STU-POR-510,Portuguese Language,2025-2026,Final Term,MS,F,16,R,LE3,T,1,1,3.5,0,no,yes,no,no,yes,no,no,5,3,2,1,0,100.0,86.0,80.0,85.0,90.0,Low Risk / On Track
+STU-POR-511,Portuguese Language,2025-2026,Final Term,MS,F,17,R,GT3,T,2,2,3.5,0,no,yes,no,yes,yes,no,no,5,3,2,1,0,100.0,90.0,75.0,85.0,85.0,Low Risk / On Track
+STU-POR-512,Portuguese Language,2025-2026,Final Term,MS,F,17,U,GT3,A,1,0,3.5,0,no,no,no,no,yes,yes,yes,4,4,5,4,1,98.33,86.0,55.0,45.0,50.0,Moderate Risk
+STU-POR-513,Portuguese Language,2025-2026,Final Term,MS,F,18,R,GT3,T,1,1,3.5,1,no,yes,no,no,yes,yes,yes,4,3,2,5,9,85.0,80.0,35.0,35.0,35.0,High Risk
+STU-POR-514,Portuguese Language,2025-2026,Final Term,MS,F,16,U,GT3,T,3,1,1.5,0,no,no,no,yes,yes,yes,no,3,1,3,1,0,100.0,85.5,40.0,30.0,40.0,High Risk
+STU-POR-515,Portuguese Language,2025-2026,Final Term,MS,F,16,U,GT3,T,3,2,1.5,0,no,no,no,no,yes,yes,no,3,1,3,3,2,96.67,81.5,35.0,30.0,35.0,High Risk
+STU-POR-516,Portuguese Language,2025-2026,Final Term,MS,F,18,U,LE3,T,1,1,3.5,0,yes,no,no,no,yes,no,no,2,3,5,3,8,86.67,86.0,45.0,40.0,50.0,Moderate Risk
+STU-POR-517,Portuguese Language,2025-2026,Final Term,MS,F,16,R,GT3,T,4,4,3.5,0,no,no,no,yes,yes,yes,yes,4,3,3,2,0,100.0,90.0,70.0,80.0,80.0,Low Risk / On Track
+STU-POR-518,Portuguese Language,2025-2026,Final Term,MS,F,16,R,LE3,T,1,2,1.5,0,no,no,no,yes,yes,yes,no,5,4,5,2,0,100.0,85.5,70.0,70.0,75.0,Low Risk / On Track
+STU-POR-519,Portuguese Language,2025-2026,Final Term,MS,F,18,U,GT3,A,2,4,3.5,1,no,yes,no,no,yes,yes,no,2,3,2,1,8,86.67,80.0,40.0,25.0,40.0,High Risk
+STU-POR-520,Portuguese Language,2025-2026,Final Term,MS,M,16,R,GT3,T,2,1,3.5,0,no,no,no,yes,yes,yes,no,5,2,1,2,0,100.0,90.0,40.0,35.0,0.0,High Risk
+STU-POR-521,Portuguese Language,2025-2026,Final Term,MS,F,16,U,LE3,T,1,1,3.5,0,no,yes,no,no,yes,yes,no,4,3,2,5,6,90.0,86.0,30.0,40.0,40.0,High Risk
+STU-POR-522,Portuguese Language,2025-2026,Final Term,MS,F,16,R,GT3,T,2,3,3.5,0,no,yes,no,yes,yes,yes,no,3,3,3,2,0,100.0,90.0,40.0,50.0,50.0,Moderate Risk
+STU-POR-523,Portuguese Language,2025-2026,Final Term,MS,F,16,U,GT3,T,4,4,3.5,0,no,yes,no,no,yes,yes,yes,4,3,4,3,4,93.33,86.0,40.0,40.0,40.0,High Risk
+STU-POR-524,Portuguese Language,2025-2026,Final Term,MS,M,18,U,LE3,T,4,4,12.0,0,no,yes,no,yes,no,yes,yes,5,5,5,5,2,96.67,91.0,25.0,30.0,30.0,High Risk
+STU-POR-525,Portuguese Language,2025-2026,Final Term,MS,F,16,R,LE3,T,3,4,3.5,0,no,yes,no,no,yes,no,no,4,2,1,2,2,96.67,86.0,35.0,45.0,40.0,High Risk
+STU-POR-526,Portuguese Language,2025-2026,Final Term,MS,M,17,U,LE3,T,4,4,7.5,0,no,yes,no,no,yes,yes,no,4,4,3,5,0,100.0,90.5,75.0,70.0,80.0,Low Risk / On Track
+STU-POR-527,Portuguese Language,2025-2026,Final Term,MS,F,17,R,GT3,T,4,1,1.5,0,no,no,no,no,yes,yes,yes,4,2,3,5,1,98.33,81.5,65.0,70.0,70.0,Low Risk / On Track
+STU-POR-528,Portuguese Language,2025-2026,Final Term,MS,M,16,U,LE3,T,2,2,7.5,0,no,no,no,no,yes,no,no,5,1,3,3,0,100.0,90.5,50.0,45.0,50.0,Moderate Risk
+STU-POR-529,Portuguese Language,2025-2026,Final Term,MS,F,17,R,GT3,T,2,2,1.5,0,no,yes,yes,no,yes,yes,no,5,1,3,5,5,91.67,81.5,45.0,45.0,45.0,High Risk
+STU-POR-530,Portuguese Language,2025-2026,Final Term,MS,F,16,U,LE3,T,4,4,1.5,0,no,yes,no,no,yes,no,no,5,1,3,5,1,98.33,81.5,55.0,55.0,55.0,Moderate Risk
+STU-POR-531,Portuguese Language,2025-2026,Final Term,MS,M,17,U,GT3,T,3,3,1.5,0,no,yes,no,yes,yes,yes,no,4,1,4,3,8,86.67,85.5,35.0,50.0,45.0,High Risk
+STU-POR-532,Portuguese Language,2025-2026,Final Term,MS,M,17,U,GT3,T,1,1,3.5,0,no,no,no,no,yes,yes,yes,5,1,3,1,0,100.0,86.0,50.0,50.0,50.0,Moderate Risk
+STU-POR-533,Portuguese Language,2025-2026,Final Term,MS,M,16,U,GT3,T,2,1,3.5,0,no,no,no,no,yes,yes,yes,4,2,2,5,2,96.67,86.0,45.0,35.0,40.0,High Risk
+STU-POR-534,Portuguese Language,2025-2026,Final Term,MS,F,16,U,LE3,T,2,1,3.5,0,no,no,no,no,yes,yes,yes,3,2,2,3,0,100.0,86.0,70.0,75.0,80.0,Low Risk / On Track
+STU-POR-535,Portuguese Language,2025-2026,Final Term,MS,M,16,U,LE3,T,4,4,1.5,0,no,yes,no,no,yes,yes,no,4,1,2,5,0,100.0,81.5,55.0,60.0,60.0,Moderate Risk
+STU-POR-536,Portuguese Language,2025-2026,Final Term,MS,M,15,R,GT3,T,1,2,3.5,0,no,yes,no,yes,yes,no,no,5,5,5,5,11,81.67,90.0,45.0,55.0,50.0,Moderate Risk
+STU-POR-537,Portuguese Language,2025-2026,Final Term,MS,M,15,U,LE3,A,2,2,12.0,0,no,yes,no,yes,yes,no,no,5,4,5,5,8,86.67,99.0,65.0,70.0,70.0,Low Risk / On Track
+STU-POR-538,Portuguese Language,2025-2026,Final Term,MS,M,15,U,LE3,A,2,1,1.5,0,no,no,no,yes,yes,yes,no,4,3,3,5,11,81.67,85.5,60.0,65.0,60.0,Moderate Risk
+STU-POR-539,Portuguese Language,2025-2026,Final Term,MS,F,16,R,LE3,T,2,2,7.5,0,no,yes,no,no,yes,no,yes,4,3,3,5,2,96.67,90.5,55.0,55.0,55.0,Moderate Risk
+STU-POR-540,Portuguese Language,2025-2026,Final Term,MS,F,16,U,LE3,T,4,1,3.5,0,no,yes,no,yes,yes,yes,no,1,2,4,1,8,86.67,90.0,45.0,50.0,50.0,Moderate Risk
+STU-POR-541,Portuguese Language,2025-2026,Final Term,MS,F,17,U,GT3,T,3,2,1.5,0,no,no,no,no,yes,no,yes,4,3,3,1,5,91.67,81.5,45.0,55.0,55.0,Moderate Risk
+STU-POR-542,Portuguese Language,2025-2026,Final Term,MS,F,17,R,GT3,T,2,2,3.5,0,yes,no,yes,no,yes,no,no,5,1,3,5,0,100.0,86.0,55.0,45.0,55.0,Moderate Risk
+STU-POR-543,Portuguese Language,2025-2026,Final Term,MS,F,16,U,GT3,T,4,4,7.5,0,no,yes,no,no,yes,yes,yes,5,3,5,5,1,98.33,90.5,50.0,55.0,60.0,Moderate Risk
+STU-POR-544,Portuguese Language,2025-2026,Final Term,MS,M,17,R,GT3,T,4,4,1.5,3,no,no,no,yes,yes,yes,yes,3,3,3,5,2,96.67,67.5,45.0,45.0,40.0,High Risk
+STU-POR-545,Portuguese Language,2025-2026,Final Term,MS,M,17,R,LE3,T,1,3,1.5,0,no,no,no,yes,yes,no,yes,5,1,2,5,2,96.67,85.5,60.0,55.0,60.0,Moderate Risk
+STU-POR-546,Portuguese Language,2025-2026,Final Term,MS,M,17,U,GT3,T,3,4,3.5,1,no,yes,no,yes,yes,yes,yes,5,4,4,5,8,86.67,84.0,40.0,45.0,40.0,High Risk
+STU-POR-547,Portuguese Language,2025-2026,Final Term,MS,F,17,U,GT3,T,4,4,3.5,0,no,yes,no,no,yes,yes,no,5,2,5,5,0,100.0,86.0,65.0,75.0,80.0,Low Risk / On Track
+STU-POR-548,Portuguese Language,2025-2026,Final Term,MS,M,16,R,LE3,T,4,1,1.5,0,no,no,no,no,yes,yes,no,4,1,2,2,0,100.0,81.5,50.0,55.0,55.0,Moderate Risk
+STU-POR-549,Portuguese Language,2025-2026,Final Term,MS,F,17,U,GT3,A,1,1,3.5,0,no,no,no,yes,yes,yes,yes,4,5,5,3,2,96.67,90.0,55.0,50.0,55.0,Moderate Risk
+STU-POR-550,Portuguese Language,2025-2026,Final Term,MS,F,17,R,GT3,T,4,2,3.5,0,yes,yes,no,no,yes,yes,no,4,3,3,5,0,100.0,86.0,85.0,90.0,90.0,Low Risk / On Track
+STU-POR-551,Portuguese Language,2025-2026,Final Term,MS,M,16,U,LE3,A,2,2,3.5,0,no,yes,no,no,yes,yes,yes,4,1,2,5,0,100.0,86.0,60.0,65.0,65.0,Moderate Risk
+STU-POR-552,Portuguese Language,2025-2026,Final Term,MS,M,17,U,GT3,T,3,2,3.5,0,no,yes,yes,no,yes,yes,no,4,1,2,1,0,100.0,86.0,65.0,70.0,65.0,Moderate Risk
+STU-POR-553,Portuguese Language,2025-2026,Final Term,MS,M,19,U,GT3,T,1,1,3.5,2,no,yes,no,yes,no,yes,no,4,4,3,4,2,96.67,70.0,45.0,45.0,50.0,Moderate Risk
+STU-POR-554,Portuguese Language,2025-2026,Final Term,MS,M,17,U,LE3,A,1,0,1.5,0,no,no,no,no,yes,no,yes,4,1,2,5,4,93.33,81.5,55.0,55.0,60.0,Moderate Risk
+STU-POR-555,Portuguese Language,2025-2026,Final Term,MS,F,17,R,GT3,T,1,1,1.5,0,no,yes,no,yes,no,yes,yes,3,5,5,4,3,95.0,77.5,50.0,55.0,50.0,Moderate Risk
+STU-POR-556,Portuguese Language,2025-2026,Final Term,MS,F,16,R,GT3,T,1,2,7.5,0,yes,yes,no,no,yes,yes,yes,4,3,4,3,5,91.67,90.5,65.0,70.0,65.0,Moderate Risk
+STU-POR-557,Portuguese Language,2025-2026,Final Term,MS,M,16,R,LE3,T,1,2,1.5,0,no,no,no,no,yes,no,no,4,4,4,5,4,93.33,81.5,45.0,50.0,55.0,Moderate Risk
+STU-POR-558,Portuguese Language,2025-2026,Final Term,MS,F,17,R,GT3,T,3,1,3.5,3,no,yes,no,yes,yes,yes,yes,5,4,4,5,2,96.67,72.0,35.0,45.0,50.0,Moderate Risk
+STU-POR-559,Portuguese Language,2025-2026,Final Term,MS,M,17,R,GT3,T,2,2,1.5,0,no,no,no,yes,no,no,yes,5,5,5,5,0,100.0,77.5,40.0,65.0,50.0,Moderate Risk
+STU-POR-560,Portuguese Language,2025-2026,Final Term,MS,M,18,R,GT3,T,1,0,1.5,1,yes,yes,no,no,yes,no,no,4,3,2,4,0,100.0,75.5,60.0,60.0,65.0,Moderate Risk
+STU-POR-561,Portuguese Language,2025-2026,Final Term,MS,M,17,R,GT3,T,1,1,1.5,0,no,yes,no,yes,yes,yes,yes,4,5,5,2,0,100.0,85.5,50.0,45.0,50.0,Moderate Risk
+STU-POR-562,Portuguese Language,2025-2026,Final Term,MS,M,18,U,LE3,T,1,1,3.5,0,no,yes,no,yes,yes,no,no,4,3,3,5,6,90.0,90.0,50.0,45.0,50.0,Moderate Risk
+STU-POR-563,Portuguese Language,2025-2026,Final Term,MS,F,16,R,LE3,T,2,2,3.5,0,no,no,no,yes,yes,no,yes,5,4,3,1,0,100.0,90.0,55.0,65.0,60.0,Moderate Risk
+STU-POR-564,Portuguese Language,2025-2026,Final Term,MS,M,17,U,GT3,T,2,2,1.5,1,no,no,no,yes,yes,no,yes,1,2,1,5,0,100.0,79.5,35.0,0.0,0.0,High Risk
+STU-POR-565,Portuguese Language,2025-2026,Final Term,MS,M,16,R,GT3,T,3,2,1.5,0,no,no,no,no,yes,yes,no,4,5,5,5,2,96.67,81.5,55.0,45.0,50.0,Moderate Risk
+STU-POR-566,Portuguese Language,2025-2026,Final Term,MS,M,16,R,LE3,T,1,1,1.5,0,no,no,no,yes,yes,yes,no,4,5,5,5,0,100.0,85.5,50.0,50.0,45.0,High Risk
+STU-POR-567,Portuguese Language,2025-2026,Final Term,MS,M,18,R,GT3,T,1,1,1.5,1,no,yes,no,no,no,yes,yes,5,3,3,5,2,96.67,67.5,45.0,35.0,45.0,High Risk
+STU-POR-568,Portuguese Language,2025-2026,Final Term,MS,M,18,R,GT3,T,3,2,1.5,1,no,no,no,no,no,yes,no,2,3,1,5,0,100.0,67.5,20.0,0.0,0.0,High Risk
+STU-POR-569,Portuguese Language,2025-2026,Final Term,MS,M,19,U,GT3,T,3,2,1.5,3,no,no,no,yes,yes,no,no,3,2,1,3,4,93.33,67.5,30.0,55.0,45.0,High Risk
+STU-POR-570,Portuguese Language,2025-2026,Final Term,MS,M,18,U,GT3,T,3,3,3.5,2,no,yes,no,yes,no,yes,no,4,4,5,3,9,85.0,70.0,20.0,40.0,40.0,High Risk
+STU-POR-571,Portuguese Language,2025-2026,Final Term,MS,M,16,R,GT3,T,2,2,1.5,0,no,yes,no,yes,yes,yes,yes,5,4,3,4,6,90.0,85.5,35.0,40.0,40.0,High Risk
+STU-POR-572,Portuguese Language,2025-2026,Final Term,MS,M,19,U,GT3,T,2,1,1.5,3,no,no,no,yes,no,yes,yes,4,4,3,5,4,93.33,59.5,40.0,45.0,45.0,High Risk
+STU-POR-573,Portuguese Language,2025-2026,Final Term,MS,F,16,U,GT3,A,3,2,3.5,2,no,yes,no,yes,yes,no,yes,2,5,5,1,8,86.67,78.0,25.0,25.0,35.0,High Risk
+STU-POR-574,Portuguese Language,2025-2026,Final Term,MS,F,17,U,GT3,T,1,1,1.5,0,no,yes,no,yes,yes,no,no,4,3,2,5,9,85.0,85.5,35.0,45.0,50.0,Moderate Risk
+STU-POR-575,Portuguese Language,2025-2026,Final Term,MS,M,20,R,GT3,T,1,1,1.5,1,no,yes,no,no,no,yes,yes,4,4,3,4,12,80.0,67.5,40.0,55.0,50.0,Moderate Risk
+STU-POR-576,Portuguese Language,2025-2026,Final Term,MS,F,18,R,GT3,A,4,3,1.5,0,no,yes,no,no,yes,yes,no,5,4,4,2,8,86.67,81.5,50.0,55.0,50.0,Moderate Risk
+STU-POR-577,Portuguese Language,2025-2026,Final Term,MS,M,18,R,GT3,T,3,2,1.5,0,no,yes,no,no,yes,yes,no,2,5,5,5,8,86.67,81.5,45.0,50.0,55.0,Moderate Risk
+STU-POR-578,Portuguese Language,2025-2026,Final Term,MS,M,19,R,GT3,T,1,1,3.5,1,no,no,no,no,yes,yes,no,5,4,4,2,8,86.67,80.0,50.0,45.0,55.0,Moderate Risk
+STU-POR-579,Portuguese Language,2025-2026,Final Term,MS,M,17,U,GT3,T,3,3,3.5,1,no,yes,no,no,yes,yes,no,4,5,4,3,4,93.33,80.0,40.0,45.0,50.0,Moderate Risk
+STU-POR-580,Portuguese Language,2025-2026,Final Term,MS,M,18,U,LE3,T,1,3,1.5,0,no,no,no,no,no,yes,yes,4,3,3,3,0,100.0,73.5,45.0,50.0,45.0,High Risk
+STU-POR-581,Portuguese Language,2025-2026,Final Term,MS,M,19,R,GT3,T,1,1,1.5,1,no,yes,no,no,yes,yes,no,4,4,4,5,4,93.33,75.5,40.0,45.0,50.0,Moderate Risk
+STU-POR-582,Portuguese Language,2025-2026,Final Term,MS,F,18,U,GT3,A,1,2,3.5,2,no,yes,no,no,yes,no,no,4,3,3,5,2,96.67,74.0,30.0,40.0,40.0,High Risk
+STU-POR-583,Portuguese Language,2025-2026,Final Term,MS,F,19,U,LE3,A,1,1,1.5,0,no,yes,no,no,no,no,no,1,4,4,5,0,100.0,73.5,30.0,40.0,35.0,High Risk
+STU-POR-584,Portuguese Language,2025-2026,Final Term,MS,F,18,R,GT3,T,2,2,1.5,1,no,no,no,no,no,yes,yes,5,5,5,3,0,100.0,67.5,40.0,30.0,0.0,High Risk
+STU-POR-585,Portuguese Language,2025-2026,Final Term,MS,F,17,R,GT3,T,0,0,1.5,0,no,yes,no,no,yes,yes,no,4,4,3,5,0,100.0,81.5,50.0,55.0,55.0,Moderate Risk
+STU-POR-586,Portuguese Language,2025-2026,Final Term,MS,F,17,R,LE3,A,3,1,7.5,0,no,yes,yes,no,no,no,no,4,2,3,3,5,91.67,82.5,40.0,35.0,40.0,High Risk
+STU-POR-587,Portuguese Language,2025-2026,Final Term,MS,F,17,U,GT3,T,4,2,3.5,0,yes,yes,no,yes,yes,yes,no,5,5,5,5,0,100.0,90.0,40.0,40.0,0.0,High Risk
+STU-POR-588,Portuguese Language,2025-2026,Final Term,MS,F,18,R,LE3,T,2,2,3.5,1,no,yes,no,yes,yes,yes,no,2,3,3,4,3,95.0,84.0,35.0,30.0,40.0,High Risk
+STU-POR-589,Portuguese Language,2025-2026,Final Term,MS,F,17,U,GT3,T,4,1,1.5,0,no,yes,no,no,yes,no,yes,3,2,2,5,0,100.0,81.5,40.0,50.0,45.0,High Risk
+STU-POR-590,Portuguese Language,2025-2026,Final Term,MS,F,17,U,LE3,T,1,2,1.5,0,no,no,no,no,yes,yes,no,5,5,1,3,0,100.0,81.5,35.0,50.0,50.0,Moderate Risk
+STU-POR-591,Portuguese Language,2025-2026,Final Term,MS,F,18,U,GT3,T,1,1,3.5,2,no,no,no,yes,yes,no,yes,3,4,4,5,3,95.0,78.0,35.0,40.0,35.0,High Risk
+STU-POR-592,Portuguese Language,2025-2026,Final Term,MS,F,18,U,GT3,T,2,2,3.5,0,no,no,no,yes,yes,yes,no,4,3,5,1,2,96.67,90.0,60.0,65.0,70.0,Low Risk / On Track
+STU-POR-593,Portuguese Language,2025-2026,Final Term,MS,F,17,U,GT3,T,3,3,1.5,0,no,yes,no,no,yes,yes,no,4,4,3,4,0,100.0,81.5,55.0,60.0,65.0,Moderate Risk
+STU-POR-594,Portuguese Language,2025-2026,Final Term,MS,F,18,U,LE3,A,1,2,3.5,0,no,no,no,no,yes,yes,no,4,4,3,4,0,100.0,86.0,60.0,65.0,70.0,Low Risk / On Track
+STU-POR-595,Portuguese Language,2025-2026,Final Term,MS,F,18,U,GT3,T,4,4,3.5,0,no,no,no,yes,yes,yes,no,4,3,5,1,0,100.0,90.0,90.0,90.0,90.0,Low Risk / On Track
+STU-POR-596,Portuguese Language,2025-2026,Final Term,MS,M,18,U,LE3,T,4,4,1.5,0,no,yes,no,yes,yes,yes,no,5,4,5,5,3,95.0,85.5,85.0,85.0,85.0,Low Risk / On Track
+STU-POR-597,Portuguese Language,2025-2026,Final Term,MS,F,17,U,GT3,T,4,2,3.5,0,no,yes,no,no,yes,yes,no,4,3,3,4,0,100.0,86.0,85.0,90.0,90.0,Low Risk / On Track
+STU-POR-598,Portuguese Language,2025-2026,Final Term,MS,F,18,R,GT3,T,2,2,3.5,1,no,no,no,yes,yes,no,yes,4,3,3,4,0,100.0,84.0,45.0,0.0,0.0,High Risk
+STU-POR-599,Portuguese Language,2025-2026,Final Term,MS,M,18,U,LE3,T,1,2,1.5,0,no,yes,no,no,yes,no,no,4,1,4,1,8,86.67,81.5,50.0,55.0,55.0,Moderate Risk
+STU-POR-600,Portuguese Language,2025-2026,Final Term,MS,M,18,R,GT3,T,4,4,1.5,0,no,yes,yes,yes,yes,yes,yes,2,5,5,1,5,91.67,85.5,60.0,65.0,70.0,Low Risk / On Track
+STU-POR-601,Portuguese Language,2025-2026,Final Term,MS,M,17,R,GT3,T,1,1,1.5,0,no,no,no,no,no,no,no,4,2,3,4,4,93.33,73.5,60.0,65.0,70.0,Low Risk / On Track
+STU-POR-602,Portuguese Language,2025-2026,Final Term,MS,F,18,U,GT3,T,2,2,3.5,0,no,yes,no,no,yes,yes,yes,1,3,1,2,4,93.33,86.0,40.0,40.0,50.0,Moderate Risk
+STU-POR-603,Portuguese Language,2025-2026,Final Term,MS,F,18,U,LE3,T,2,2,7.5,0,no,no,no,no,yes,yes,yes,5,4,5,3,0,100.0,90.5,55.0,60.0,65.0,Moderate Risk
+STU-POR-604,Portuguese Language,2025-2026,Final Term,MS,F,18,R,LE3,A,4,2,3.5,0,no,no,no,yes,yes,yes,yes,5,3,1,5,0,100.0,90.0,25.0,0.0,0.0,High Risk
+STU-POR-605,Portuguese Language,2025-2026,Final Term,MS,F,18,U,GT3,T,1,1,3.5,1,no,no,no,no,no,no,no,4,4,2,2,2,96.67,72.0,45.0,50.0,50.0,Moderate Risk
+STU-POR-606,Portuguese Language,2025-2026,Final Term,MS,F,19,U,GT3,T,1,1,1.5,1,no,no,no,no,no,no,no,5,5,5,2,0,100.0,67.5,25.0,0.0,0.0,High Risk
+STU-POR-607,Portuguese Language,2025-2026,Final Term,MS,F,17,U,GT3,T,4,2,12.0,0,no,no,no,no,yes,yes,yes,4,2,3,5,0,100.0,95.0,90.0,90.0,90.0,Low Risk / On Track
+STU-POR-608,Portuguese Language,2025-2026,Final Term,MS,F,17,R,LE3,A,2,1,3.5,0,no,no,no,yes,yes,yes,yes,5,3,3,2,5,91.67,90.0,55.0,55.0,60.0,Moderate Risk
+STU-POR-609,Portuguese Language,2025-2026,Final Term,MS,F,18,U,LE3,A,1,1,3.5,0,no,no,no,no,yes,no,yes,5,2,3,3,2,96.67,86.0,40.0,50.0,55.0,Moderate Risk
+STU-POR-610,Portuguese Language,2025-2026,Final Term,MS,F,18,U,GT3,T,1,2,3.5,0,no,yes,no,no,no,no,no,4,1,1,4,0,100.0,78.0,55.0,55.0,60.0,Moderate Risk
+STU-POR-611,Portuguese Language,2025-2026,Final Term,MS,F,19,R,GT3,A,1,1,3.5,3,no,yes,no,yes,no,no,yes,3,5,4,1,0,100.0,64.0,40.0,0.0,0.0,High Risk
+STU-POR-612,Portuguese Language,2025-2026,Final Term,MS,F,18,R,GT3,T,2,2,7.5,0,no,no,no,no,yes,yes,yes,4,2,1,4,5,91.67,90.5,70.0,70.0,75.0,Low Risk / On Track
+STU-POR-613,Portuguese Language,2025-2026,Final Term,MS,M,17,R,GT3,T,4,3,3.5,1,no,yes,yes,yes,yes,yes,yes,4,5,5,2,4,93.33,84.0,50.0,55.0,55.0,Moderate Risk
+STU-POR-614,Portuguese Language,2025-2026,Final Term,MS,F,18,U,GT3,T,3,3,3.5,0,no,yes,no,no,yes,no,yes,5,3,4,5,0,100.0,86.0,50.0,50.0,50.0,Moderate Risk
+STU-POR-615,Portuguese Language,2025-2026,Final Term,MS,F,17,R,GT3,T,4,4,3.5,0,no,yes,yes,yes,yes,yes,no,4,3,3,5,2,96.67,90.0,60.0,60.0,60.0,Moderate Risk
+STU-POR-616,Portuguese Language,2025-2026,Final Term,MS,F,17,U,LE3,A,3,2,3.5,0,no,no,no,no,yes,no,yes,1,2,3,5,0,100.0,86.0,75.0,70.0,75.0,Low Risk / On Track
+STU-POR-617,Portuguese Language,2025-2026,Final Term,MS,M,18,U,LE3,T,1,1,1.5,0,no,no,no,no,yes,yes,yes,3,3,2,3,2,96.67,81.5,70.0,65.0,70.0,Low Risk / On Track
+STU-POR-618,Portuguese Language,2025-2026,Final Term,MS,F,18,U,LE3,T,1,1,7.5,0,no,no,no,no,yes,yes,no,5,3,2,4,0,100.0,90.5,95.0,85.0,90.0,Low Risk / On Track
+STU-POR-619,Portuguese Language,2025-2026,Final Term,MS,F,18,R,LE3,A,1,2,3.5,0,no,no,no,no,yes,no,yes,4,3,4,5,0,100.0,86.0,80.0,75.0,75.0,Low Risk / On Track
+STU-POR-620,Portuguese Language,2025-2026,Final Term,MS,F,18,U,GT3,T,3,3,3.5,0,no,yes,no,no,yes,yes,yes,4,3,2,3,6,90.0,86.0,65.0,60.0,65.0,Moderate Risk
+STU-POR-621,Portuguese Language,2025-2026,Final Term,MS,F,17,U,LE3,T,4,4,3.5,0,no,yes,no,yes,yes,yes,yes,2,3,4,1,4,93.33,90.0,75.0,70.0,75.0,Low Risk / On Track
+STU-POR-622,Portuguese Language,2025-2026,Final Term,MS,F,17,R,GT3,T,1,2,3.5,0,no,no,no,no,yes,no,no,3,2,2,3,0,100.0,86.0,65.0,65.0,65.0,Moderate Risk
+STU-POR-623,Portuguese Language,2025-2026,Final Term,MS,M,18,R,GT3,T,1,3,3.5,0,no,yes,yes,no,yes,no,no,3,3,4,3,0,100.0,86.0,40.0,50.0,45.0,High Risk
+STU-POR-624,Portuguese Language,2025-2026,Final Term,MS,M,18,U,LE3,T,4,4,7.5,0,no,no,no,no,yes,yes,yes,4,2,2,5,0,100.0,90.5,75.0,80.0,80.0,Low Risk / On Track
+STU-POR-625,Portuguese Language,2025-2026,Final Term,MS,F,17,R,GT3,T,1,1,1.5,1,no,yes,no,no,yes,yes,yes,5,2,1,1,0,100.0,75.5,40.0,40.0,45.0,High Risk
+STU-POR-626,Portuguese Language,2025-2026,Final Term,MS,F,18,U,GT3,T,2,3,1.5,0,no,yes,no,no,yes,yes,yes,5,2,3,4,0,100.0,81.5,50.0,50.0,50.0,Moderate Risk
+STU-POR-627,Portuguese Language,2025-2026,Final Term,MS,F,18,R,GT3,T,4,4,3.5,0,no,yes,no,no,yes,yes,yes,3,2,2,5,0,100.0,86.0,35.0,25.0,0.0,High Risk
+STU-POR-628,Portuguese Language,2025-2026,Final Term,MS,M,18,R,LE3,T,1,2,1.5,0,no,yes,no,yes,no,yes,yes,4,3,3,3,3,95.0,77.5,45.0,50.0,50.0,Moderate Risk
+STU-POR-629,Portuguese Language,2025-2026,Final Term,MS,F,17,U,GT3,T,2,2,7.5,0,no,no,no,yes,yes,no,yes,3,4,3,3,8,86.67,94.5,50.0,55.0,60.0,Moderate Risk
+STU-POR-630,Portuguese Language,2025-2026,Final Term,MS,F,17,R,GT3,T,1,2,1.5,0,no,no,no,yes,yes,yes,no,3,5,5,1,4,93.33,85.5,35.0,40.0,45.0,High Risk
+STU-POR-631,Portuguese Language,2025-2026,Final Term,MS,F,18,R,LE3,T,4,4,7.5,0,no,no,no,no,yes,yes,no,5,4,4,1,0,100.0,90.5,75.0,85.0,85.0,Low Risk / On Track
+STU-POR-632,Portuguese Language,2025-2026,Final Term,MS,F,18,R,GT3,T,1,1,7.5,0,no,no,no,no,yes,yes,no,4,3,2,4,4,93.33,90.5,50.0,55.0,60.0,Moderate Risk
+STU-POR-633,Portuguese Language,2025-2026,Final Term,MS,F,19,R,GT3,T,1,1,3.5,1,no,yes,no,no,yes,yes,yes,4,3,3,3,4,93.33,80.0,35.0,40.0,45.0,High Risk
+STU-POR-634,Portuguese Language,2025-2026,Final Term,MS,F,18,R,LE3,T,4,4,3.5,0,no,no,no,yes,yes,yes,no,5,4,3,2,1,98.33,90.0,65.0,70.0,70.0,Low Risk / On Track
+STU-POR-635,Portuguese Language,2025-2026,Final Term,MS,F,18,U,GT3,T,3,3,3.5,0,no,no,no,no,yes,yes,yes,4,1,3,1,1,98.33,86.0,80.0,80.0,80.0,Low Risk / On Track
+STU-POR-636,Portuguese Language,2025-2026,Final Term,MS,F,17,R,GT3,T,3,1,3.5,0,no,yes,no,yes,yes,yes,no,4,5,4,1,10,83.33,90.0,40.0,45.0,45.0,High Risk
+STU-POR-637,Portuguese Language,2025-2026,Final Term,MS,M,18,U,GT3,T,4,4,3.5,0,no,no,no,yes,yes,yes,no,3,2,4,2,4,93.33,90.0,85.0,90.0,95.0,Low Risk / On Track
+STU-POR-638,Portuguese Language,2025-2026,Final Term,MS,M,18,R,GT3,T,2,1,1.5,0,no,no,no,yes,yes,yes,yes,4,4,3,5,0,100.0,85.5,35.0,35.0,0.0,High Risk
+STU-POR-639,Portuguese Language,2025-2026,Final Term,MS,M,17,U,GT3,T,2,3,3.5,0,no,no,no,yes,yes,yes,no,4,4,3,3,4,93.33,90.0,70.0,75.0,80.0,Low Risk / On Track
+STU-POR-640,Portuguese Language,2025-2026,Final Term,MS,M,19,R,GT3,T,1,1,1.5,1,no,no,no,no,yes,no,no,4,3,2,5,0,100.0,75.5,25.0,40.0,0.0,High Risk
+STU-POR-641,Portuguese Language,2025-2026,Final Term,MS,M,18,R,GT3,T,4,2,1.5,1,no,no,yes,no,yes,no,no,5,4,3,3,0,100.0,75.5,35.0,35.0,0.0,High Risk
+STU-POR-642,Portuguese Language,2025-2026,Final Term,MS,F,18,R,GT3,T,2,2,7.5,0,no,no,no,no,yes,no,no,5,3,3,4,0,100.0,90.5,70.0,85.0,75.0,Low Risk / On Track
+STU-POR-643,Portuguese Language,2025-2026,Final Term,MS,F,17,U,GT3,T,4,3,3.5,0,no,no,no,no,yes,yes,no,5,5,4,1,0,100.0,86.0,30.0,45.0,55.0,Moderate Risk
+STU-POR-644,Portuguese Language,2025-2026,Final Term,MS,F,18,R,GT3,T,4,4,1.5,0,no,yes,no,yes,yes,yes,yes,4,4,3,5,4,93.33,85.5,35.0,45.0,50.0,Moderate Risk
+STU-POR-645,Portuguese Language,2025-2026,Final Term,MS,F,19,R,GT3,T,2,3,7.5,1,no,no,no,yes,yes,yes,no,5,4,2,5,4,93.33,88.5,50.0,55.0,50.0,Moderate Risk
+STU-POR-646,Portuguese Language,2025-2026,Final Term,MS,F,18,U,LE3,T,3,1,3.5,0,no,yes,no,no,yes,yes,no,4,3,4,1,4,93.33,86.0,75.0,75.0,80.0,Low Risk / On Track
+STU-POR-647,Portuguese Language,2025-2026,Final Term,MS,F,18,U,GT3,T,1,1,3.5,0,no,no,no,yes,yes,no,no,1,1,1,5,6,90.0,90.0,55.0,60.0,45.0,High Risk
+STU-POR-648,Portuguese Language,2025-2026,Final Term,MS,M,17,U,LE3,T,3,1,1.5,0,no,no,no,no,yes,yes,no,2,4,5,2,6,90.0,81.5,50.0,50.0,50.0,Moderate Risk
+STU-POR-649,Portuguese Language,2025-2026,Final Term,MS,M,18,R,LE3,T,3,2,1.5,0,no,no,no,no,yes,yes,no,4,4,1,5,4,93.33,81.5,50.0,55.0,55.0,Moderate Risk

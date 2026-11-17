@@ -1,0 +1,88 @@
+===============================================================================
+EDUPREDICT: STATISTICAL VALIDATION & HYPOTHESIS TESTING REPORT
+Generated via R 4.6.2 (Windows 10 x64)
+Dataset: UCI Student Performance (Cleaned Academic Records)
+Date/Time: 2026-11-17 08:30:40.571819 
+===============================================================================
+
+--- 1. DESCRIPTIVE STATISTICS (G3 FINAL GRADE BY SUBJECT) ---
+                       N  Mean   SD Median IQR Min Max
+Mathematics          395 10.42 4.58     11   6   0  20
+Portuguese Language  649 11.91 3.23     12   4   0  19
+Combined            1044 11.34 3.86     11   4   0  20
+
+--- 2. TWO-SAMPLE WELCH'S T-TEST (MATH vs. PORTUGUESE LANGUAGE G3) ---
+
+	Welch Two Sample t-test
+
+data:  math_g3 and port_g3
+t = -5.6664, df = 633.3, p-value = 2.215e-08
+alternative hypothesis: true difference in means is not equal to 0
+95 percent confidence interval:
+ -2.0074678 -0.9741709
+sample estimates:
+mean of x mean of y 
+ 10.41519  11.90601 
+
+
+--- 3. WILCOXON RANK-SUM TEST (MANN-WHITNEY U) ---
+
+	Wilcoxon rank sum test with continuity correction
+
+data:  math_g3 and port_g3
+W = 103715, p-value = 1.948e-07
+alternative hypothesis: true location shift is not equal to 0
+
+
+--- 4. ONE-WAY ANALYSIS OF VARIANCE (ANOVA: G3 ~ ACADEMIC RISK TIER) ---
+                  Df Sum Sq Mean Sq F value Pr(>F)    
+academic_status    2  11542    5771    1488 <2e-16 ***
+Residuals       1041   4037       4                   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+--- 5. KRUSKAL-WALLIS TEST (G3 ~ ACADEMIC RISK TIER) ---
+
+	Kruskal-Wallis rank sum test
+
+data:  G3 by academic_status
+Kruskal-Wallis chi-squared = 888.86, df = 2, p-value < 2.2e-16
+
+
+--- 6. PEARSON CORRELATION ANALYSIS ---
+Attendance % vs. Final Grade (G3): r = 0.0453 (t = 1.47, p = 1.43e-01)
+Study Hours/Week vs. Final Grade (G3): r = 0.1535 (t = 5.02, p = 6.20e-07)
+Past Failures vs. Final Grade (G3): r = -0.3831 (t = -13.39, p = 7.67e-38)
+
+FULL CORRELATION MATRIX:
+                          G1     G2     G3 final_exam_marks
+G1                     1.000  0.859  0.809            0.809
+G2                     0.859  1.000  0.911            0.911
+G3                     0.809  0.911  1.000            1.000
+final_exam_marks       0.809  0.911  1.000            1.000
+attendance_percentage  0.094  0.090  0.045            0.045
+absences              -0.092 -0.089 -0.046           -0.046
+study_hours_per_week   0.204  0.178  0.154            0.154
+failures              -0.374 -0.377 -0.383           -0.383
+                      attendance_percentage absences study_hours_per_week
+G1                                    0.094   -0.092                0.204
+G2                                    0.090   -0.089                0.178
+G3                                    0.045   -0.046                0.154
+final_exam_marks                      0.045   -0.046                0.154
+attendance_percentage                 1.000   -0.997                0.081
+absences                             -0.997    1.000               -0.079
+study_hours_per_week                  0.081   -0.079                1.000
+failures                             -0.103    0.100               -0.142
+                      failures
+G1                      -0.374
+G2                      -0.377
+G3                      -0.383
+final_exam_marks        -0.383
+attendance_percentage   -0.103
+absences                 0.100
+study_hours_per_week    -0.142
+failures                 1.000
+
+===============================================================================
+END OF STATISTICAL VALIDATION REPORT
+===============================================================================

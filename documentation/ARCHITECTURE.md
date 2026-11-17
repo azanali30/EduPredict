@@ -114,3 +114,81 @@ frontend/
 *(Preserved from Phase 2)*
 - MongoDB 6.x running on port `27017` with collections: `users`, `academic_records`, `predictions`, `teacher_student_assignments`, `system_logs`.
 - All 41 backend tests verified and passing.
+
+
+---
+
+## 5. Phase 4: Big Data Lakehouse, Analytical Schema & Statistical Pipelines
+
+```
+                             +-----------------------------------+
+                             |     Raw External Data Sources     |
+                             |  UCI Student Performance Dataset  |
+                             |  (student-mat.csv, student-por)   |
+                             +-----------------+-----------------+
+                                               |
+                                               v
+                             +-----------------------------------+
+                             |    Data Cleaning & Standardization|
+                             |  - Standardized indicators        |
+                             |  - 3-Tier Risk Classification     |
+                             |  - Zero Nulls, Continuous Scaling |
+                             +--------+-----------------+--------+
+                                      |                 |
+                   +------------------+                 +------------------+
+                   v                                                       v
++------------------------------------+               +------------------------------------+
+|     Operational Analytics Store    |               |       Big Data HDFS Lakehouse      |
+|  MongoDB 6.0.29 (PyMongo 4.20)     |               |  WebHDFS REST API (Port 9870)      |
+|  Collection:                       |               |  Bronze: /edupredict/raw/          |
+|  `analytical_academic_records`     |               |  Silver: /edupredict/processed/    |
+|  Index: (student_code, subject, yr)|               |  Gold:   /edupredict/analytics/    |
+|  Idempotent batch upserts          |               |  Standalone Docker Compose ready   |
++------------------------------------+               +-----------------+------------------+
+                                                                       |
+                                                                       v
+                                                     +------------------------------------+
+                                                     |    Apache Impala MPP Query Engine  |
+                                                     |  Port 21050 (Thrift/HS2)           |
+                                                     |  Snappy Parquet Fact & Dimension   |
+                                                     |  7 Analytical Window OLAP Queries  |
+                                                     +------------------------------------+
+                                                                       |
+                   +---------------------------------------------------+
+                   v
++------------------------------------+               +------------------------------------+
+|   Exploratory Data Analysis (EDA)  |               |  RStudio / Native R Statistical UI |
+|  Jupyter Notebook (.ipynb)         |               |  R 4.6.2 (Windows 10 x64)          |
+|  16 Executed Cells, Embedded Plots |               |  Welch t-test, Wilcoxon, ANOVA,    |
+|  Variance, Trajectory, Risk Bands  |               |  Kruskal-Wallis, Pearson r         |
++------------------------------------+               +------------------------------------+
+```
+
+### 5.1 MongoDB Analytical Collection
+- **Collection**: `analytical_academic_records`
+- **Schema**: 45 standardized features per document (student identifiers, demographics, family background, academic velocity $G_1, G_2, G_3$, percentage scores, attendance %, study hours, failures, and risk tiers).
+- **Indexing**:
+  - Compound Unique: `{"student_code": 1, "subject": 1, "academic_year": 1}`
+  - Single field: `{"subject": 1}`, `{"academic_status": 1}`, `{"attendance_percentage": -1}`
+
+### 5.2 HDFS Lakehouse Architecture
+- **Raw Zone (Bronze)**: `/edupredict/raw/academic/` – Immutable raw CSV source preservation.
+- **Cleaned Zone (Silver)**: `/edupredict/processed/academic/` – Standardized, deduplicated, and typed coursework observations.
+- **Analytics Zone (Gold)**: `/edupredict/analytics/` – Parquet partitions by subject, term, and academic risk status.
+- **Manager**: `HDFSLakehouseManager` provides WebHDFS REST API encapsulation (`LISTSTATUS`, `MKDIRS`, `CREATE`).
+
+### 5.3 Apache Impala MPP SQL OLAP Layer
+- **Catalog**: `edupredict_lakehouse` database with Parquet compression.
+- **Queries**:
+  1. Average Academic Performance & Pass Rates by Subject.
+  2. Attendance Velocity vs. Final Academic Results.
+  3. Top-Performing Students Across Curriculum (`DENSE_RANK() OVER (PARTITION BY subject ...)`).
+  4. Early Warning Detection – Students with Declining Performance.
+  5. Longitudinal Term-Wise Performance Trajectory ($G_1 \rightarrow G_2 \rightarrow G_3$).
+  6. Subject-Level Performance Distribution (Percentile & Dispersion).
+  7. Data Quality Audit – Missing, Out-of-Bounds, or Anomalous Records.
+
+### 5.4 Statistical Rigor & Hypothesis Testing (R 4.6.2)
+- **Math vs. Portuguese Final Grade Difference**: Welch's two-sample t-test ($t = -5.67, p = 2.22 \times 10^{-8}$) and Wilcoxon rank-sum test ($W = 103715, p = 1.95 \times 10^{-7}$).
+- **Academic Risk Variance**: One-way ANOVA ($F = 1488, p < 2 \times 10^{-16}$) and Kruskal-Wallis test ($\chi^2 = 888.86, p < 2.2 \times 10^{-16}$).
+- **Predictor Correlation**: Prior term grades exhibit extreme correlation ($G_1$ $r = 0.81$, $G_2$ $r = 0.91$), while past failures exhibit strong negative correlation ($r = -0.38, p = 7.67 \times 10^{-38}$).

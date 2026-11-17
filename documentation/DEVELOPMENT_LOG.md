@@ -94,3 +94,45 @@
        - `screenshots/03_student_dashboard.png` (Student Analytics Dashboard)
        - `screenshots/04_teacher_dashboard.png` (Teacher Workspace Dashboard)
        - `screenshots/05_admin_dashboard.png` (Admin Governance Dashboard)
+
+---
+
+## Phase 4: Dataset Engineering, Big Data Storage & Exploratory Data Analysis
+- **Date**: 2026-11-17
+- **Status**: Completed & Verified
+- **Commits**: Pending Push (`feat(phase-4): dataset engineering, mongodb ingestion, hdfs lakehouse, impala queries, eda and r validation`)
+- **Actions Executed**:
+  1. **Dataset Research & Curation**:
+     - Curated and downloaded the official UCI Student Performance benchmark dataset (`student-mat.csv` with 395 records, `student-por.csv` with 649 records; total 1,044 observations, CC BY 4.0 license).
+     - Standardized delimiters, column naming conventions, and composite indicators.
+     - Preserved raw files verbatim under `data/raw/`.
+  2. **Data Cleaning & Indicator Engineering Pipeline** (`backend/data_engineering/clean_dataset.py`):
+     - Engineered continuous and ordinal standardized features: `study_hours_per_week`, `absences_cleaned`, `attendance_percentage` (0–100%), `previous_exam_marks` (G1 scaled to 0–100), `quiz_scores` (G2 scaled to 0–100), `final_exam_marks` (G3 scaled to 0–100), `assignment_completion_rate`, and three-tier `academic_status` (`Low Risk / On Track`, `Moderate Risk`, `High Risk`).
+     - Generated `data/processed/cleaned_academic_records.csv` (1,044 rows, 45 attributes) and `data/processed/academic_features_normalized.csv`.
+     - Exported machine-readable `data/processed/data_dictionary.json` and `data/processed/cleaning_summary.json`.
+  3. **MongoDB 6.0 Schema & Resilient Ingestion Pipeline** (`backend/data_engineering/ingest_mongodb.py`):
+     - Added `analytical_academic_records` collection with compound unique index on `(student_code, subject, academic_year)` and single indexes on `subject`, `academic_status`, `attendance_percentage`.
+     - Built chunked batch upsert pipeline (`bulk_write` with `UpdateOne(upsert=True)`).
+     - Verified idempotency: First run ingested 1,044 records; second run resulted in 0 duplicates inserted (1,044 matched, net added: 0).
+  4. **Hadoop / HDFS Lakehouse Architecture** (`backend/data_engineering/hdfs_lakehouse.py` & `analytics/hdfs/docker-compose-hdfs.yml`):
+     - Designed multi-tier Lakehouse directory taxonomy (`/edupredict/raw/academic/`, `/edupredict/processed/academic/`, `/edupredict/analytics/...`).
+     - Built `HDFSLakehouseManager` supporting WebHDFS REST API operations (`LISTSTATUS`, `MKDIRS`, `CREATE`).
+     - Performed active socket probe on port 9870; honestly documented NameNode offline status and 8GB RAM host constraints.
+     - Created standalone Docker Compose deployment recipe for optional Linux/container testbeds.
+  5. **Apache Impala MPP Analytical Engine** (`analytics/impala/`):
+     - Penned `01_create_academic_lakehouse_tables.sql` defining external text staging and compressed Snappy Parquet tables.
+     - Implemented all 7 required analytical queries (`02_analytical_queries.sql`) covering subject aggregates, attendance velocity correlation, top 10 scholars via `DENSE_RANK()`, early warning declining trajectories, longitudinal term progression, percentile dispersion, and data quality anomaly detection.
+     - Built diagnostic client runner `impala_query_runner.py` with port 21050 active socket probe.
+     - Penned `analytics/impala/README.md` with cluster execution documentation.
+  6. **Exploratory Data Analysis (EDA) Jupyter Notebook** (`notebooks/eda_academic_performance.ipynb`):
+     - Created and executed reproducible 16-cell notebook with embedded Markdown narrative, statistical tables, and high-resolution plots.
+     - Generated plots: G3 grade distributions by subject, longitudinal grade trajectory ($G_1 \rightarrow G_2 \rightarrow G_3$), correlation heatmap, and academic risk category composition.
+  7. **RStudio / R Statistical Validation Pipeline** (`analytics/r/statistical_validation.R`):
+     - Executed via installed native R 4.6.2 (`C:\Program Files\R\R-4.6.2\bin\x64\Rscript.exe`).
+     - Executed Welch's two-sample t-test ($t = -5.67, p = 2.22 \times 10^{-8}$), Wilcoxon rank-sum test ($W = 103715, p = 1.95 \times 10^{-7}$), one-way ANOVA ($F = 1488, p < 2 \times 10^{-16}$), Kruskal-Wallis test ($\chi^2 = 888.86, p < 2.2 \times 10^{-16}$), and Pearson correlation analysis.
+     - Exported `analytics/r/statistical_summary_output.txt`, `analytics/r/correlation_matrix.csv`, and rendered high-res plots: `analytics/r/grade_distribution_by_subject.png` and `analytics/r/attendance_vs_grade_scatter.png`.
+  8. **Comprehensive Automated Test Suite** (`tests/test_data_pipeline.py`):
+     - Authored 13 dedicated automated unit/integration tests covering dataset cleaning, metadata schemas, MongoDB ingestion idempotency, HDFS Lakehouse manager, Impala query parsing, and R statistical artifacts.
+     - Executed full test suite: **54 / 54 tests passing (100%)** across existing backend modules and new data pipeline.
+  9. **Frontend Integrity Verification**:
+     - Ran production Vite build (`npm run build`): completed in 21.80s with 0 errors.

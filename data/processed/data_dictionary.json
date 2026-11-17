@@ -1,0 +1,128 @@
+{
+  "student_code": {
+    "type": "string",
+    "description": "Unique deterministic student enrollment identifier.",
+    "example": "STU-MAT-001"
+  },
+  "subject": {
+    "type": "string",
+    "description": "Academic course subject domain (Mathematics or Portuguese Language).",
+    "values": [
+      "Mathematics",
+      "Portuguese Language"
+    ]
+  },
+  "academic_year": {
+    "type": "string",
+    "description": "Academic calendar year of coursework observation.",
+    "example": "2025-2026"
+  },
+  "term": {
+    "type": "string",
+    "description": "Course evaluation term period.",
+    "example": "Final Term"
+  },
+  "attendance_percentage": {
+    "type": "float",
+    "description": "Course session presence percentage calculated from term class attendance.",
+    "range": [
+      0.0,
+      100.0
+    ],
+    "unit": "Percentage (%)"
+  },
+  "study_hours_per_week": {
+    "type": "float",
+    "description": "Reported weekly self-study and revision hours dedicated to coursework.",
+    "range": [
+      1.0,
+      20.0
+    ],
+    "unit": "Hours/Week"
+  },
+  "assignment_completion_rate": {
+    "type": "float",
+    "description": "Percentage of homework and continuous coursework submissions completed.",
+    "range": [
+      0.0,
+      100.0
+    ],
+    "unit": "Percentage (%)"
+  },
+  "previous_exam_marks": {
+    "type": "float",
+    "description": "Period 1 (G1) evaluation scaled to percentage scale (0-100%).",
+    "range": [
+      0.0,
+      100.0
+    ],
+    "unit": "Percentage (%)"
+  },
+  "quiz_scores": {
+    "type": "float",
+    "description": "Period 2 (G2) continuous evaluation score scaled to percentage (0-100%).",
+    "range": [
+      0.0,
+      100.0
+    ],
+    "unit": "Percentage (%)"
+  },
+  "final_exam_marks": {
+    "type": "float",
+    "description": "Final term examination mark (G3) scaled to percentage (0-100%). Target label.",
+    "range": [
+      0.0,
+      100.0
+    ],
+    "unit": "Percentage (%)"
+  },
+  "academic_status": {
+    "type": "string",
+    "description": "Three-tier academic risk classification based on target performance.",
+    "values": [
+      "High Risk",
+      "Moderate Risk",
+      "Low Risk / On Track"
+    ]
+  },
+  "school": {
+    "type": "string",
+    "description": "Student secondary educational institution code (GP: Gabriel Pereira, MS: Mousinho da Silveira).",
+    "values": [
+      "GP",
+      "MS"
+    ]
+  },
+  "sex": {
+    "type": "string",
+    "description": "Biological sex of student (F: Female, M: Male).",
+    "values": [
+      "F",
+      "M"
+    ]
+  },
+  "age": {
+    "type": "integer",
+    "description": "Student age in years.",
+    "range": [
+      15,
+      22
+    ]
+  },
+  "failures": {
+    "type": "integer",
+    "description": "Number of previous academic class failures.",
+    "range": [
+      0,
+      4
+    ]
+  },
+  "absences": {
+    "type": "integer",
+    "description": "Raw count of school absences across the semester.",
+    "range": [
+      0,
+      93
+    ]
+  }
+}

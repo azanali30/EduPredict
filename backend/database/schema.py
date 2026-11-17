@@ -83,6 +83,19 @@ def init_db_indexes(db: Database) -> dict[str, list[str]]:
         ]
         created_indexes["system_logs"] = logs_idx
 
+        # 6. Analytical Academic Records (Big Data Staging & Lakehouse Integration)
+        analytical_idx = [
+            db.analytical_academic_records.create_index(
+                [("student_code", ASCENDING), ("subject", ASCENDING), ("academic_year", ASCENDING)],
+                unique=True,
+                name="idx_analytical_student_subj_year_unique",
+            ),
+            db.analytical_academic_records.create_index([("academic_status", ASCENDING)], name="idx_analytical_status"),
+            db.analytical_academic_records.create_index([("subject", ASCENDING)], name="idx_analytical_subject"),
+            db.analytical_academic_records.create_index([("final_exam_marks", DESCENDING)], name="idx_analytical_final_marks"),
+        ]
+        created_indexes["analytical_academic_records"] = analytical_idx
+
         logger.info("MongoDB 6.x indexes successfully initialized.")
         return created_indexes
 

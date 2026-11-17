@@ -57,8 +57,10 @@ desktop.ini
 # Logs and temporary files
 *.log
 *.tmp
+*.zip
 temp/
 tmp/
+scratch/
 
 
 # Node.js & Frontend Artifacts

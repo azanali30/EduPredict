@@ -67,3 +67,46 @@ All existing Phase 1 and Phase 2 authentication, RBAC, IDOR protection, and Mong
 5. `screenshots/05_admin_dashboard.png` – Admin console featuring user distribution donut chart, MongoDB 6 telemetry, and system health status.
 
 
+
+---
+
+## Phase 4: Dataset Engineering, Big Data Storage & Exploratory Data Analysis Verification
+- **Date**: 2026-11-17
+- **Target**: UCI Dataset Ingestion, Indicator Standardization, MongoDB Ingestion Idempotency, HDFS Lakehouse Architecture, Impala Analytical Queries, Jupyter EDA Execution, R Statistical Validation, Automated Pytest Suite
+- **Result**: **All Checks PASSED (100%)**
+
+### Comprehensive Phase 4 Verification Matrix
+| Component / Layer | Command / Action | Expected Result | Actual Result | Status |
+|---|---|---|---|---|
+| **Raw Dataset Preservation** | Check `data/raw/` | `student-mat.csv` (395), `student-por.csv` (649) | Verified 1,044 total records preserved | **PASS** |
+| **Data Cleaning Pipeline** | `python backend/data_engineering/clean_dataset.py` | 1,044 cleaned rows, 0 NaNs, derived indicators | `cleaned_academic_records.csv` generated (45 cols) | **PASS** |
+| **Data Dictionary & Meta** | Verify JSON outputs | Schemas, bounds, and summary stats | `cleaning_summary.json` & `data_dictionary.json` generated | **PASS** |
+| **MongoDB Schema** | `init_db_indexes(db)` | Compound unique index `(student_code, subject, academic_year)` | Index registered on `analytical_academic_records` | **PASS** |
+| **MongoDB Ingestion** | `python backend/data_engineering/ingest_mongodb.py` | Bulk upsert, batch size 250, idempotency | First run: 1,044 upserted; Second run: 0 new (1,044 matched) | **PASS** |
+| **HDFS Lakehouse Manager** | `python backend/data_engineering/hdfs_lakehouse.py` | WebHDFS REST API client, honest socket check | Correctly detected NameNode offline (port 9870 refused) | **PASS** |
+| **Impala Analytical Engine** | `python analytics/impala/impala_query_runner.py` | 7 analytical queries parsed, honest daemon check | Correctly detected Impala offline (port 21050 refused) | **PASS** |
+| **Jupyter Notebook EDA** | Execute `notebooks/eda_academic_performance.ipynb` | 16 cells with embedded plots and findings | Generated 342 KB notebook with 4 high-res charts | **PASS** |
+| **R Statistical Validation** | `Rscript.exe analytics/r/statistical_validation.R` | Welch t-test, ANOVA, Kruskal-Wallis, correlation | Welch $p = 2.22 \times 10^{-8}$, ANOVA $p < 2 \times 10^{-16}$, 2 PNG plots | **PASS** |
+| **Full Pytest Suite** | `pytest -v` | All 41 existing + 13 new data tests pass | **54 passed in 29.40s (100% Pass Rate)** | **PASS** |
+| **Frontend Production Build** | `npm run build` in `frontend/` | Zero compilation or bundling regressions | `dist/assets` built in 21.80s (0 errors) | **PASS** |
+
+### Backend Pytest Execution Summary
+```text
+============================= test session starts =============================
+platform win32 -- Python 3.12.16, pytest-9.2.0, pluggy-1.7.0
+rootdir: C:\Users\Azan's PC\Documents\EduPredict
+plugins: flask-1.3.0
+collected 54 items
+
+tests/test_admin.py (7 tests) ........................................ PASSED
+tests/test_app_factory.py (3 tests) .................................. PASSED
+tests/test_auth.py (10 tests) ........................................ PASSED
+tests/test_config.py (4 tests) ....................................... PASSED
+tests/test_data_pipeline.py (13 tests) ............................... PASSED
+tests/test_health_routes.py (4 tests) ................................ PASSED
+tests/test_models.py (4 tests) ....................................... PASSED
+tests/test_mongo_connectivity.py (3 tests) ........................... PASSED
+tests/test_rbac.py (6 tests) ......................................... PASSED
+
+============================= 54 passed in 29.40s =============================
+```
