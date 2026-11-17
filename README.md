@@ -26,8 +26,8 @@ EduPredict is a standalone AI/ML-powered Educational Performance Prediction and 
 - **Operational Database**: MongoDB Server 6.0.29 (native service on port 27017, database: `edupredict`)
 - **Big Data & OLAP**: HDFS WebHDFS REST API client, Apache Impala MPP SQL query catalog, Apache Parquet
 - **Statistical Computing**: Native R 4.6.2 (ANOVA, Welch t-test, Kruskal-Wallis, Pearson correlation)
-- **Machine Learning & EDA**: Jupyter Notebook, Scikit-learn, NumPy, Pandas, Matplotlib, Seaborn, Scipy
-- **Testing**: Pytest (54 automated tests, 100% passing), pytest-flask, TypeScript compiler (`tsc -b`), Vite production bundler
+- **Machine Learning & EDA**: Scikit-learn 1.9.1, NumPy 2.5.5, Pandas 3.1.1, Joblib 1.6.0, Matplotlib, Seaborn, Jupyter Notebook
+- **Testing**: Pytest (72 automated tests, 100% passing), pytest-flask, TypeScript compiler (`tsc -b`), Vite production bundler
 
 ---
 
@@ -73,16 +73,20 @@ EduPredict/
 │   ├── tailwind.config.js    # Tailwind CSS design system and color palette extension
 │   ├── index.html            # HTML5 template
 │   └── src/                  # React components, pages, context, and styles
-├── ml_models/                # Serialized model artifacts (Phase 5)
+├── ml_models/                # Serialized model artifacts & evaluation reports (Phase 5A)
+│   ├── saved_models/         # 12 champion Scikit-learn pipelines (.joblib) & metadata (.json)
+│   └── reports/              # Holdout evaluation, cross-validation & confusion matrix reports
 ├── notebooks/                # Executed Jupyter Notebooks (eda_academic_performance.ipynb)
-└── tests/                    # 54 automated unit & integration tests
+└── tests/                    # 72 automated unit & integration tests
     ├── conftest.py
     ├── test_admin.py
     ├── test_app_factory.py
     ├── test_auth.py
     ├── test_config.py
     ├── test_data_pipeline.py # Dataset cleaning, MongoDB ingestion & Big Data checks
+    ├── test_feature_leakage.py # Leakage guard, attendance proxy & group tests
     ├── test_health_routes.py
+    ├── test_ml_models.py     # ML models, milestone restrictions & pipeline tests
     ├── test_models.py
     ├── test_mongo_connectivity.py
     └── test_rbac.py
@@ -133,7 +137,14 @@ Execute Native R 4.6.2 Statistical Hypothesis Testing:
 & "C:\Program Files\R\R-4.6.2\bin\x64\Rscript.exe" analytics/r/statistical_validation.R
 ```
 
-### 4. Start Application Servers
+### 4. Train Machine Learning Models (Phase 5A)
+Train all 54 candidate pipelines across Mathematics and Portuguese cohorts and export serialized champions:
+```powershell
+$env:PYTHONPATH="."
+.\.venv\Scripts\python.exe backend/ml/train_models.py
+```
+
+### 5. Start Application Servers
 Start Flask Backend (Windows CMD / PowerShell):
 ```cmd
 .\.venv\Scripts\python.exe -m backend.app
@@ -147,13 +158,13 @@ npm run dev
 ```
 Vite runs at `http://localhost:5173/` and proxies `/auth` and `/api` requests to `http://127.0.0.1:5000`.
 
-### 5. Run Automated Tests
-Execute full backend and data pipeline pytest suite:
+### 6. Run Automated Tests
+Execute full backend, data pipeline, and machine learning pytest suite:
 ```powershell
 $env:PYTHONPATH="."
 .\.venv\Scripts\pytest.exe -v
 ```
-*(All 54 tests passing)*
+*(All 72 tests passing)*
 
 Execute frontend type-checking and production build:
 ```cmd

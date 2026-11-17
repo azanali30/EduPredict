@@ -186,3 +186,60 @@ tests/test_rbac.py (6 tests) ......................................... PASSED [1
 
 ============================= 64 passed in 27.31s =============================
 ```
+
+---
+
+## Phase 5A: Machine Learning Model Development & Empirical Testing Summary
+- **Date**: 2026-11-17
+- **Target**: Machine Learning Pipelines, Preprocessing Encapsulation, Target Leakage Prevention, Milestone Restrictions, Model Artifact Loading, Inference Reproducibility, Metrics Fidelity
+- **Result**: **All 72 Backend Tests & Frontend Production Build PASSED (100%)**
+
+### Phase 5A ML Test Matrix
+| Test Case | Module | Target Tested | Result | Status |
+|---|---|---|---|---|
+| `test_subject_separation` | `test_ml_models.py` | Math ($N=395$) and Portuguese ($N=649$) cohort isolation | Zero cross-subject overlap in subject-specific datasets | **PASS** |
+| `test_milestone_feature_restrictions` | `test_ml_models.py` | Milestone feature sets (M0: 33, M1: 34, M2: 35) | $G_1, G_2$ strictly excluded from M0; $G_2$ excluded from M1 | **PASS** |
+| `test_target_leakage_prevention_across_milestones` | `test_ml_models.py` | Target leakage guard across all milestones | Rejects $G_3$, `final_exam_marks`, `academic_status`, `student_code` | **PASS** |
+| `test_train_test_isolation` | `test_ml_models.py` | 80/20 train/test partition integrity | Exact sample counts ($316/79$ Math, $519/130$ Por), zero index overlap | **PASS** |
+| `test_pipeline_preprocessing_encapsulation` | `test_ml_models.py` | Scikit-learn Pipeline & ColumnTransformer | Data-dependent scaling/encoding encapsulated inside pipeline | **PASS** |
+| `test_all_12_champion_model_artifacts_exist_and_load` | `test_ml_models.py` | Model persistence & deserialization | All 12 `.joblib` pipelines and `_meta.json` load with valid predict API | **PASS** |
+| `test_model_inference_reproducibility` | `test_ml_models.py` | Model inference consistency & shape | Identical input produces identical predictions and valid probabilities | **PASS** |
+| `test_metric_calculations_fidelity` | `test_ml_models.py` | Safe sMAPE, MAE, RMSE, Macro F1 calculation | Exact numerical stability with zero-division handling | **PASS** |
+
+### Complete Backend Test Suite Execution Summary (72 Tests)
+```text
+============================= test session starts =============================
+platform win32 -- Python 3.12.16, pytest-9.2.0, pluggy-1.7.0
+rootdir: C:\Users\Azan's PC\Documents\EduPredict
+plugins: flask-1.3.0
+collected 72 items
+
+tests/test_admin.py (7 tests) ........................................ PASSED [  9%]
+tests/test_app_factory.py (3 tests) .................................. PASSED [ 13%]
+tests/test_auth.py (10 tests) ........................................ PASSED [ 27%]
+tests/test_config.py (4 tests) ....................................... PASSED [ 33%]
+tests/test_data_pipeline.py (13 tests) ............................... PASSED [ 51%]
+tests/test_feature_leakage.py (10 tests) ............................. PASSED [ 65%]
+tests/test_health_routes.py (4 tests) ................................ PASSED [ 70%]
+tests/test_ml_models.py (8 tests) .................................... PASSED [ 81%]
+tests/test_models.py (4 tests) ....................................... PASSED [ 87%]
+tests/test_mongo_connectivity.py (3 tests) ........................... PASSED [ 91%]
+tests/test_rbac.py (6 tests) ......................................... PASSED [100%]
+
+============================= 72 passed in 35.14s =============================
+```
+
+### Frontend Production Build Verification
+```text
+> edupredict-frontend@1.0.0 build
+> tsc -b && vite build
+
+vite v6.4.6 building for production...
+✓ 2025 modules transformed.
+dist/index.html                   0.81 kB │ gzip:   0.46 kB
+dist/assets/index-BpR1vFdi.css   36.27 kB │ gzip:   7.10 kB
+dist/assets/index-cwR6B7wV.js   735.12 kB │ gzip: 199.12 kB
+✓ built in 17.58s
+```
+Status: **100% Passing, 0 Type Errors, 0 Build Warnings.**
+

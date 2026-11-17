@@ -1,0 +1,104 @@
+{
+  "subject": "Portuguese Language",
+  "milestone": 1,
+  "task": "regression",
+  "model_name": "Random Forest Regressor",
+  "model_family": "tree",
+  "artifact_file": "portuguese_milestone_1_regressor.joblib",
+  "target_variable": "final_exam_marks",
+  "feature_count": 34,
+  "features": [
+    "school",
+    "sex",
+    "age",
+    "address",
+    "famsize",
+    "Pstatus",
+    "Medu",
+    "Fedu",
+    "Mjob",
+    "Fjob",
+    "reason",
+    "guardian",
+    "traveltime",
+    "studytime",
+    "study_hours_per_week",
+    "failures",
+    "schoolsup",
+    "famsup",
+    "paid",
+    "activities",
+    "nursery",
+    "higher",
+    "internet",
+    "romantic",
+    "famrel",
+    "freetime",
+    "goout",
+    "Dalc",
+    "Walc",
+    "health",
+    "absences",
+    "attendance_percentage",
+    "assignment_completion_rate",
+    "previous_exam_marks"
+  ],
+  "training_samples": 519,
+  "test_samples": 130,
+  "cross_validation_metrics": {
+    "model_family": "tree",
+    "mean_mae": 5.9407,
+    "std_mae": 0.4884,
+    "mean_rmse": 8.3742,
+    "std_rmse": 0.9569,
+    "mean_r2": 0.7153,
+    "std_r2": 0.0233,
+    "mean_smape": 13.5296,
+    "std_smape": 2.9514,
+    "folds": [
+      {
+        "mae": 5.2995,
+        "rmse": 7.0535,
+        "r2": 0.722,
+        "smape": 9.4694
+      },
+      {
+        "mae": 5.4666,
+        "rmse": 7.4185,
+        "r2": 0.7398,
+        "smape": 11.0474
+      },
+      {
+        "mae": 6.0337,
+        "rmse": 9.1304,
+        "r2": 0.7288,
+        "smape": 15.9753
+      },
+      {
+        "mae": 6.3394,
+        "rmse": 8.8235,
+        "r2": 0.672,
+        "smape": 13.7704
+      },
+      {
+        "mae": 6.5644,
+        "rmse": 9.445,
+        "r2": 0.7141,
+        "smape": 17.3856
+      }
+    ]
+  },
+  "holdout_metrics": {
+    "champion_model": "Random Forest Regressor",
+    "holdout_mae": 6.3608,
+    "holdout_rmse": 9.5302,
+    "holdout_r2": 0.6935,
+    "holdout_smape": 17.0403,
+    "baseline_mae": 12.1316,
+    "baseline_rmse": 17.2183,
+    "baseline_r2": -0.0005,
+    "baseline_smape": 23.7501,
+    "mae_reduction_pct": 47.57
+  },
+  "created_at": "2026-11-17T09:14:46.467711"
+}

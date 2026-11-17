@@ -99,6 +99,33 @@ MILESTONE_2_EXAM_FEATURES: List[str] = [
     "quiz_scores",
 ]
 
+# Standardized feature definitions per milestone (excluding redundant raw G1/G2)
+MILESTONE_0_FEATURES: List[str] = list(BASE_DEMOGRAPHIC_BEHAVIORAL_FEATURES)
+MILESTONE_1_FEATURES: List[str] = BASE_DEMOGRAPHIC_BEHAVIORAL_FEATURES + ["previous_exam_marks"]
+MILESTONE_2_FEATURES: List[str] = BASE_DEMOGRAPHIC_BEHAVIORAL_FEATURES + ["previous_exam_marks", "quiz_scores"]
+
+
+def get_milestone_features(milestone: int) -> List[str]:
+    """
+    Returns the audited, standardized feature list for a given academic prediction milestone:
+    - Milestone 0: Demographics, study habits, attendance proxy, prior failures (zero exam marks).
+    - Milestone 1: Milestone 0 features + Period 1 examination marks (previous_exam_marks).
+    - Milestone 2: Milestone 1 features + Period 2 continuous quiz scores (quiz_scores).
+    """
+    if milestone == 0:
+        feats = list(MILESTONE_0_FEATURES)
+    elif milestone == 1:
+        feats = list(MILESTONE_1_FEATURES)
+    elif milestone == 2:
+        feats = list(MILESTONE_2_FEATURES)
+    else:
+        raise ValueError(f"Invalid milestone {milestone}. Expected 0, 1, or 2.")
+
+    # Guard check against target leakage
+    assert_no_leakage(feats, REGRESSION_TARGET)
+    assert_no_leakage(feats, CLASSIFICATION_TARGET)
+    return feats
+
 
 # ==============================================================================
 # 2. Leakage Guard Validator

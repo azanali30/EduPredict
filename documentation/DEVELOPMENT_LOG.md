@@ -172,7 +172,7 @@
 ## Phase 5 Readiness Verification: Pre-Modeling Protocols & Audit Review
 - **Date**: 2026-11-17
 - **Status**: Completed & Verified (Zero Models Trained)
-- **Commits**: Pending Push (`feat(readiness): document phase 5 readiness verification, split protocols, and metrics`)
+- **Commits**: `82ccfd1` (`feat(readiness): document phase 5 readiness verification, split protocols, and metrics`)
 - **Actions Executed**:
   1. **Student Identity Grouping Limitations Audit**:
      - Investigated exact mathematical reconciliation: 1,044 enrollment records vs. 662 demographic profile equivalence classes vs. 382 merge rows in `student-merge.R`.
@@ -194,3 +194,40 @@
      - Added unit tests for regression stratification binning and `safe_smape`.
      - Full test suite passed: **64 / 64 tests passing (100%)**.
      - Frontend production build passed: 0 errors in 17.35s.
+
+---
+
+## Phase 5A: Machine Learning Model Development & Empirical Evaluation
+- **Date**: 2026-11-17
+- **Status**: Completed & Empirically Verified
+- **Commits**: Pending Commit (`feat(phase-5a): subject-specific ml model training, pipelines, reports, and tests`)
+- **Actions Executed**:
+  1. **Subject Separation & Milestone Feature Partitions**:
+     - Enforced independent training on Mathematics ($N=395$) and Portuguese Language ($N=649$) cohorts.
+     - Implemented Milestone 0 (33 features, strictly zero grades), Milestone 1 (34 features, M0 + $G_1$), and Milestone 2 (35 features, M1 + $G_2$) in `backend/data_engineering/leakage_guard.py`.
+     - Strictly excluded $G_3$, `final_exam_marks`, `academic_status`, `student_code`, and database identifiers from all input feature matrices.
+  2. **Pipeline Preprocessing & Encapsulation**:
+     - Built `backend/ml/pipeline_builder.py` using Scikit-learn `Pipeline` and `ColumnTransformer`.
+     - Implemented model-specific preprocessors: standard scaling + one-hot encoding for linear models, passthrough + one-hot encoding for Random Forest, and ordinal encoding for HistGradientBoosting.
+     - Embedded all transformations inside Scikit-learn pipelines to ensure 100% data-dependent fitting happens inside training folds.
+  3. **Model Training & 5-Fold Cross-Validation**:
+     - Evaluated 54 candidate pipelines across 2 subjects, 3 milestones, and 2 prediction tasks.
+     - Regression algorithms evaluated: DummyRegressor (Mean), Linear Regression (OLS), Ridge Regression ($L_2$), Random Forest Regressor, HistGradientBoosting Regressor.
+     - Classification algorithms evaluated: DummyClassifier (Prior), Logistic Regression ($L_2$), Random Forest Classifier, HistGradientBoosting Classifier.
+     - Observed and documented OLS linear model collapse under multicollinearity in small-sample Math cohort (CV MAE 62.78 vs Ridge 17.22 vs RF 14.78).
+     - Selected 12 champion pipelines based on lowest CV MAE (regression) and highest CV Macro F1 (classification).
+  4. **Model Serialization & Reports Export**:
+     - Serialized all 12 champion pipelines (`.joblib`) with metadata files (`_meta.json`) into `ml_models/saved_models/`.
+     - Built thread-safe loader and inference utility `backend/ml/model_loader.py`.
+     - Generated machine-readable evaluation outputs in `ml_models/reports/`: `cross_validation_results.json`, `holdout_evaluation_results.json`, `confusion_matrices.json`, `champion_models_manifest.json`.
+  5. **Holdout Evaluation & Safety Analysis**:
+     - Evaluated champions against unseen 20% holdout test partitions ($N=79$ Math, $N=130$ Portuguese).
+     - Math Regression holdout MAE: 14.41% (M0) -> 9.10% (M1) -> 4.70% (M2, 71.27% error reduction over baseline).
+     - Math Classification holdout Macro F1: 0.5599 (M0) -> 0.7386 (M1) -> 0.8632 (M2, +339.51% lift over baseline). At M2, High Risk recall reached 92.3% (24/26).
+     - Portuguese Regression holdout MAE: 10.62% (M0) -> 6.36% (M1) -> 3.72% (M2, 69.36% error reduction over baseline).
+     - Portuguese Classification holdout Macro F1: 0.4711 (M0) -> 0.7060 (M1) -> 0.8121 (M2, +244.84% lift over baseline).
+  6. **Automated Testing & Documentation**:
+     - Authored `tests/test_ml_models.py` (8 automated tests covering subject separation, milestone restrictions, leakage prevention, train/test isolation, pipeline preprocessing, artifact loading, inference reproducibility, and metric calculations).
+     - Full test suite passed: **72 / 72 tests passing (100%)**.
+     - Frontend production build passed: 0 errors in 17.58s.
+     - Authored comprehensive documentation `documentation/PHASE_5A_ML_MODEL_DEVELOPMENT.md`.

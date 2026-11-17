@@ -1,0 +1,132 @@
+{
+  "subject": "Portuguese Language",
+  "milestone": 2,
+  "task": "classification",
+  "model_name": "HistGradientBoosting Classifier",
+  "model_family": "hist_gradient_boosting",
+  "artifact_file": "portuguese_milestone_2_classifier.joblib",
+  "target_variable": "academic_status",
+  "target_classes": [
+    "High Risk",
+    "Moderate Risk",
+    "Low Risk / On Track"
+  ],
+  "feature_count": 35,
+  "features": [
+    "school",
+    "sex",
+    "age",
+    "address",
+    "famsize",
+    "Pstatus",
+    "Medu",
+    "Fedu",
+    "Mjob",
+    "Fjob",
+    "reason",
+    "guardian",
+    "traveltime",
+    "studytime",
+    "study_hours_per_week",
+    "failures",
+    "schoolsup",
+    "famsup",
+    "paid",
+    "activities",
+    "nursery",
+    "higher",
+    "internet",
+    "romantic",
+    "famrel",
+    "freetime",
+    "goout",
+    "Dalc",
+    "Walc",
+    "health",
+    "absences",
+    "attendance_percentage",
+    "assignment_completion_rate",
+    "previous_exam_marks",
+    "quiz_scores"
+  ],
+  "training_samples": 519,
+  "test_samples": 130,
+  "cross_validation_metrics": {
+    "model_family": "hist_gradient_boosting",
+    "mean_macro_f1": 0.8175,
+    "std_macro_f1": 0.042,
+    "mean_weighted_f1": 0.8306,
+    "std_weighted_f1": 0.0339,
+    "mean_balanced_accuracy": 0.8158,
+    "std_balanced_accuracy": 0.0553,
+    "mean_precision": 0.8308,
+    "mean_recall": 0.8158,
+    "folds": [
+      {
+        "macro_f1": 0.8293,
+        "weighted_f1": 0.8351,
+        "balanced_accuracy": 0.8415,
+        "precision": 0.8333,
+        "recall": 0.8415
+      },
+      {
+        "macro_f1": 0.8505,
+        "weighted_f1": 0.8555,
+        "balanced_accuracy": 0.8529,
+        "precision": 0.8492,
+        "recall": 0.8529
+      },
+      {
+        "macro_f1": 0.801,
+        "weighted_f1": 0.808,
+        "balanced_accuracy": 0.8087,
+        "precision": 0.7941,
+        "recall": 0.8087
+      },
+      {
+        "macro_f1": 0.8621,
+        "weighted_f1": 0.875,
+        "balanced_accuracy": 0.8643,
+        "precision": 0.8601,
+        "recall": 0.8643
+      },
+      {
+        "macro_f1": 0.7444,
+        "weighted_f1": 0.7795,
+        "balanced_accuracy": 0.7116,
+        "precision": 0.8171,
+        "recall": 0.7116
+      }
+    ]
+  },
+  "holdout_metrics": {
+    "champion_model": "HistGradientBoosting Classifier",
+    "holdout_macro_f1": 0.8121,
+    "holdout_weighted_f1": 0.8386,
+    "holdout_balanced_accuracy": 0.8103,
+    "holdout_precision": 0.814,
+    "holdout_recall": 0.8103,
+    "baseline_macro_f1": 0.2355,
+    "baseline_weighted_f1": 0.3858,
+    "baseline_balanced_accuracy": 0.3333,
+    "f1_improvement_pct": 244.84
+  },
+  "confusion_matrix": [
+    [
+      14,
+      6,
+      0
+    ],
+    [
+      6,
+      61,
+      4
+    ],
+    [
+      0,
+      5,
+      34
+    ]
+  ],
+  "created_at": "2026-11-17T09:15:03.314735"
+}

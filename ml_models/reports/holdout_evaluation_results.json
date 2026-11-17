@@ -1,0 +1,162 @@
+{
+  "math": {
+    "milestone_0": {
+      "regression": {
+        "champion_model": "Random Forest Regressor",
+        "holdout_mae": 14.4141,
+        "holdout_rmse": 19.4164,
+        "holdout_r2": 0.2067,
+        "holdout_smape": 38.1866,
+        "baseline_mae": 16.365,
+        "baseline_rmse": 21.8049,
+        "baseline_r2": -0.0004,
+        "baseline_smape": 39.0563,
+        "mae_reduction_pct": 11.92
+      },
+      "classification": {
+        "champion_model": "Random Forest Classifier",
+        "holdout_macro_f1": 0.5599,
+        "holdout_weighted_f1": 0.5469,
+        "holdout_balanced_accuracy": 0.5767,
+        "holdout_precision": 0.5617,
+        "holdout_recall": 0.5767,
+        "baseline_macro_f1": 0.1964,
+        "baseline_weighted_f1": 0.2462,
+        "baseline_balanced_accuracy": 0.3333,
+        "f1_improvement_pct": 185.08
+      }
+    },
+    "milestone_1": {
+      "regression": {
+        "champion_model": "HistGradientBoosting Regressor",
+        "holdout_mae": 9.103,
+        "holdout_rmse": 12.3783,
+        "holdout_r2": 0.6776,
+        "holdout_smape": 31.4791,
+        "baseline_mae": 16.365,
+        "baseline_rmse": 21.8049,
+        "baseline_r2": -0.0004,
+        "baseline_smape": 39.0563,
+        "mae_reduction_pct": 44.38
+      },
+      "classification": {
+        "champion_model": "HistGradientBoosting Classifier",
+        "holdout_macro_f1": 0.7386,
+        "holdout_weighted_f1": 0.7341,
+        "holdout_balanced_accuracy": 0.7349,
+        "holdout_precision": 0.744,
+        "holdout_recall": 0.7349,
+        "baseline_macro_f1": 0.1964,
+        "baseline_weighted_f1": 0.2462,
+        "baseline_balanced_accuracy": 0.3333,
+        "f1_improvement_pct": 276.07
+      }
+    },
+    "milestone_2": {
+      "regression": {
+        "champion_model": "Random Forest Regressor",
+        "holdout_mae": 4.7011,
+        "holdout_rmse": 7.0455,
+        "holdout_r2": 0.8955,
+        "holdout_smape": 25.1484,
+        "baseline_mae": 16.365,
+        "baseline_rmse": 21.8049,
+        "baseline_r2": -0.0004,
+        "baseline_smape": 39.0563,
+        "mae_reduction_pct": 71.27
+      },
+      "classification": {
+        "champion_model": "HistGradientBoosting Classifier",
+        "holdout_macro_f1": 0.8632,
+        "holdout_weighted_f1": 0.8708,
+        "holdout_balanced_accuracy": 0.8476,
+        "holdout_precision": 0.903,
+        "holdout_recall": 0.8476,
+        "baseline_macro_f1": 0.1964,
+        "baseline_weighted_f1": 0.2462,
+        "baseline_balanced_accuracy": 0.3333,
+        "f1_improvement_pct": 339.51
+      }
+    }
+  },
+  "portuguese": {
+    "milestone_0": {
+      "regression": {
+        "champion_model": "Random Forest Regressor",
+        "holdout_mae": 10.617,
+        "holdout_rmse": 15.7298,
+        "holdout_r2": 0.165,
+        "holdout_smape": 21.4632,
+        "baseline_mae": 12.1316,
+        "baseline_rmse": 17.2183,
+        "baseline_r2": -0.0005,
+        "baseline_smape": 23.7501,
+        "mae_reduction_pct": 12.48
+      },
+      "classification": {
+        "champion_model": "HistGradientBoosting Classifier",
+        "holdout_macro_f1": 0.4711,
+        "holdout_weighted_f1": 0.5275,
+        "holdout_balanced_accuracy": 0.4578,
+        "holdout_precision": 0.5139,
+        "holdout_recall": 0.4578,
+        "baseline_macro_f1": 0.2355,
+        "baseline_weighted_f1": 0.3858,
+        "baseline_balanced_accuracy": 0.3333,
+        "f1_improvement_pct": 100.04
+      }
+    },
+    "milestone_1": {
+      "regression": {
+        "champion_model": "Random Forest Regressor",
+        "holdout_mae": 6.3608,
+        "holdout_rmse": 9.5302,
+        "holdout_r2": 0.6935,
+        "holdout_smape": 17.0403,
+        "baseline_mae": 12.1316,
+        "baseline_rmse": 17.2183,
+        "baseline_r2": -0.0005,
+        "baseline_smape": 23.7501,
+        "mae_reduction_pct": 47.57
+      },
+      "classification": {
+        "champion_model": "HistGradientBoosting Classifier",
+        "holdout_macro_f1": 0.706,
+        "holdout_weighted_f1": 0.7365,
+        "holdout_balanced_accuracy": 0.698,
+        "holdout_precision": 0.7168,
+        "holdout_recall": 0.698,
+        "baseline_macro_f1": 0.2355,
+        "baseline_weighted_f1": 0.3858,
+        "baseline_balanced_accuracy": 0.3333,
+        "f1_improvement_pct": 199.79
+      }
+    },
+    "milestone_2": {
+      "regression": {
+        "champion_model": "Random Forest Regressor",
+        "holdout_mae": 3.7176,
+        "holdout_rmse": 5.3618,
+        "holdout_r2": 0.903,
+        "holdout_smape": 12.9783,
+        "baseline_mae": 12.1316,
+        "baseline_rmse": 17.2183,
+        "baseline_r2": -0.0005,
+        "baseline_smape": 23.7501,
+        "mae_reduction_pct": 69.36
+      },
+      "classification": {
+        "champion_model": "HistGradientBoosting Classifier",
+        "holdout_macro_f1": 0.8121,
+        "holdout_weighted_f1": 0.8386,
+        "holdout_balanced_accuracy": 0.8103,
+        "holdout_precision": 0.814,
+        "holdout_recall": 0.8103,
+        "baseline_macro_f1": 0.2355,
+        "baseline_weighted_f1": 0.3858,
+        "baseline_balanced_accuracy": 0.3333,
+        "f1_improvement_pct": 244.84
+      }
+    }
+  }
+}

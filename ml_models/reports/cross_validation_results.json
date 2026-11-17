@@ -1,0 +1,2724 @@
+{
+  "math": {
+    "milestone_0": {
+      "milestone": 0,
+      "feature_count": 33,
+      "features": [
+        "school",
+        "sex",
+        "age",
+        "address",
+        "famsize",
+        "Pstatus",
+        "Medu",
+        "Fedu",
+        "Mjob",
+        "Fjob",
+        "reason",
+        "guardian",
+        "traveltime",
+        "studytime",
+        "study_hours_per_week",
+        "failures",
+        "schoolsup",
+        "famsup",
+        "paid",
+        "activities",
+        "nursery",
+        "higher",
+        "internet",
+        "romantic",
+        "famrel",
+        "freetime",
+        "goout",
+        "Dalc",
+        "Walc",
+        "health",
+        "absences",
+        "attendance_percentage",
+        "assignment_completion_rate"
+      ],
+      "regression": {
+        "DummyRegressor (Mean Baseline)": {
+          "model_family": "baseline",
+          "mean_mae": 17.3937,
+          "std_mae": 2.0796,
+          "mean_rmse": 23.0774,
+          "std_rmse": 2.3014,
+          "mean_r2": -0.016,
+          "std_r2": 0.0157,
+          "mean_smape": 41.3787,
+          "std_smape": 5.5594,
+          "folds": [
+            {
+              "mae": 20.5122,
+              "rmse": 26.0653,
+              "r2": -0.0122,
+              "smape": 47.3229
+            },
+            {
+              "mae": 17.2304,
+              "rmse": 23.3085,
+              "r2": -0.0422,
+              "smape": 43.6723
+            },
+            {
+              "mae": 18.8528,
+              "rmse": 24.9525,
+              "r2": -0.0004,
+              "smape": 46.3189
+            },
+            {
+              "mae": 15.1895,
+              "rmse": 21.241,
+              "r2": -0.0012,
+              "smape": 35.9535
+            },
+            {
+              "mae": 15.1838,
+              "rmse": 19.8198,
+              "r2": -0.0241,
+              "smape": 33.626
+            }
+          ]
+        },
+        "Linear Regression": {
+          "model_family": "linear",
+          "mean_mae": 62.7779,
+          "std_mae": 90.8286,
+          "mean_rmse": 381.9327,
+          "std_rmse": 718.3085,
+          "mean_r2": -985.3289,
+          "std_r2": 1970.471,
+          "mean_smape": 45.6688,
+          "std_smape": 1.0154,
+          "folds": [
+            {
+              "mae": 244.4256,
+              "rmse": 1818.5466,
+              "r2": -4926.2709,
+              "smape": 46.3749
+            },
+            {
+              "mae": 15.7725,
+              "rmse": 20.0121,
+              "r2": 0.2317,
+              "smape": 45.6315
+            },
+            {
+              "mae": 17.8296,
+              "rmse": 23.6748,
+              "r2": 0.0994,
+              "smape": 45.7893
+            },
+            {
+              "mae": 18.5932,
+              "rmse": 24.3141,
+              "r2": -0.3118,
+              "smape": 46.7455
+            },
+            {
+              "mae": 17.2686,
+              "rmse": 23.1157,
+              "r2": -0.3931,
+              "smape": 43.803
+            }
+          ]
+        },
+        "Ridge Regression": {
+          "model_family": "linear",
+          "mean_mae": 17.2236,
+          "std_mae": 0.9002,
+          "mean_rmse": 22.4157,
+          "std_rmse": 1.5187,
+          "mean_r2": -0.0015,
+          "std_r2": 0.2789,
+          "mean_smape": 44.8356,
+          "std_smape": 1.131,
+          "folds": [
+            {
+              "mae": 17.1663,
+              "rmse": 21.5749,
+              "r2": 0.3065,
+              "smape": 43.3425
+            },
+            {
+              "mae": 15.6609,
+              "rmse": 19.8854,
+              "r2": 0.2414,
+              "smape": 45.3462
+            },
+            {
+              "mae": 17.7341,
+              "rmse": 23.5442,
+              "r2": 0.1093,
+              "smape": 45.6352
+            },
+            {
+              "mae": 18.3826,
+              "rmse": 24.1002,
+              "r2": -0.2888,
+              "smape": 46.2019
+            },
+            {
+              "mae": 17.1739,
+              "rmse": 22.9739,
+              "r2": -0.376,
+              "smape": 43.6524
+            }
+          ]
+        },
+        "Random Forest Regressor": {
+          "model_family": "tree",
+          "mean_mae": 14.7815,
+          "std_mae": 1.7888,
+          "mean_rmse": 19.3592,
+          "std_rmse": 2.3742,
+          "mean_r2": 0.278,
+          "std_r2": 0.1191,
+          "mean_smape": 40.7596,
+          "std_smape": 4.7473,
+          "folds": [
+            {
+              "mae": 16.3196,
+              "rmse": 20.9437,
+              "r2": 0.3465,
+              "smape": 43.336
+            },
+            {
+              "mae": 13.0324,
+              "rmse": 16.7897,
+              "r2": 0.4592,
+              "smape": 41.7755
+            },
+            {
+              "mae": 17.5046,
+              "rmse": 23.2225,
+              "r2": 0.1335,
+              "smape": 47.6685
+            },
+            {
+              "mae": 13.4783,
+              "rmse": 17.9556,
+              "r2": 0.2846,
+              "smape": 36.5445
+            },
+            {
+              "mae": 13.5728,
+              "rmse": 17.8843,
+              "r2": 0.1661,
+              "smape": 34.4735
+            }
+          ]
+        },
+        "HistGradientBoosting Regressor": {
+          "model_family": "hist_gradient_boosting",
+          "mean_mae": 15.6223,
+          "std_mae": 1.5217,
+          "mean_rmse": 20.1903,
+          "std_rmse": 2.0274,
+          "mean_r2": 0.2058,
+          "std_r2": 0.1614,
+          "mean_smape": 43.1827,
+          "std_smape": 5.1573,
+          "folds": [
+            {
+              "mae": 17.0906,
+              "rmse": 21.3999,
+              "r2": 0.3177,
+              "smape": 45.0897
+            },
+            {
+              "mae": 14.0754,
+              "rmse": 17.2177,
+              "r2": 0.4313,
+              "smape": 44.7598
+            },
+            {
+              "mae": 17.8101,
+              "rmse": 23.2065,
+              "r2": 0.1347,
+              "smape": 50.981
+            },
+            {
+              "mae": 14.6621,
+              "rmse": 19.1341,
+              "r2": 0.1876,
+              "smape": 38.6379
+            },
+            {
+              "mae": 14.4733,
+              "rmse": 19.9932,
+              "r2": -0.0421,
+              "smape": 36.4449
+            }
+          ]
+        }
+      },
+      "classification": {
+        "DummyClassifier (Prior Baseline)": {
+          "model_family": "baseline",
+          "mean_macro_f1": 0.1964,
+          "std_macro_f1": 0.0021,
+          "mean_weighted_f1": 0.2461,
+          "std_weighted_f1": 0.0065,
+          "mean_balanced_accuracy": 0.3333,
+          "std_balanced_accuracy": 0.0,
+          "mean_precision": 0.1393,
+          "mean_recall": 0.3333,
+          "folds": [
+            {
+              "macro_f1": 0.1978,
+              "weighted_f1": 0.2503,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1406,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.1948,
+              "weighted_f1": 0.2411,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1376,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.1948,
+              "weighted_f1": 0.2411,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1376,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.1948,
+              "weighted_f1": 0.2411,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1376,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.2,
+              "weighted_f1": 0.2571,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1429,
+              "recall": 0.3333
+            }
+          ]
+        },
+        "Logistic Regression": {
+          "model_family": "linear",
+          "mean_macro_f1": 0.4732,
+          "std_macro_f1": 0.0498,
+          "mean_weighted_f1": 0.4677,
+          "std_weighted_f1": 0.0561,
+          "mean_balanced_accuracy": 0.4754,
+          "std_balanced_accuracy": 0.0442,
+          "mean_precision": 0.4846,
+          "mean_recall": 0.4754,
+          "folds": [
+            {
+              "macro_f1": 0.4241,
+              "weighted_f1": 0.4177,
+              "balanced_accuracy": 0.4344,
+              "precision": 0.4245,
+              "recall": 0.4344
+            },
+            {
+              "macro_f1": 0.5559,
+              "weighted_f1": 0.5642,
+              "balanced_accuracy": 0.5482,
+              "precision": 0.5892,
+              "recall": 0.5482
+            },
+            {
+              "macro_f1": 0.4909,
+              "weighted_f1": 0.4919,
+              "balanced_accuracy": 0.4791,
+              "precision": 0.5247,
+              "recall": 0.4791
+            },
+            {
+              "macro_f1": 0.42,
+              "weighted_f1": 0.4118,
+              "balanced_accuracy": 0.4249,
+              "precision": 0.4182,
+              "recall": 0.4249
+            },
+            {
+              "macro_f1": 0.4752,
+              "weighted_f1": 0.453,
+              "balanced_accuracy": 0.4903,
+              "precision": 0.4662,
+              "recall": 0.4903
+            }
+          ]
+        },
+        "Random Forest Classifier": {
+          "model_family": "tree",
+          "mean_macro_f1": 0.4986,
+          "std_macro_f1": 0.0148,
+          "mean_weighted_f1": 0.4978,
+          "std_weighted_f1": 0.0157,
+          "mean_balanced_accuracy": 0.5065,
+          "std_balanced_accuracy": 0.0146,
+          "mean_precision": 0.5016,
+          "mean_recall": 0.5065,
+          "folds": [
+            {
+              "macro_f1": 0.4846,
+              "weighted_f1": 0.4829,
+              "balanced_accuracy": 0.4993,
+              "precision": 0.4893,
+              "recall": 0.4993
+            },
+            {
+              "macro_f1": 0.5083,
+              "weighted_f1": 0.5067,
+              "balanced_accuracy": 0.5098,
+              "precision": 0.5151,
+              "recall": 0.5098
+            },
+            {
+              "macro_f1": 0.5065,
+              "weighted_f1": 0.5198,
+              "balanced_accuracy": 0.5047,
+              "precision": 0.5124,
+              "recall": 0.5047
+            },
+            {
+              "macro_f1": 0.4776,
+              "weighted_f1": 0.4773,
+              "balanced_accuracy": 0.4873,
+              "precision": 0.4823,
+              "recall": 0.4873
+            },
+            {
+              "macro_f1": 0.516,
+              "weighted_f1": 0.5025,
+              "balanced_accuracy": 0.5316,
+              "precision": 0.5087,
+              "recall": 0.5316
+            }
+          ]
+        },
+        "HistGradientBoosting Classifier": {
+          "model_family": "hist_gradient_boosting",
+          "mean_macro_f1": 0.4667,
+          "std_macro_f1": 0.0556,
+          "mean_weighted_f1": 0.4673,
+          "std_weighted_f1": 0.0587,
+          "mean_balanced_accuracy": 0.4725,
+          "std_balanced_accuracy": 0.0541,
+          "mean_precision": 0.47,
+          "mean_recall": 0.4725,
+          "folds": [
+            {
+              "macro_f1": 0.3782,
+              "weighted_f1": 0.368,
+              "balanced_accuracy": 0.3938,
+              "precision": 0.3792,
+              "recall": 0.3938
+            },
+            {
+              "macro_f1": 0.4381,
+              "weighted_f1": 0.4432,
+              "balanced_accuracy": 0.4345,
+              "precision": 0.4452,
+              "recall": 0.4345
+            },
+            {
+              "macro_f1": 0.4846,
+              "weighted_f1": 0.5121,
+              "balanced_accuracy": 0.4887,
+              "precision": 0.488,
+              "recall": 0.4887
+            },
+            {
+              "macro_f1": 0.5445,
+              "weighted_f1": 0.5358,
+              "balanced_accuracy": 0.5515,
+              "precision": 0.5471,
+              "recall": 0.5515
+            },
+            {
+              "macro_f1": 0.4881,
+              "weighted_f1": 0.4773,
+              "balanced_accuracy": 0.4941,
+              "precision": 0.4907,
+              "recall": 0.4941
+            }
+          ]
+        }
+      },
+      "champion_regressor": "Random Forest Regressor",
+      "champion_classifier": "Random Forest Classifier"
+    },
+    "milestone_1": {
+      "milestone": 1,
+      "feature_count": 34,
+      "features": [
+        "school",
+        "sex",
+        "age",
+        "address",
+        "famsize",
+        "Pstatus",
+        "Medu",
+        "Fedu",
+        "Mjob",
+        "Fjob",
+        "reason",
+        "guardian",
+        "traveltime",
+        "studytime",
+        "study_hours_per_week",
+        "failures",
+        "schoolsup",
+        "famsup",
+        "paid",
+        "activities",
+        "nursery",
+        "higher",
+        "internet",
+        "romantic",
+        "famrel",
+        "freetime",
+        "goout",
+        "Dalc",
+        "Walc",
+        "health",
+        "absences",
+        "attendance_percentage",
+        "assignment_completion_rate",
+        "previous_exam_marks"
+      ],
+      "regression": {
+        "DummyRegressor (Mean Baseline)": {
+          "model_family": "baseline",
+          "mean_mae": 17.3937,
+          "std_mae": 2.0796,
+          "mean_rmse": 23.0774,
+          "std_rmse": 2.3014,
+          "mean_r2": -0.016,
+          "std_r2": 0.0157,
+          "mean_smape": 41.3787,
+          "std_smape": 5.5594,
+          "folds": [
+            {
+              "mae": 20.5122,
+              "rmse": 26.0653,
+              "r2": -0.0122,
+              "smape": 47.3229
+            },
+            {
+              "mae": 17.2304,
+              "rmse": 23.3085,
+              "r2": -0.0422,
+              "smape": 43.6723
+            },
+            {
+              "mae": 18.8528,
+              "rmse": 24.9525,
+              "r2": -0.0004,
+              "smape": 46.3189
+            },
+            {
+              "mae": 15.1895,
+              "rmse": 21.241,
+              "r2": -0.0012,
+              "smape": 35.9535
+            },
+            {
+              "mae": 15.1838,
+              "rmse": 19.8198,
+              "r2": -0.0241,
+              "smape": 33.626
+            }
+          ]
+        },
+        "Linear Regression": {
+          "model_family": "linear",
+          "mean_mae": 31.0426,
+          "std_mae": 40.7664,
+          "mean_rmse": 175.8062,
+          "std_rmse": 323.5116,
+          "mean_r2": -201.0815,
+          "std_r2": 403.3234,
+          "mean_smape": 36.5489,
+          "std_smape": 2.3664,
+          "folds": [
+            {
+              "mae": 112.5719,
+              "rmse": 822.8266,
+              "r2": -1007.7283,
+              "smape": 37.3507
+            },
+            {
+              "mae": 10.133,
+              "rmse": 12.2547,
+              "r2": 0.7119,
+              "smape": 39.4302
+            },
+            {
+              "mae": 10.454,
+              "rmse": 14.3014,
+              "r2": 0.6714,
+              "smape": 38.3736
+            },
+            {
+              "mae": 10.792,
+              "rmse": 14.676,
+              "r2": 0.5221,
+              "smape": 34.3234
+            },
+            {
+              "mae": 11.262,
+              "rmse": 14.9724,
+              "r2": 0.4156,
+              "smape": 33.2667
+            }
+          ]
+        },
+        "Ridge Regression": {
+          "model_family": "linear",
+          "mean_mae": 10.4146,
+          "std_mae": 0.4228,
+          "mean_rmse": 14.0717,
+          "std_rmse": 0.9461,
+          "mean_r2": 0.6062,
+          "std_r2": 0.1105,
+          "mean_smape": 35.7623,
+          "std_smape": 2.4646,
+          "folds": [
+            {
+              "mae": 9.9639,
+              "rmse": 14.5729,
+              "r2": 0.6836,
+              "smape": 34.532
+            },
+            {
+              "mae": 10.0875,
+              "rmse": 12.2418,
+              "r2": 0.7125,
+              "smape": 39.2546
+            },
+            {
+              "mae": 10.3488,
+              "rmse": 14.2848,
+              "r2": 0.6721,
+              "smape": 38.1362
+            },
+            {
+              "mae": 10.5022,
+              "rmse": 14.3067,
+              "r2": 0.5458,
+              "smape": 33.8186
+            },
+            {
+              "mae": 11.1708,
+              "rmse": 14.9522,
+              "r2": 0.4171,
+              "smape": 33.07
+            }
+          ]
+        },
+        "Random Forest Regressor": {
+          "model_family": "tree",
+          "mean_mae": 8.6401,
+          "std_mae": 0.6659,
+          "mean_rmse": 12.0864,
+          "std_rmse": 1.3776,
+          "mean_r2": 0.7153,
+          "std_r2": 0.0625,
+          "mean_smape": 33.6716,
+          "std_smape": 4.1355,
+          "folds": [
+            {
+              "mae": 8.5493,
+              "rmse": 13.7563,
+              "r2": 0.7181,
+              "smape": 31.5577
+            },
+            {
+              "mae": 8.0639,
+              "rmse": 10.0817,
+              "r2": 0.805,
+              "smape": 36.1442
+            },
+            {
+              "mae": 9.3271,
+              "rmse": 12.529,
+              "r2": 0.7478,
+              "smape": 39.086
+            },
+            {
+              "mae": 9.468,
+              "rmse": 13.146,
+              "r2": 0.6165,
+              "smape": 34.5895
+            },
+            {
+              "mae": 7.792,
+              "rmse": 10.9189,
+              "r2": 0.6892,
+              "smape": 26.9804
+            }
+          ]
+        },
+        "HistGradientBoosting Regressor": {
+          "model_family": "hist_gradient_boosting",
+          "mean_mae": 8.5048,
+          "std_mae": 0.3725,
+          "mean_rmse": 11.8473,
+          "std_rmse": 0.987,
+          "mean_r2": 0.7272,
+          "std_r2": 0.0471,
+          "mean_smape": 33.8384,
+          "std_smape": 4.4299,
+          "folds": [
+            {
+              "mae": 7.914,
+              "rmse": 13.6414,
+              "r2": 0.7227,
+              "smape": 30.8512
+            },
+            {
+              "mae": 8.2563,
+              "rmse": 10.7032,
+              "r2": 0.7802,
+              "smape": 38.7812
+            },
+            {
+              "mae": 8.9356,
+              "rmse": 11.6759,
+              "r2": 0.7809,
+              "smape": 39.1199
+            },
+            {
+              "mae": 8.7929,
+              "rmse": 11.9239,
+              "r2": 0.6845,
+              "smape": 32.531
+            },
+            {
+              "mae": 8.6252,
+              "rmse": 11.2921,
+              "r2": 0.6676,
+              "smape": 27.9086
+            }
+          ]
+        }
+      },
+      "classification": {
+        "DummyClassifier (Prior Baseline)": {
+          "model_family": "baseline",
+          "mean_macro_f1": 0.1964,
+          "std_macro_f1": 0.0021,
+          "mean_weighted_f1": 0.2461,
+          "std_weighted_f1": 0.0065,
+          "mean_balanced_accuracy": 0.3333,
+          "std_balanced_accuracy": 0.0,
+          "mean_precision": 0.1393,
+          "mean_recall": 0.3333,
+          "folds": [
+            {
+              "macro_f1": 0.1978,
+              "weighted_f1": 0.2503,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1406,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.1948,
+              "weighted_f1": 0.2411,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1376,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.1948,
+              "weighted_f1": 0.2411,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1376,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.1948,
+              "weighted_f1": 0.2411,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1376,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.2,
+              "weighted_f1": 0.2571,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1429,
+              "recall": 0.3333
+            }
+          ]
+        },
+        "Logistic Regression": {
+          "model_family": "linear",
+          "mean_macro_f1": 0.7167,
+          "std_macro_f1": 0.0656,
+          "mean_weighted_f1": 0.7034,
+          "std_weighted_f1": 0.0689,
+          "mean_balanced_accuracy": 0.7198,
+          "std_balanced_accuracy": 0.0596,
+          "mean_precision": 0.7197,
+          "mean_recall": 0.7198,
+          "folds": [
+            {
+              "macro_f1": 0.6708,
+              "weighted_f1": 0.6477,
+              "balanced_accuracy": 0.6917,
+              "precision": 0.6592,
+              "recall": 0.6917
+            },
+            {
+              "macro_f1": 0.8194,
+              "weighted_f1": 0.8101,
+              "balanced_accuracy": 0.8118,
+              "precision": 0.8333,
+              "recall": 0.8118
+            },
+            {
+              "macro_f1": 0.7076,
+              "weighted_f1": 0.6923,
+              "balanced_accuracy": 0.7202,
+              "precision": 0.7038,
+              "recall": 0.7202
+            },
+            {
+              "macro_f1": 0.7548,
+              "weighted_f1": 0.748,
+              "balanced_accuracy": 0.7445,
+              "precision": 0.7711,
+              "recall": 0.7445
+            },
+            {
+              "macro_f1": 0.631,
+              "weighted_f1": 0.619,
+              "balanced_accuracy": 0.631,
+              "precision": 0.631,
+              "recall": 0.631
+            }
+          ]
+        },
+        "Random Forest Classifier": {
+          "model_family": "tree",
+          "mean_macro_f1": 0.7103,
+          "std_macro_f1": 0.0174,
+          "mean_weighted_f1": 0.6956,
+          "std_weighted_f1": 0.0167,
+          "mean_balanced_accuracy": 0.7209,
+          "std_balanced_accuracy": 0.0114,
+          "mean_precision": 0.7085,
+          "mean_recall": 0.7209,
+          "folds": [
+            {
+              "macro_f1": 0.6914,
+              "weighted_f1": 0.6747,
+              "balanced_accuracy": 0.727,
+              "precision": 0.69,
+              "recall": 0.727
+            },
+            {
+              "macro_f1": 0.7284,
+              "weighted_f1": 0.713,
+              "balanced_accuracy": 0.7318,
+              "precision": 0.7258,
+              "recall": 0.7318
+            },
+            {
+              "macro_f1": 0.7299,
+              "weighted_f1": 0.7142,
+              "balanced_accuracy": 0.7299,
+              "precision": 0.7333,
+              "recall": 0.7299
+            },
+            {
+              "macro_f1": 0.7125,
+              "weighted_f1": 0.6979,
+              "balanced_accuracy": 0.7141,
+              "precision": 0.7114,
+              "recall": 0.7141
+            },
+            {
+              "macro_f1": 0.6893,
+              "weighted_f1": 0.6783,
+              "balanced_accuracy": 0.7019,
+              "precision": 0.682,
+              "recall": 0.7019
+            }
+          ]
+        },
+        "HistGradientBoosting Classifier": {
+          "model_family": "hist_gradient_boosting",
+          "mean_macro_f1": 0.7202,
+          "std_macro_f1": 0.0308,
+          "mean_weighted_f1": 0.7064,
+          "std_weighted_f1": 0.0297,
+          "mean_balanced_accuracy": 0.718,
+          "std_balanced_accuracy": 0.0298,
+          "mean_precision": 0.7273,
+          "mean_recall": 0.718,
+          "folds": [
+            {
+              "macro_f1": 0.7011,
+              "weighted_f1": 0.6848,
+              "balanced_accuracy": 0.7079,
+              "precision": 0.6972,
+              "recall": 0.7079
+            },
+            {
+              "macro_f1": 0.7576,
+              "weighted_f1": 0.7442,
+              "balanced_accuracy": 0.7636,
+              "precision": 0.753,
+              "recall": 0.7636
+            },
+            {
+              "macro_f1": 0.7525,
+              "weighted_f1": 0.7353,
+              "balanced_accuracy": 0.7397,
+              "precision": 0.7729,
+              "recall": 0.7397
+            },
+            {
+              "macro_f1": 0.7126,
+              "weighted_f1": 0.7022,
+              "balanced_accuracy": 0.698,
+              "precision": 0.7397,
+              "recall": 0.698
+            },
+            {
+              "macro_f1": 0.677,
+              "weighted_f1": 0.6657,
+              "balanced_accuracy": 0.6809,
+              "precision": 0.6738,
+              "recall": 0.6809
+            }
+          ]
+        }
+      },
+      "champion_regressor": "HistGradientBoosting Regressor",
+      "champion_classifier": "HistGradientBoosting Classifier"
+    },
+    "milestone_2": {
+      "milestone": 2,
+      "feature_count": 35,
+      "features": [
+        "school",
+        "sex",
+        "age",
+        "address",
+        "famsize",
+        "Pstatus",
+        "Medu",
+        "Fedu",
+        "Mjob",
+        "Fjob",
+        "reason",
+        "guardian",
+        "traveltime",
+        "studytime",
+        "study_hours_per_week",
+        "failures",
+        "schoolsup",
+        "famsup",
+        "paid",
+        "activities",
+        "nursery",
+        "higher",
+        "internet",
+        "romantic",
+        "famrel",
+        "freetime",
+        "goout",
+        "Dalc",
+        "Walc",
+        "health",
+        "absences",
+        "attendance_percentage",
+        "assignment_completion_rate",
+        "previous_exam_marks",
+        "quiz_scores"
+      ],
+      "regression": {
+        "DummyRegressor (Mean Baseline)": {
+          "model_family": "baseline",
+          "mean_mae": 17.3937,
+          "std_mae": 2.0796,
+          "mean_rmse": 23.0774,
+          "std_rmse": 2.3014,
+          "mean_r2": -0.016,
+          "std_r2": 0.0157,
+          "mean_smape": 41.3787,
+          "std_smape": 5.5594,
+          "folds": [
+            {
+              "mae": 20.5122,
+              "rmse": 26.0653,
+              "r2": -0.0122,
+              "smape": 47.3229
+            },
+            {
+              "mae": 17.2304,
+              "rmse": 23.3085,
+              "r2": -0.0422,
+              "smape": 43.6723
+            },
+            {
+              "mae": 18.8528,
+              "rmse": 24.9525,
+              "r2": -0.0004,
+              "smape": 46.3189
+            },
+            {
+              "mae": 15.1895,
+              "rmse": 21.241,
+              "r2": -0.0012,
+              "smape": 35.9535
+            },
+            {
+              "mae": 15.1838,
+              "rmse": 19.8198,
+              "r2": -0.0241,
+              "smape": 33.626
+            }
+          ]
+        },
+        "Linear Regression": {
+          "model_family": "linear",
+          "mean_mae": 27.9287,
+          "std_mae": 42.0022,
+          "mean_rmse": 178.465,
+          "std_rmse": 335.7693,
+          "mean_r2": -214.4822,
+          "std_r2": 430.489,
+          "mean_smape": 29.8481,
+          "std_smape": 3.9357,
+          "folds": [
+            {
+              "mae": 111.9312,
+              "rmse": 850.0025,
+              "r2": -1075.4602,
+              "smape": 33.1087
+            },
+            {
+              "mae": 6.975,
+              "rmse": 9.5992,
+              "r2": 0.8232,
+              "smape": 32.4653
+            },
+            {
+              "mae": 6.4839,
+              "rmse": 10.6271,
+              "r2": 0.8185,
+              "smape": 33.3256
+            },
+            {
+              "mae": 6.8812,
+              "rmse": 10.6956,
+              "r2": 0.7462,
+              "smape": 26.6049
+            },
+            {
+              "mae": 7.3722,
+              "rmse": 11.4004,
+              "r2": 0.6612,
+              "smape": 23.7362
+            }
+          ]
+        },
+        "Ridge Regression": {
+          "model_family": "linear",
+          "mean_mae": 6.6321,
+          "std_mae": 0.5622,
+          "mean_rmse": 10.1331,
+          "std_rmse": 0.973,
+          "mean_r2": 0.7899,
+          "std_r2": 0.0774,
+          "mean_smape": 29.1691,
+          "std_smape": 3.6169,
+          "folds": [
+            {
+              "mae": 5.675,
+              "rmse": 8.5664,
+              "r2": 0.8907,
+              "smape": 30.0429
+            },
+            {
+              "mae": 6.9434,
+              "rmse": 9.5626,
+              "r2": 0.8246,
+              "smape": 32.4143
+            },
+            {
+              "mae": 6.42,
+              "rmse": 10.5924,
+              "r2": 0.8197,
+              "smape": 33.2453
+            },
+            {
+              "mae": 6.783,
+              "rmse": 10.5625,
+              "r2": 0.7524,
+              "smape": 26.4714
+            },
+            {
+              "mae": 7.3391,
+              "rmse": 11.3815,
+              "r2": 0.6623,
+              "smape": 23.6717
+            }
+          ]
+        },
+        "Random Forest Regressor": {
+          "model_family": "tree",
+          "mean_mae": 5.1485,
+          "std_mae": 0.9893,
+          "mean_rmse": 7.9882,
+          "std_rmse": 1.8608,
+          "mean_r2": 0.8598,
+          "std_r2": 0.0814,
+          "mean_smape": 28.0411,
+          "std_smape": 3.8883,
+          "folds": [
+            {
+              "mae": 4.126,
+              "rmse": 6.6104,
+              "r2": 0.9349,
+              "smape": 27.8486
+            },
+            {
+              "mae": 3.9868,
+              "rmse": 5.2015,
+              "r2": 0.9481,
+              "smape": 28.9833
+            },
+            {
+              "mae": 5.1764,
+              "rmse": 8.286,
+              "r2": 0.8897,
+              "smape": 33.1871
+            },
+            {
+              "mae": 6.5203,
+              "rmse": 10.1282,
+              "r2": 0.7724,
+              "smape": 29.018
+            },
+            {
+              "mae": 5.9332,
+              "rmse": 9.7148,
+              "r2": 0.754,
+              "smape": 21.1683
+            }
+          ]
+        },
+        "HistGradientBoosting Regressor": {
+          "model_family": "hist_gradient_boosting",
+          "mean_mae": 5.5737,
+          "std_mae": 0.5314,
+          "mean_rmse": 8.412,
+          "std_rmse": 1.3304,
+          "mean_r2": 0.8533,
+          "std_r2": 0.0628,
+          "mean_smape": 28.7682,
+          "std_smape": 3.9949,
+          "folds": [
+            {
+              "mae": 4.9707,
+              "rmse": 7.4021,
+              "r2": 0.9184,
+              "smape": 29.3628
+            },
+            {
+              "mae": 4.8924,
+              "rmse": 6.3507,
+              "r2": 0.9226,
+              "smape": 30.6527
+            },
+            {
+              "mae": 5.8635,
+              "rmse": 9.1893,
+              "r2": 0.8643,
+              "smape": 33.9837
+            },
+            {
+              "mae": 6.1249,
+              "rmse": 9.9744,
+              "r2": 0.7792,
+              "smape": 28.0103
+            },
+            {
+              "mae": 6.0168,
+              "rmse": 9.1436,
+              "r2": 0.782,
+              "smape": 21.8317
+            }
+          ]
+        }
+      },
+      "classification": {
+        "DummyClassifier (Prior Baseline)": {
+          "model_family": "baseline",
+          "mean_macro_f1": 0.1964,
+          "std_macro_f1": 0.0021,
+          "mean_weighted_f1": 0.2461,
+          "std_weighted_f1": 0.0065,
+          "mean_balanced_accuracy": 0.3333,
+          "std_balanced_accuracy": 0.0,
+          "mean_precision": 0.1393,
+          "mean_recall": 0.3333,
+          "folds": [
+            {
+              "macro_f1": 0.1978,
+              "weighted_f1": 0.2503,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1406,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.1948,
+              "weighted_f1": 0.2411,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1376,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.1948,
+              "weighted_f1": 0.2411,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1376,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.1948,
+              "weighted_f1": 0.2411,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1376,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.2,
+              "weighted_f1": 0.2571,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1429,
+              "recall": 0.3333
+            }
+          ]
+        },
+        "Logistic Regression": {
+          "model_family": "linear",
+          "mean_macro_f1": 0.8463,
+          "std_macro_f1": 0.0369,
+          "mean_weighted_f1": 0.8389,
+          "std_weighted_f1": 0.0363,
+          "mean_balanced_accuracy": 0.8418,
+          "std_balanced_accuracy": 0.0385,
+          "mean_precision": 0.8588,
+          "mean_recall": 0.8418,
+          "folds": [
+            {
+              "macro_f1": 0.8352,
+              "weighted_f1": 0.8268,
+              "balanced_accuracy": 0.8345,
+              "precision": 0.8438,
+              "recall": 0.8345
+            },
+            {
+              "macro_f1": 0.8968,
+              "weighted_f1": 0.8893,
+              "balanced_accuracy": 0.89,
+              "precision": 0.9074,
+              "recall": 0.89
+            },
+            {
+              "macro_f1": 0.8217,
+              "weighted_f1": 0.8109,
+              "balanced_accuracy": 0.816,
+              "precision": 0.8408,
+              "recall": 0.816
+            },
+            {
+              "macro_f1": 0.8803,
+              "weighted_f1": 0.873,
+              "balanced_accuracy": 0.8803,
+              "precision": 0.8803,
+              "recall": 0.8803
+            },
+            {
+              "macro_f1": 0.7974,
+              "weighted_f1": 0.7945,
+              "balanced_accuracy": 0.7881,
+              "precision": 0.8215,
+              "recall": 0.7881
+            }
+          ]
+        },
+        "Random Forest Classifier": {
+          "model_family": "tree",
+          "mean_macro_f1": 0.8642,
+          "std_macro_f1": 0.0156,
+          "mean_weighted_f1": 0.8544,
+          "std_weighted_f1": 0.0157,
+          "mean_balanced_accuracy": 0.8649,
+          "std_balanced_accuracy": 0.0183,
+          "mean_precision": 0.8659,
+          "mean_recall": 0.8649,
+          "folds": [
+            {
+              "macro_f1": 0.8844,
+              "weighted_f1": 0.8741,
+              "balanced_accuracy": 0.8907,
+              "precision": 0.8798,
+              "recall": 0.8907
+            },
+            {
+              "macro_f1": 0.8543,
+              "weighted_f1": 0.8422,
+              "balanced_accuracy": 0.8485,
+              "precision": 0.8619,
+              "recall": 0.8485
+            },
+            {
+              "macro_f1": 0.8581,
+              "weighted_f1": 0.8416,
+              "balanced_accuracy": 0.8626,
+              "precision": 0.8612,
+              "recall": 0.8626
+            },
+            {
+              "macro_f1": 0.8803,
+              "weighted_f1": 0.873,
+              "balanced_accuracy": 0.8803,
+              "precision": 0.8803,
+              "recall": 0.8803
+            },
+            {
+              "macro_f1": 0.8439,
+              "weighted_f1": 0.841,
+              "balanced_accuracy": 0.8424,
+              "precision": 0.8462,
+              "recall": 0.8424
+            }
+          ]
+        },
+        "HistGradientBoosting Classifier": {
+          "model_family": "hist_gradient_boosting",
+          "mean_macro_f1": 0.8695,
+          "std_macro_f1": 0.017,
+          "mean_weighted_f1": 0.8611,
+          "std_weighted_f1": 0.018,
+          "mean_balanced_accuracy": 0.868,
+          "std_balanced_accuracy": 0.0204,
+          "mean_precision": 0.8734,
+          "mean_recall": 0.868,
+          "folds": [
+            {
+              "macro_f1": 0.8975,
+              "weighted_f1": 0.8895,
+              "balanced_accuracy": 0.8995,
+              "precision": 0.8977,
+              "recall": 0.8995
+            },
+            {
+              "macro_f1": 0.8526,
+              "weighted_f1": 0.8432,
+              "balanced_accuracy": 0.8436,
+              "precision": 0.8651,
+              "recall": 0.8436
+            },
+            {
+              "macro_f1": 0.8559,
+              "weighted_f1": 0.8426,
+              "balanced_accuracy": 0.8546,
+              "precision": 0.8611,
+              "recall": 0.8546
+            },
+            {
+              "macro_f1": 0.8804,
+              "weighted_f1": 0.8726,
+              "balanced_accuracy": 0.8833,
+              "precision": 0.8795,
+              "recall": 0.8833
+            },
+            {
+              "macro_f1": 0.8611,
+              "weighted_f1": 0.8574,
+              "balanced_accuracy": 0.859,
+              "precision": 0.8637,
+              "recall": 0.859
+            }
+          ]
+        }
+      },
+      "champion_regressor": "Random Forest Regressor",
+      "champion_classifier": "HistGradientBoosting Classifier"
+    }
+  },
+  "portuguese": {
+    "milestone_0": {
+      "milestone": 0,
+      "feature_count": 33,
+      "features": [
+        "school",
+        "sex",
+        "age",
+        "address",
+        "famsize",
+        "Pstatus",
+        "Medu",
+        "Fedu",
+        "Mjob",
+        "Fjob",
+        "reason",
+        "guardian",
+        "traveltime",
+        "studytime",
+        "study_hours_per_week",
+        "failures",
+        "schoolsup",
+        "famsup",
+        "paid",
+        "activities",
+        "nursery",
+        "higher",
+        "internet",
+        "romantic",
+        "famrel",
+        "freetime",
+        "goout",
+        "Dalc",
+        "Walc",
+        "health",
+        "absences",
+        "attendance_percentage",
+        "assignment_completion_rate"
+      ],
+      "regression": {
+        "DummyRegressor (Mean Baseline)": {
+          "model_family": "baseline",
+          "mean_mae": 12.0152,
+          "std_mae": 0.8667,
+          "mean_rmse": 15.8147,
+          "std_rmse": 1.6669,
+          "mean_r2": -0.0144,
+          "std_r2": 0.0111,
+          "mean_smape": 22.0546,
+          "std_smape": 3.1776,
+          "folds": [
+            {
+              "mae": 10.9775,
+              "rmse": 13.5535,
+              "r2": -0.0265,
+              "smape": 17.7806
+            },
+            {
+              "mae": 11.5942,
+              "rmse": 14.6643,
+              "r2": -0.0167,
+              "smape": 19.9619
+            },
+            {
+              "mae": 13.0021,
+              "rmse": 17.5434,
+              "r2": -0.0011,
+              "smape": 25.5435
+            },
+            {
+              "mae": 11.4095,
+              "rmse": 15.421,
+              "r2": -0.0018,
+              "smape": 21.0927
+            },
+            {
+              "mae": 13.0926,
+              "rmse": 17.8914,
+              "r2": -0.0258,
+              "smape": 25.8942
+            }
+          ]
+        },
+        "Linear Regression": {
+          "model_family": "linear",
+          "mean_mae": 10.0747,
+          "std_mae": 0.8051,
+          "mean_rmse": 13.5253,
+          "std_rmse": 1.538,
+          "mean_r2": 0.2563,
+          "std_r2": 0.0679,
+          "mean_smape": 19.5717,
+          "std_smape": 3.0356,
+          "folds": [
+            {
+              "mae": 9.609,
+              "rmse": 12.1599,
+              "r2": 0.1738,
+              "smape": 16.3028
+            },
+            {
+              "mae": 8.8084,
+              "rmse": 11.4686,
+              "r2": 0.3782,
+              "smape": 15.7252
+            },
+            {
+              "mae": 11.0399,
+              "rmse": 15.2918,
+              "r2": 0.2394,
+              "smape": 22.7813
+            },
+            {
+              "mae": 10.1458,
+              "rmse": 13.5654,
+              "r2": 0.2248,
+              "smape": 20.3707
+            },
+            {
+              "mae": 10.7703,
+              "rmse": 15.1409,
+              "r2": 0.2653,
+              "smape": 22.6785
+            }
+          ]
+        },
+        "Ridge Regression": {
+          "model_family": "linear",
+          "mean_mae": 10.0269,
+          "std_mae": 0.7614,
+          "mean_rmse": 13.4798,
+          "std_rmse": 1.4978,
+          "mean_r2": 0.2609,
+          "std_r2": 0.0669,
+          "mean_smape": 19.475,
+          "std_smape": 2.9678,
+          "folds": [
+            {
+              "mae": 9.5906,
+              "rmse": 12.1509,
+              "r2": 0.175,
+              "smape": 16.2534
+            },
+            {
+              "mae": 8.803,
+              "rmse": 11.4654,
+              "r2": 0.3785,
+              "smape": 15.7147
+            },
+            {
+              "mae": 10.8491,
+              "rmse": 15.1175,
+              "r2": 0.2566,
+              "smape": 22.4356
+            },
+            {
+              "mae": 10.1432,
+              "rmse": 13.5402,
+              "r2": 0.2277,
+              "smape": 20.3302
+            },
+            {
+              "mae": 10.7487,
+              "rmse": 15.1251,
+              "r2": 0.2669,
+              "smape": 22.6411
+            }
+          ]
+        },
+        "Random Forest Regressor": {
+          "model_family": "tree",
+          "mean_mae": 9.5514,
+          "std_mae": 1.0417,
+          "mean_rmse": 12.9046,
+          "std_rmse": 1.5585,
+          "mean_r2": 0.3266,
+          "std_r2": 0.0266,
+          "mean_smape": 18.6067,
+          "std_smape": 3.821,
+          "folds": [
+            {
+              "mae": 8.3426,
+              "rmse": 10.8476,
+              "r2": 0.3425,
+              "smape": 13.7511
+            },
+            {
+              "mae": 8.6428,
+              "rmse": 11.5373,
+              "r2": 0.3707,
+              "smape": 15.331
+            },
+            {
+              "mae": 10.9637,
+              "rmse": 14.6683,
+              "r2": 0.3001,
+              "smape": 23.4241
+            },
+            {
+              "mae": 9.2348,
+              "rmse": 12.8531,
+              "r2": 0.3041,
+              "smape": 18.0281
+            },
+            {
+              "mae": 10.5732,
+              "rmse": 14.6165,
+              "r2": 0.3154,
+              "smape": 22.4992
+            }
+          ]
+        },
+        "HistGradientBoosting Regressor": {
+          "model_family": "hist_gradient_boosting",
+          "mean_mae": 10.0723,
+          "std_mae": 0.9938,
+          "mean_rmse": 13.1055,
+          "std_rmse": 1.5097,
+          "mean_r2": 0.3031,
+          "std_r2": 0.0467,
+          "mean_smape": 19.8385,
+          "std_smape": 3.8509,
+          "folds": [
+            {
+              "mae": 9.2256,
+              "rmse": 11.504,
+              "r2": 0.2605,
+              "smape": 15.5017
+            },
+            {
+              "mae": 9.0506,
+              "rmse": 11.924,
+              "r2": 0.3278,
+              "smape": 16.1982
+            },
+            {
+              "mae": 11.4663,
+              "rmse": 15.311,
+              "r2": 0.2374,
+              "smape": 24.7887
+            },
+            {
+              "mae": 9.5608,
+              "rmse": 12.2979,
+              "r2": 0.3629,
+              "smape": 18.8023
+            },
+            {
+              "mae": 11.0584,
+              "rmse": 14.4905,
+              "r2": 0.3271,
+              "smape": 23.9015
+            }
+          ]
+        }
+      },
+      "classification": {
+        "DummyClassifier (Prior Baseline)": {
+          "model_family": "baseline",
+          "mean_macro_f1": 0.2358,
+          "std_macro_f1": 0.0005,
+          "mean_weighted_f1": 0.3871,
+          "std_weighted_f1": 0.002,
+          "mean_balanced_accuracy": 0.3333,
+          "std_balanced_accuracy": 0.0,
+          "mean_precision": 0.1824,
+          "mean_recall": 0.3333,
+          "folds": [
+            {
+              "macro_f1": 0.236,
+              "weighted_f1": 0.3881,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1827,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.236,
+              "weighted_f1": 0.3881,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1827,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.236,
+              "weighted_f1": 0.3881,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1827,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.236,
+              "weighted_f1": 0.3881,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1827,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.2348,
+              "weighted_f1": 0.383,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1812,
+              "recall": 0.3333
+            }
+          ]
+        },
+        "Logistic Regression": {
+          "model_family": "linear",
+          "mean_macro_f1": 0.5347,
+          "std_macro_f1": 0.0353,
+          "mean_weighted_f1": 0.5764,
+          "std_weighted_f1": 0.023,
+          "mean_balanced_accuracy": 0.5265,
+          "std_balanced_accuracy": 0.038,
+          "mean_precision": 0.5598,
+          "mean_recall": 0.5265,
+          "folds": [
+            {
+              "macro_f1": 0.4978,
+              "weighted_f1": 0.5535,
+              "balanced_accuracy": 0.4926,
+              "precision": 0.5058,
+              "recall": 0.4926
+            },
+            {
+              "macro_f1": 0.5251,
+              "weighted_f1": 0.5646,
+              "balanced_accuracy": 0.5186,
+              "precision": 0.5333,
+              "recall": 0.5186
+            },
+            {
+              "macro_f1": 0.5899,
+              "weighted_f1": 0.6107,
+              "balanced_accuracy": 0.5928,
+              "precision": 0.5947,
+              "recall": 0.5928
+            },
+            {
+              "macro_f1": 0.5014,
+              "weighted_f1": 0.5565,
+              "balanced_accuracy": 0.4884,
+              "precision": 0.5582,
+              "recall": 0.4884
+            },
+            {
+              "macro_f1": 0.5593,
+              "weighted_f1": 0.5969,
+              "balanced_accuracy": 0.5399,
+              "precision": 0.6071,
+              "recall": 0.5399
+            }
+          ]
+        },
+        "Random Forest Classifier": {
+          "model_family": "tree",
+          "mean_macro_f1": 0.58,
+          "std_macro_f1": 0.051,
+          "mean_weighted_f1": 0.5838,
+          "std_weighted_f1": 0.0466,
+          "mean_balanced_accuracy": 0.623,
+          "std_balanced_accuracy": 0.0531,
+          "mean_precision": 0.5761,
+          "mean_recall": 0.623,
+          "folds": [
+            {
+              "macro_f1": 0.5431,
+              "weighted_f1": 0.5504,
+              "balanced_accuracy": 0.5813,
+              "precision": 0.5373,
+              "recall": 0.5813
+            },
+            {
+              "macro_f1": 0.4972,
+              "weighted_f1": 0.5106,
+              "balanced_accuracy": 0.5478,
+              "precision": 0.4994,
+              "recall": 0.5478
+            },
+            {
+              "macro_f1": 0.6212,
+              "weighted_f1": 0.6111,
+              "balanced_accuracy": 0.692,
+              "precision": 0.6053,
+              "recall": 0.692
+            },
+            {
+              "macro_f1": 0.6204,
+              "weighted_f1": 0.6078,
+              "balanced_accuracy": 0.6666,
+              "precision": 0.6168,
+              "recall": 0.6666
+            },
+            {
+              "macro_f1": 0.6179,
+              "weighted_f1": 0.639,
+              "balanced_accuracy": 0.6271,
+              "precision": 0.6217,
+              "recall": 0.6271
+            }
+          ]
+        },
+        "HistGradientBoosting Classifier": {
+          "model_family": "hist_gradient_boosting",
+          "mean_macro_f1": 0.5805,
+          "std_macro_f1": 0.0374,
+          "mean_weighted_f1": 0.6142,
+          "std_weighted_f1": 0.0387,
+          "mean_balanced_accuracy": 0.5761,
+          "std_balanced_accuracy": 0.0311,
+          "mean_precision": 0.6019,
+          "mean_recall": 0.5761,
+          "folds": [
+            {
+              "macro_f1": 0.546,
+              "weighted_f1": 0.5847,
+              "balanced_accuracy": 0.5401,
+              "precision": 0.5534,
+              "recall": 0.5401
+            },
+            {
+              "macro_f1": 0.549,
+              "weighted_f1": 0.5806,
+              "balanced_accuracy": 0.564,
+              "precision": 0.5408,
+              "recall": 0.564
+            },
+            {
+              "macro_f1": 0.5664,
+              "weighted_f1": 0.5861,
+              "balanced_accuracy": 0.56,
+              "precision": 0.5745,
+              "recall": 0.56
+            },
+            {
+              "macro_f1": 0.5943,
+              "weighted_f1": 0.6437,
+              "balanced_accuracy": 0.5854,
+              "precision": 0.6415,
+              "recall": 0.5854
+            },
+            {
+              "macro_f1": 0.647,
+              "weighted_f1": 0.676,
+              "balanced_accuracy": 0.6312,
+              "precision": 0.6991,
+              "recall": 0.6312
+            }
+          ]
+        }
+      },
+      "champion_regressor": "Random Forest Regressor",
+      "champion_classifier": "HistGradientBoosting Classifier"
+    },
+    "milestone_1": {
+      "milestone": 1,
+      "feature_count": 34,
+      "features": [
+        "school",
+        "sex",
+        "age",
+        "address",
+        "famsize",
+        "Pstatus",
+        "Medu",
+        "Fedu",
+        "Mjob",
+        "Fjob",
+        "reason",
+        "guardian",
+        "traveltime",
+        "studytime",
+        "study_hours_per_week",
+        "failures",
+        "schoolsup",
+        "famsup",
+        "paid",
+        "activities",
+        "nursery",
+        "higher",
+        "internet",
+        "romantic",
+        "famrel",
+        "freetime",
+        "goout",
+        "Dalc",
+        "Walc",
+        "health",
+        "absences",
+        "attendance_percentage",
+        "assignment_completion_rate",
+        "previous_exam_marks"
+      ],
+      "regression": {
+        "DummyRegressor (Mean Baseline)": {
+          "model_family": "baseline",
+          "mean_mae": 12.0152,
+          "std_mae": 0.8667,
+          "mean_rmse": 15.8147,
+          "std_rmse": 1.6669,
+          "mean_r2": -0.0144,
+          "std_r2": 0.0111,
+          "mean_smape": 22.0546,
+          "std_smape": 3.1776,
+          "folds": [
+            {
+              "mae": 10.9775,
+              "rmse": 13.5535,
+              "r2": -0.0265,
+              "smape": 17.7806
+            },
+            {
+              "mae": 11.5942,
+              "rmse": 14.6643,
+              "r2": -0.0167,
+              "smape": 19.9619
+            },
+            {
+              "mae": 13.0021,
+              "rmse": 17.5434,
+              "r2": -0.0011,
+              "smape": 25.5435
+            },
+            {
+              "mae": 11.4095,
+              "rmse": 15.421,
+              "r2": -0.0018,
+              "smape": 21.0927
+            },
+            {
+              "mae": 13.0926,
+              "rmse": 17.8914,
+              "r2": -0.0258,
+              "smape": 25.8942
+            }
+          ]
+        },
+        "Linear Regression": {
+          "model_family": "linear",
+          "mean_mae": 6.34,
+          "std_mae": 0.7036,
+          "mean_rmse": 9.1615,
+          "std_rmse": 1.1945,
+          "mean_r2": 0.6606,
+          "std_r2": 0.0276,
+          "mean_smape": 13.967,
+          "std_smape": 2.8267,
+          "folds": [
+            {
+              "mae": 5.9602,
+              "rmse": 7.5606,
+              "r2": 0.6806,
+              "smape": 10.5888
+            },
+            {
+              "mae": 5.2241,
+              "rmse": 7.9669,
+              "r2": 0.6999,
+              "smape": 10.7857
+            },
+            {
+              "mae": 6.3691,
+              "rmse": 10.4331,
+              "r2": 0.6459,
+              "smape": 15.8651
+            },
+            {
+              "mae": 7.0054,
+              "rmse": 9.4951,
+              "r2": 0.6202,
+              "smape": 14.8925
+            },
+            {
+              "mae": 7.1412,
+              "rmse": 10.3516,
+              "r2": 0.6566,
+              "smape": 17.7031
+            }
+          ]
+        },
+        "Ridge Regression": {
+          "model_family": "linear",
+          "mean_mae": 6.3143,
+          "std_mae": 0.7093,
+          "mean_rmse": 9.1326,
+          "std_rmse": 1.2051,
+          "mean_r2": 0.6628,
+          "std_r2": 0.0288,
+          "mean_smape": 13.9165,
+          "std_smape": 2.8364,
+          "folds": [
+            {
+              "mae": 5.9432,
+              "rmse": 7.5319,
+              "r2": 0.683,
+              "smape": 10.5578
+            },
+            {
+              "mae": 5.1756,
+              "rmse": 7.9052,
+              "r2": 0.7046,
+              "smape": 10.6791
+            },
+            {
+              "mae": 6.3598,
+              "rmse": 10.4104,
+              "r2": 0.6475,
+              "smape": 15.8507
+            },
+            {
+              "mae": 6.9891,
+              "rmse": 9.4846,
+              "r2": 0.621,
+              "smape": 14.8588
+            },
+            {
+              "mae": 7.104,
+              "rmse": 10.3307,
+              "r2": 0.658,
+              "smape": 17.636
+            }
+          ]
+        },
+        "Random Forest Regressor": {
+          "model_family": "tree",
+          "mean_mae": 5.9407,
+          "std_mae": 0.4884,
+          "mean_rmse": 8.3742,
+          "std_rmse": 0.9569,
+          "mean_r2": 0.7153,
+          "std_r2": 0.0233,
+          "mean_smape": 13.5296,
+          "std_smape": 2.9514,
+          "folds": [
+            {
+              "mae": 5.2995,
+              "rmse": 7.0535,
+              "r2": 0.722,
+              "smape": 9.4694
+            },
+            {
+              "mae": 5.4666,
+              "rmse": 7.4185,
+              "r2": 0.7398,
+              "smape": 11.0474
+            },
+            {
+              "mae": 6.0337,
+              "rmse": 9.1304,
+              "r2": 0.7288,
+              "smape": 15.9753
+            },
+            {
+              "mae": 6.3394,
+              "rmse": 8.8235,
+              "r2": 0.672,
+              "smape": 13.7704
+            },
+            {
+              "mae": 6.5644,
+              "rmse": 9.445,
+              "r2": 0.7141,
+              "smape": 17.3856
+            }
+          ]
+        },
+        "HistGradientBoosting Regressor": {
+          "model_family": "hist_gradient_boosting",
+          "mean_mae": 6.1469,
+          "std_mae": 0.5677,
+          "mean_rmse": 8.1971,
+          "std_rmse": 0.9192,
+          "mean_r2": 0.7249,
+          "std_r2": 0.0393,
+          "mean_smape": 14.2512,
+          "std_smape": 3.3422,
+          "folds": [
+            {
+              "mae": 5.6202,
+              "rmse": 7.4001,
+              "r2": 0.694,
+              "smape": 10.2827
+            },
+            {
+              "mae": 5.5601,
+              "rmse": 7.0363,
+              "r2": 0.7659,
+              "smape": 11.0775
+            },
+            {
+              "mae": 7.1251,
+              "rmse": 9.6296,
+              "r2": 0.6984,
+              "smape": 18.8445
+            },
+            {
+              "mae": 6.3231,
+              "rmse": 8.6211,
+              "r2": 0.6869,
+              "smape": 13.8399
+            },
+            {
+              "mae": 6.1058,
+              "rmse": 8.2985,
+              "r2": 0.7793,
+              "smape": 17.2115
+            }
+          ]
+        }
+      },
+      "classification": {
+        "DummyClassifier (Prior Baseline)": {
+          "model_family": "baseline",
+          "mean_macro_f1": 0.2358,
+          "std_macro_f1": 0.0005,
+          "mean_weighted_f1": 0.3871,
+          "std_weighted_f1": 0.002,
+          "mean_balanced_accuracy": 0.3333,
+          "std_balanced_accuracy": 0.0,
+          "mean_precision": 0.1824,
+          "mean_recall": 0.3333,
+          "folds": [
+            {
+              "macro_f1": 0.236,
+              "weighted_f1": 0.3881,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1827,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.236,
+              "weighted_f1": 0.3881,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1827,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.236,
+              "weighted_f1": 0.3881,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1827,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.236,
+              "weighted_f1": 0.3881,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1827,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.2348,
+              "weighted_f1": 0.383,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1812,
+              "recall": 0.3333
+            }
+          ]
+        },
+        "Logistic Regression": {
+          "model_family": "linear",
+          "mean_macro_f1": 0.7232,
+          "std_macro_f1": 0.0582,
+          "mean_weighted_f1": 0.749,
+          "std_weighted_f1": 0.0494,
+          "mean_balanced_accuracy": 0.7138,
+          "std_balanced_accuracy": 0.0711,
+          "mean_precision": 0.7495,
+          "mean_recall": 0.7138,
+          "folds": [
+            {
+              "macro_f1": 0.6928,
+              "weighted_f1": 0.7284,
+              "balanced_accuracy": 0.6774,
+              "precision": 0.7188,
+              "recall": 0.6774
+            },
+            {
+              "macro_f1": 0.7599,
+              "weighted_f1": 0.778,
+              "balanced_accuracy": 0.7513,
+              "precision": 0.7699,
+              "recall": 0.7513
+            },
+            {
+              "macro_f1": 0.7867,
+              "weighted_f1": 0.7991,
+              "balanced_accuracy": 0.8028,
+              "precision": 0.7747,
+              "recall": 0.8028
+            },
+            {
+              "macro_f1": 0.7523,
+              "weighted_f1": 0.7775,
+              "balanced_accuracy": 0.7413,
+              "precision": 0.7659,
+              "recall": 0.7413
+            },
+            {
+              "macro_f1": 0.6244,
+              "weighted_f1": 0.6618,
+              "balanced_accuracy": 0.596,
+              "precision": 0.718,
+              "recall": 0.596
+            }
+          ]
+        },
+        "Random Forest Classifier": {
+          "model_family": "tree",
+          "mean_macro_f1": 0.7146,
+          "std_macro_f1": 0.0454,
+          "mean_weighted_f1": 0.7235,
+          "std_weighted_f1": 0.0476,
+          "mean_balanced_accuracy": 0.7478,
+          "std_balanced_accuracy": 0.0556,
+          "mean_precision": 0.7063,
+          "mean_recall": 0.7478,
+          "folds": [
+            {
+              "macro_f1": 0.7295,
+              "weighted_f1": 0.7431,
+              "balanced_accuracy": 0.7628,
+              "precision": 0.7131,
+              "recall": 0.7628
+            },
+            {
+              "macro_f1": 0.6707,
+              "weighted_f1": 0.6734,
+              "balanced_accuracy": 0.7418,
+              "precision": 0.6586,
+              "recall": 0.7418
+            },
+            {
+              "macro_f1": 0.7476,
+              "weighted_f1": 0.7605,
+              "balanced_accuracy": 0.7941,
+              "precision": 0.7285,
+              "recall": 0.7941
+            },
+            {
+              "macro_f1": 0.7719,
+              "weighted_f1": 0.7794,
+              "balanced_accuracy": 0.796,
+              "precision": 0.7557,
+              "recall": 0.796
+            },
+            {
+              "macro_f1": 0.6531,
+              "weighted_f1": 0.6609,
+              "balanced_accuracy": 0.6443,
+              "precision": 0.6757,
+              "recall": 0.6443
+            }
+          ]
+        },
+        "HistGradientBoosting Classifier": {
+          "model_family": "hist_gradient_boosting",
+          "mean_macro_f1": 0.7244,
+          "std_macro_f1": 0.0333,
+          "mean_weighted_f1": 0.738,
+          "std_weighted_f1": 0.0254,
+          "mean_balanced_accuracy": 0.7285,
+          "std_balanced_accuracy": 0.0367,
+          "mean_precision": 0.728,
+          "mean_recall": 0.7285,
+          "folds": [
+            {
+              "macro_f1": 0.6884,
+              "weighted_f1": 0.7114,
+              "balanced_accuracy": 0.6908,
+              "precision": 0.6973,
+              "recall": 0.6908
+            },
+            {
+              "macro_f1": 0.7531,
+              "weighted_f1": 0.7507,
+              "balanced_accuracy": 0.7638,
+              "precision": 0.7445,
+              "recall": 0.7638
+            },
+            {
+              "macro_f1": 0.6906,
+              "weighted_f1": 0.712,
+              "balanced_accuracy": 0.7003,
+              "precision": 0.6829,
+              "recall": 0.7003
+            },
+            {
+              "macro_f1": 0.7718,
+              "weighted_f1": 0.7789,
+              "balanced_accuracy": 0.7813,
+              "precision": 0.7642,
+              "recall": 0.7813
+            },
+            {
+              "macro_f1": 0.7183,
+              "weighted_f1": 0.7368,
+              "balanced_accuracy": 0.7063,
+              "precision": 0.7513,
+              "recall": 0.7063
+            }
+          ]
+        }
+      },
+      "champion_regressor": "Random Forest Regressor",
+      "champion_classifier": "HistGradientBoosting Classifier"
+    },
+    "milestone_2": {
+      "milestone": 2,
+      "feature_count": 35,
+      "features": [
+        "school",
+        "sex",
+        "age",
+        "address",
+        "famsize",
+        "Pstatus",
+        "Medu",
+        "Fedu",
+        "Mjob",
+        "Fjob",
+        "reason",
+        "guardian",
+        "traveltime",
+        "studytime",
+        "study_hours_per_week",
+        "failures",
+        "schoolsup",
+        "famsup",
+        "paid",
+        "activities",
+        "nursery",
+        "higher",
+        "internet",
+        "romantic",
+        "famrel",
+        "freetime",
+        "goout",
+        "Dalc",
+        "Walc",
+        "health",
+        "absences",
+        "attendance_percentage",
+        "assignment_completion_rate",
+        "previous_exam_marks",
+        "quiz_scores"
+      ],
+      "regression": {
+        "DummyRegressor (Mean Baseline)": {
+          "model_family": "baseline",
+          "mean_mae": 12.0152,
+          "std_mae": 0.8667,
+          "mean_rmse": 15.8147,
+          "std_rmse": 1.6669,
+          "mean_r2": -0.0144,
+          "std_r2": 0.0111,
+          "mean_smape": 22.0546,
+          "std_smape": 3.1776,
+          "folds": [
+            {
+              "mae": 10.9775,
+              "rmse": 13.5535,
+              "r2": -0.0265,
+              "smape": 17.7806
+            },
+            {
+              "mae": 11.5942,
+              "rmse": 14.6643,
+              "r2": -0.0167,
+              "smape": 19.9619
+            },
+            {
+              "mae": 13.0021,
+              "rmse": 17.5434,
+              "r2": -0.0011,
+              "smape": 25.5435
+            },
+            {
+              "mae": 11.4095,
+              "rmse": 15.421,
+              "r2": -0.0018,
+              "smape": 21.0927
+            },
+            {
+              "mae": 13.0926,
+              "rmse": 17.8914,
+              "r2": -0.0258,
+              "smape": 25.8942
+            }
+          ]
+        },
+        "Linear Regression": {
+          "model_family": "linear",
+          "mean_mae": 4.3006,
+          "std_mae": 0.4671,
+          "mean_rmse": 6.522,
+          "std_rmse": 1.5964,
+          "mean_r2": 0.8275,
+          "std_r2": 0.0499,
+          "mean_smape": 10.8453,
+          "std_smape": 2.9138,
+          "folds": [
+            {
+              "mae": 4.1359,
+              "rmse": 5.2096,
+              "r2": 0.8483,
+              "smape": 7.1849
+            },
+            {
+              "mae": 3.5022,
+              "rmse": 4.2921,
+              "r2": 0.9129,
+              "smape": 7.947
+            },
+            {
+              "mae": 4.7904,
+              "rmse": 8.3347,
+              "r2": 0.774,
+              "smape": 14.1966
+            },
+            {
+              "mae": 4.3443,
+              "rmse": 6.5912,
+              "r2": 0.817,
+              "smape": 10.9862
+            },
+            {
+              "mae": 4.7304,
+              "rmse": 8.1823,
+              "r2": 0.7854,
+              "smape": 13.9117
+            }
+          ]
+        },
+        "Ridge Regression": {
+          "model_family": "linear",
+          "mean_mae": 4.2802,
+          "std_mae": 0.4694,
+          "mean_rmse": 6.5098,
+          "std_rmse": 1.6005,
+          "mean_r2": 0.8282,
+          "std_r2": 0.05,
+          "mean_smape": 10.8013,
+          "std_smape": 2.9205,
+          "folds": [
+            {
+              "mae": 4.0999,
+              "rmse": 5.1861,
+              "r2": 0.8497,
+              "smape": 7.1399
+            },
+            {
+              "mae": 3.496,
+              "rmse": 4.2812,
+              "r2": 0.9133,
+              "smape": 7.9297
+            },
+            {
+              "mae": 4.7773,
+              "rmse": 8.3202,
+              "r2": 0.7748,
+              "smape": 14.1714
+            },
+            {
+              "mae": 4.2926,
+              "rmse": 6.576,
+              "r2": 0.8178,
+              "smape": 10.86
+            },
+            {
+              "mae": 4.7351,
+              "rmse": 8.1854,
+              "r2": 0.7853,
+              "smape": 13.9053
+            }
+          ]
+        },
+        "Random Forest Regressor": {
+          "model_family": "tree",
+          "mean_mae": 4.1238,
+          "std_mae": 0.436,
+          "mean_rmse": 6.5883,
+          "std_rmse": 1.2687,
+          "mean_r2": 0.8245,
+          "std_r2": 0.0364,
+          "mean_smape": 10.6434,
+          "std_smape": 2.9858,
+          "folds": [
+            {
+              "mae": 3.9834,
+              "rmse": 5.2847,
+              "r2": 0.8439,
+              "smape": 7.1895
+            },
+            {
+              "mae": 3.5125,
+              "rmse": 4.886,
+              "r2": 0.8871,
+              "smape": 7.793
+            },
+            {
+              "mae": 4.4332,
+              "rmse": 7.7775,
+              "r2": 0.8032,
+              "smape": 13.6146
+            },
+            {
+              "mae": 3.9186,
+              "rmse": 7.0574,
+              "r2": 0.7902,
+              "smape": 10.0584
+            },
+            {
+              "mae": 4.7714,
+              "rmse": 7.936,
+              "r2": 0.7982,
+              "smape": 14.5615
+            }
+          ]
+        },
+        "HistGradientBoosting Regressor": {
+          "model_family": "hist_gradient_boosting",
+          "mean_mae": 4.5683,
+          "std_mae": 0.5683,
+          "mean_rmse": 6.9586,
+          "std_rmse": 1.3909,
+          "mean_r2": 0.8042,
+          "std_r2": 0.0456,
+          "mean_smape": 11.729,
+          "std_smape": 3.4071,
+          "folds": [
+            {
+              "mae": 4.0378,
+              "rmse": 5.3359,
+              "r2": 0.8409,
+              "smape": 7.2427
+            },
+            {
+              "mae": 4.1144,
+              "rmse": 5.5278,
+              "r2": 0.8555,
+              "smape": 8.8701
+            },
+            {
+              "mae": 5.6166,
+              "rmse": 9.091,
+              "r2": 0.7312,
+              "smape": 16.0612
+            },
+            {
+              "mae": 4.4218,
+              "rmse": 7.3149,
+              "r2": 0.7746,
+              "smape": 11.4421
+            },
+            {
+              "mae": 4.6508,
+              "rmse": 7.5234,
+              "r2": 0.8186,
+              "smape": 15.0291
+            }
+          ]
+        }
+      },
+      "classification": {
+        "DummyClassifier (Prior Baseline)": {
+          "model_family": "baseline",
+          "mean_macro_f1": 0.2358,
+          "std_macro_f1": 0.0005,
+          "mean_weighted_f1": 0.3871,
+          "std_weighted_f1": 0.002,
+          "mean_balanced_accuracy": 0.3333,
+          "std_balanced_accuracy": 0.0,
+          "mean_precision": 0.1824,
+          "mean_recall": 0.3333,
+          "folds": [
+            {
+              "macro_f1": 0.236,
+              "weighted_f1": 0.3881,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1827,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.236,
+              "weighted_f1": 0.3881,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1827,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.236,
+              "weighted_f1": 0.3881,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1827,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.236,
+              "weighted_f1": 0.3881,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1827,
+              "recall": 0.3333
+            },
+            {
+              "macro_f1": 0.2348,
+              "weighted_f1": 0.383,
+              "balanced_accuracy": 0.3333,
+              "precision": 0.1812,
+              "recall": 0.3333
+            }
+          ]
+        },
+        "Logistic Regression": {
+          "model_family": "linear",
+          "mean_macro_f1": 0.8057,
+          "std_macro_f1": 0.0596,
+          "mean_weighted_f1": 0.824,
+          "std_weighted_f1": 0.0507,
+          "mean_balanced_accuracy": 0.7942,
+          "std_balanced_accuracy": 0.0727,
+          "mean_precision": 0.8332,
+          "mean_recall": 0.7942,
+          "folds": [
+            {
+              "macro_f1": 0.8131,
+              "weighted_f1": 0.8221,
+              "balanced_accuracy": 0.7808,
+              "precision": 0.8716,
+              "recall": 0.7808
+            },
+            {
+              "macro_f1": 0.7856,
+              "weighted_f1": 0.8071,
+              "balanced_accuracy": 0.7787,
+              "precision": 0.7934,
+              "recall": 0.7787
+            },
+            {
+              "macro_f1": 0.8602,
+              "weighted_f1": 0.8656,
+              "balanced_accuracy": 0.8685,
+              "precision": 0.8527,
+              "recall": 0.8685
+            },
+            {
+              "macro_f1": 0.8669,
+              "weighted_f1": 0.8852,
+              "balanced_accuracy": 0.8702,
+              "precision": 0.8643,
+              "recall": 0.8702
+            },
+            {
+              "macro_f1": 0.7029,
+              "weighted_f1": 0.7398,
+              "balanced_accuracy": 0.6729,
+              "precision": 0.7838,
+              "recall": 0.6729
+            }
+          ]
+        },
+        "Random Forest Classifier": {
+          "model_family": "tree",
+          "mean_macro_f1": 0.7862,
+          "std_macro_f1": 0.0281,
+          "mean_weighted_f1": 0.8045,
+          "std_weighted_f1": 0.0313,
+          "mean_balanced_accuracy": 0.797,
+          "std_balanced_accuracy": 0.046,
+          "mean_precision": 0.7865,
+          "mean_recall": 0.797,
+          "folds": [
+            {
+              "macro_f1": 0.783,
+              "weighted_f1": 0.7982,
+              "balanced_accuracy": 0.7881,
+              "precision": 0.7881,
+              "recall": 0.7881
+            },
+            {
+              "macro_f1": 0.8067,
+              "weighted_f1": 0.8325,
+              "balanced_accuracy": 0.8253,
+              "precision": 0.8028,
+              "recall": 0.8253
+            },
+            {
+              "macro_f1": 0.8105,
+              "weighted_f1": 0.8273,
+              "balanced_accuracy": 0.8449,
+              "precision": 0.7919,
+              "recall": 0.8449
+            },
+            {
+              "macro_f1": 0.7977,
+              "weighted_f1": 0.8179,
+              "balanced_accuracy": 0.8142,
+              "precision": 0.7852,
+              "recall": 0.8142
+            },
+            {
+              "macro_f1": 0.7333,
+              "weighted_f1": 0.7464,
+              "balanced_accuracy": 0.7127,
+              "precision": 0.7643,
+              "recall": 0.7127
+            }
+          ]
+        },
+        "HistGradientBoosting Classifier": {
+          "model_family": "hist_gradient_boosting",
+          "mean_macro_f1": 0.8175,
+          "std_macro_f1": 0.042,
+          "mean_weighted_f1": 0.8306,
+          "std_weighted_f1": 0.0339,
+          "mean_balanced_accuracy": 0.8158,
+          "std_balanced_accuracy": 0.0553,
+          "mean_precision": 0.8308,
+          "mean_recall": 0.8158,
+          "folds": [
+            {
+              "macro_f1": 0.8293,
+              "weighted_f1": 0.8351,
+              "balanced_accuracy": 0.8415,
+              "precision": 0.8333,
+              "recall": 0.8415
+            },
+            {
+              "macro_f1": 0.8505,
+              "weighted_f1": 0.8555,
+              "balanced_accuracy": 0.8529,
+              "precision": 0.8492,
+              "recall": 0.8529
+            },
+            {
+              "macro_f1": 0.801,
+              "weighted_f1": 0.808,
+              "balanced_accuracy": 0.8087,
+              "precision": 0.7941,
+              "recall": 0.8087
+            },
+            {
+              "macro_f1": 0.8621,
+              "weighted_f1": 0.875,
+              "balanced_accuracy": 0.8643,
+              "precision": 0.8601,
+              "recall": 0.8643
+            },
+            {
+              "macro_f1": 0.7444,
+              "weighted_f1": 0.7795,
+              "balanced_accuracy": 0.7116,
+              "precision": 0.8171,
+              "recall": 0.7116
+            }
+          ]
+        }
+      },
+      "champion_regressor": "Random Forest Regressor",
+      "champion_classifier": "HistGradientBoosting Classifier"
+    }
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "subject": "Mathematics",
+  "milestone": 2,
+  "task": "classification",
+  "model_name": "HistGradientBoosting Classifier",
+  "model_family": "hist_gradient_boosting",
+  "artifact_file": "math_milestone_2_classifier.joblib",
+  "target_variable": "academic_status",
+  "target_classes": [
+    "High Risk",
+    "Moderate Risk",
+    "Low Risk / On Track"
+  ],
+  "feature_count": 35,
+  "features": [
+    "school",
+    "sex",
+    "age",
+    "address",
+    "famsize",
+    "Pstatus",
+    "Medu",
+    "Fedu",
+    "Mjob",
+    "Fjob",
+    "reason",
+    "guardian",
+    "traveltime",
+    "studytime",
+    "study_hours_per_week",
+    "failures",
+    "schoolsup",
+    "famsup",
+    "paid",
+    "activities",
+    "nursery",
+    "higher",
+    "internet",
+    "romantic",
+    "famrel",
+    "freetime",
+    "goout",
+    "Dalc",
+    "Walc",
+    "health",
+    "absences",
+    "attendance_percentage",
+    "assignment_completion_rate",
+    "previous_exam_marks",
+    "quiz_scores"
+  ],
+  "training_samples": 316,
+  "test_samples": 79,
+  "cross_validation_metrics": {
+    "model_family": "hist_gradient_boosting",
+    "mean_macro_f1": 0.8695,
+    "std_macro_f1": 0.017,
+    "mean_weighted_f1": 0.8611,
+    "std_weighted_f1": 0.018,
+    "mean_balanced_accuracy": 0.868,
+    "std_balanced_accuracy": 0.0204,
+    "mean_precision": 0.8734,
+    "mean_recall": 0.868,
+    "folds": [
+      {
+        "macro_f1": 0.8975,
+        "weighted_f1": 0.8895,
+        "balanced_accuracy": 0.8995,
+        "precision": 0.8977,
+        "recall": 0.8995
+      },
+      {
+        "macro_f1": 0.8526,
+        "weighted_f1": 0.8432,
+        "balanced_accuracy": 0.8436,
+        "precision": 0.8651,
+        "recall": 0.8436
+      },
+      {
+        "macro_f1": 0.8559,
+        "weighted_f1": 0.8426,
+        "balanced_accuracy": 0.8546,
+        "precision": 0.8611,
+        "recall": 0.8546
+      },
+      {
+        "macro_f1": 0.8804,
+        "weighted_f1": 0.8726,
+        "balanced_accuracy": 0.8833,
+        "precision": 0.8795,
+        "recall": 0.8833
+      },
+      {
+        "macro_f1": 0.8611,
+        "weighted_f1": 0.8574,
+        "balanced_accuracy": 0.859,
+        "precision": 0.8637,
+        "recall": 0.859
+      }
+    ]
+  },
+  "holdout_metrics": {
+    "champion_model": "HistGradientBoosting Classifier",
+    "holdout_macro_f1": 0.8632,
+    "holdout_weighted_f1": 0.8708,
+    "holdout_balanced_accuracy": 0.8476,
+    "holdout_precision": 0.903,
+    "holdout_recall": 0.8476,
+    "baseline_macro_f1": 0.1964,
+    "baseline_weighted_f1": 0.2462,
+    "baseline_balanced_accuracy": 0.3333,
+    "f1_improvement_pct": 339.51
+  },
+  "confusion_matrix": [
+    [
+      24,
+      2,
+      0
+    ],
+    [
+      0,
+      32,
+      1
+    ],
+    [
+      0,
+      7,
+      13
+    ]
+  ],
+  "created_at": "2026-11-17T09:14:09.174980"
+}

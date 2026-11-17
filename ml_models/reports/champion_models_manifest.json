@@ -1,0 +1,1412 @@
+{
+  "math_m0_reg": {
+    "subject": "Mathematics",
+    "milestone": 0,
+    "task": "regression",
+    "model_name": "Random Forest Regressor",
+    "model_family": "tree",
+    "artifact_file": "math_milestone_0_regressor.joblib",
+    "target_variable": "final_exam_marks",
+    "feature_count": 33,
+    "features": [
+      "school",
+      "sex",
+      "age",
+      "address",
+      "famsize",
+      "Pstatus",
+      "Medu",
+      "Fedu",
+      "Mjob",
+      "Fjob",
+      "reason",
+      "guardian",
+      "traveltime",
+      "studytime",
+      "study_hours_per_week",
+      "failures",
+      "schoolsup",
+      "famsup",
+      "paid",
+      "activities",
+      "nursery",
+      "higher",
+      "internet",
+      "romantic",
+      "famrel",
+      "freetime",
+      "goout",
+      "Dalc",
+      "Walc",
+      "health",
+      "absences",
+      "attendance_percentage",
+      "assignment_completion_rate"
+    ],
+    "training_samples": 316,
+    "test_samples": 79,
+    "cross_validation_metrics": {
+      "model_family": "tree",
+      "mean_mae": 14.7815,
+      "std_mae": 1.7888,
+      "mean_rmse": 19.3592,
+      "std_rmse": 2.3742,
+      "mean_r2": 0.278,
+      "std_r2": 0.1191,
+      "mean_smape": 40.7596,
+      "std_smape": 4.7473,
+      "folds": [
+        {
+          "mae": 16.3196,
+          "rmse": 20.9437,
+          "r2": 0.3465,
+          "smape": 43.336
+        },
+        {
+          "mae": 13.0324,
+          "rmse": 16.7897,
+          "r2": 0.4592,
+          "smape": 41.7755
+        },
+        {
+          "mae": 17.5046,
+          "rmse": 23.2225,
+          "r2": 0.1335,
+          "smape": 47.6685
+        },
+        {
+          "mae": 13.4783,
+          "rmse": 17.9556,
+          "r2": 0.2846,
+          "smape": 36.5445
+        },
+        {
+          "mae": 13.5728,
+          "rmse": 17.8843,
+          "r2": 0.1661,
+          "smape": 34.4735
+        }
+      ]
+    },
+    "holdout_metrics": {
+      "champion_model": "Random Forest Regressor",
+      "holdout_mae": 14.4141,
+      "holdout_rmse": 19.4164,
+      "holdout_r2": 0.2067,
+      "holdout_smape": 38.1866,
+      "baseline_mae": 16.365,
+      "baseline_rmse": 21.8049,
+      "baseline_r2": -0.0004,
+      "baseline_smape": 39.0563,
+      "mae_reduction_pct": 11.92
+    },
+    "created_at": "2026-11-17T09:13:30.902758"
+  },
+  "math_m0_cls": {
+    "subject": "Mathematics",
+    "milestone": 0,
+    "task": "classification",
+    "model_name": "Random Forest Classifier",
+    "model_family": "tree",
+    "artifact_file": "math_milestone_0_classifier.joblib",
+    "target_variable": "academic_status",
+    "target_classes": [
+      "High Risk",
+      "Moderate Risk",
+      "Low Risk / On Track"
+    ],
+    "feature_count": 33,
+    "features": [
+      "school",
+      "sex",
+      "age",
+      "address",
+      "famsize",
+      "Pstatus",
+      "Medu",
+      "Fedu",
+      "Mjob",
+      "Fjob",
+      "reason",
+      "guardian",
+      "traveltime",
+      "studytime",
+      "study_hours_per_week",
+      "failures",
+      "schoolsup",
+      "famsup",
+      "paid",
+      "activities",
+      "nursery",
+      "higher",
+      "internet",
+      "romantic",
+      "famrel",
+      "freetime",
+      "goout",
+      "Dalc",
+      "Walc",
+      "health",
+      "absences",
+      "attendance_percentage",
+      "assignment_completion_rate"
+    ],
+    "training_samples": 316,
+    "test_samples": 79,
+    "cross_validation_metrics": {
+      "model_family": "tree",
+      "mean_macro_f1": 0.4986,
+      "std_macro_f1": 0.0148,
+      "mean_weighted_f1": 0.4978,
+      "std_weighted_f1": 0.0157,
+      "mean_balanced_accuracy": 0.5065,
+      "std_balanced_accuracy": 0.0146,
+      "mean_precision": 0.5016,
+      "mean_recall": 0.5065,
+      "folds": [
+        {
+          "macro_f1": 0.4846,
+          "weighted_f1": 0.4829,
+          "balanced_accuracy": 0.4993,
+          "precision": 0.4893,
+          "recall": 0.4993
+        },
+        {
+          "macro_f1": 0.5083,
+          "weighted_f1": 0.5067,
+          "balanced_accuracy": 0.5098,
+          "precision": 0.5151,
+          "recall": 0.5098
+        },
+        {
+          "macro_f1": 0.5065,
+          "weighted_f1": 0.5198,
+          "balanced_accuracy": 0.5047,
+          "precision": 0.5124,
+          "recall": 0.5047
+        },
+        {
+          "macro_f1": 0.4776,
+          "weighted_f1": 0.4773,
+          "balanced_accuracy": 0.4873,
+          "precision": 0.4823,
+          "recall": 0.4873
+        },
+        {
+          "macro_f1": 0.516,
+          "weighted_f1": 0.5025,
+          "balanced_accuracy": 0.5316,
+          "precision": 0.5087,
+          "recall": 0.5316
+        }
+      ]
+    },
+    "holdout_metrics": {
+      "champion_model": "Random Forest Classifier",
+      "holdout_macro_f1": 0.5599,
+      "holdout_weighted_f1": 0.5469,
+      "holdout_balanced_accuracy": 0.5767,
+      "holdout_precision": 0.5617,
+      "holdout_recall": 0.5767,
+      "baseline_macro_f1": 0.1964,
+      "baseline_weighted_f1": 0.2462,
+      "baseline_balanced_accuracy": 0.3333,
+      "f1_improvement_pct": 185.08
+    },
+    "confusion_matrix": [
+      [
+        10,
+        13,
+        3
+      ],
+      [
+        8,
+        18,
+        7
+      ],
+      [
+        0,
+        4,
+        16
+      ]
+    ],
+    "created_at": "2026-11-17T09:13:30.904755"
+  },
+  "math_m1_reg": {
+    "subject": "Mathematics",
+    "milestone": 1,
+    "task": "regression",
+    "model_name": "HistGradientBoosting Regressor",
+    "model_family": "hist_gradient_boosting",
+    "artifact_file": "math_milestone_1_regressor.joblib",
+    "target_variable": "final_exam_marks",
+    "feature_count": 34,
+    "features": [
+      "school",
+      "sex",
+      "age",
+      "address",
+      "famsize",
+      "Pstatus",
+      "Medu",
+      "Fedu",
+      "Mjob",
+      "Fjob",
+      "reason",
+      "guardian",
+      "traveltime",
+      "studytime",
+      "study_hours_per_week",
+      "failures",
+      "schoolsup",
+      "famsup",
+      "paid",
+      "activities",
+      "nursery",
+      "higher",
+      "internet",
+      "romantic",
+      "famrel",
+      "freetime",
+      "goout",
+      "Dalc",
+      "Walc",
+      "health",
+      "absences",
+      "attendance_percentage",
+      "assignment_completion_rate",
+      "previous_exam_marks"
+    ],
+    "training_samples": 316,
+    "test_samples": 79,
+    "cross_validation_metrics": {
+      "model_family": "hist_gradient_boosting",
+      "mean_mae": 8.5048,
+      "std_mae": 0.3725,
+      "mean_rmse": 11.8473,
+      "std_rmse": 0.987,
+      "mean_r2": 0.7272,
+      "std_r2": 0.0471,
+      "mean_smape": 33.8384,
+      "std_smape": 4.4299,
+      "folds": [
+        {
+          "mae": 7.914,
+          "rmse": 13.6414,
+          "r2": 0.7227,
+          "smape": 30.8512
+        },
+        {
+          "mae": 8.2563,
+          "rmse": 10.7032,
+          "r2": 0.7802,
+          "smape": 38.7812
+        },
+        {
+          "mae": 8.9356,
+          "rmse": 11.6759,
+          "r2": 0.7809,
+          "smape": 39.1199
+        },
+        {
+          "mae": 8.7929,
+          "rmse": 11.9239,
+          "r2": 0.6845,
+          "smape": 32.531
+        },
+        {
+          "mae": 8.6252,
+          "rmse": 11.2921,
+          "r2": 0.6676,
+          "smape": 27.9086
+        }
+      ]
+    },
+    "holdout_metrics": {
+      "champion_model": "HistGradientBoosting Regressor",
+      "holdout_mae": 9.103,
+      "holdout_rmse": 12.3783,
+      "holdout_r2": 0.6776,
+      "holdout_smape": 31.4791,
+      "baseline_mae": 16.365,
+      "baseline_rmse": 21.8049,
+      "baseline_r2": -0.0004,
+      "baseline_smape": 39.0563,
+      "mae_reduction_pct": 44.38
+    },
+    "created_at": "2026-11-17T09:13:51.142279"
+  },
+  "math_m1_cls": {
+    "subject": "Mathematics",
+    "milestone": 1,
+    "task": "classification",
+    "model_name": "HistGradientBoosting Classifier",
+    "model_family": "hist_gradient_boosting",
+    "artifact_file": "math_milestone_1_classifier.joblib",
+    "target_variable": "academic_status",
+    "target_classes": [
+      "High Risk",
+      "Moderate Risk",
+      "Low Risk / On Track"
+    ],
+    "feature_count": 34,
+    "features": [
+      "school",
+      "sex",
+      "age",
+      "address",
+      "famsize",
+      "Pstatus",
+      "Medu",
+      "Fedu",
+      "Mjob",
+      "Fjob",
+      "reason",
+      "guardian",
+      "traveltime",
+      "studytime",
+      "study_hours_per_week",
+      "failures",
+      "schoolsup",
+      "famsup",
+      "paid",
+      "activities",
+      "nursery",
+      "higher",
+      "internet",
+      "romantic",
+      "famrel",
+      "freetime",
+      "goout",
+      "Dalc",
+      "Walc",
+      "health",
+      "absences",
+      "attendance_percentage",
+      "assignment_completion_rate",
+      "previous_exam_marks"
+    ],
+    "training_samples": 316,
+    "test_samples": 79,
+    "cross_validation_metrics": {
+      "model_family": "hist_gradient_boosting",
+      "mean_macro_f1": 0.7202,
+      "std_macro_f1": 0.0308,
+      "mean_weighted_f1": 0.7064,
+      "std_weighted_f1": 0.0297,
+      "mean_balanced_accuracy": 0.718,
+      "std_balanced_accuracy": 0.0298,
+      "mean_precision": 0.7273,
+      "mean_recall": 0.718,
+      "folds": [
+        {
+          "macro_f1": 0.7011,
+          "weighted_f1": 0.6848,
+          "balanced_accuracy": 0.7079,
+          "precision": 0.6972,
+          "recall": 0.7079
+        },
+        {
+          "macro_f1": 0.7576,
+          "weighted_f1": 0.7442,
+          "balanced_accuracy": 0.7636,
+          "precision": 0.753,
+          "recall": 0.7636
+        },
+        {
+          "macro_f1": 0.7525,
+          "weighted_f1": 0.7353,
+          "balanced_accuracy": 0.7397,
+          "precision": 0.7729,
+          "recall": 0.7397
+        },
+        {
+          "macro_f1": 0.7126,
+          "weighted_f1": 0.7022,
+          "balanced_accuracy": 0.698,
+          "precision": 0.7397,
+          "recall": 0.698
+        },
+        {
+          "macro_f1": 0.677,
+          "weighted_f1": 0.6657,
+          "balanced_accuracy": 0.6809,
+          "precision": 0.6738,
+          "recall": 0.6809
+        }
+      ]
+    },
+    "holdout_metrics": {
+      "champion_model": "HistGradientBoosting Classifier",
+      "holdout_macro_f1": 0.7386,
+      "holdout_weighted_f1": 0.7341,
+      "holdout_balanced_accuracy": 0.7349,
+      "holdout_precision": 0.744,
+      "holdout_recall": 0.7349,
+      "baseline_macro_f1": 0.1964,
+      "baseline_weighted_f1": 0.2462,
+      "baseline_balanced_accuracy": 0.3333,
+      "f1_improvement_pct": 276.07
+    },
+    "confusion_matrix": [
+      [
+        21,
+        5,
+        0
+      ],
+      [
+        6,
+        23,
+        4
+      ],
+      [
+        0,
+        6,
+        14
+      ]
+    ],
+    "created_at": "2026-11-17T09:13:51.145278"
+  },
+  "math_m2_reg": {
+    "subject": "Mathematics",
+    "milestone": 2,
+    "task": "regression",
+    "model_name": "Random Forest Regressor",
+    "model_family": "tree",
+    "artifact_file": "math_milestone_2_regressor.joblib",
+    "target_variable": "final_exam_marks",
+    "feature_count": 35,
+    "features": [
+      "school",
+      "sex",
+      "age",
+      "address",
+      "famsize",
+      "Pstatus",
+      "Medu",
+      "Fedu",
+      "Mjob",
+      "Fjob",
+      "reason",
+      "guardian",
+      "traveltime",
+      "studytime",
+      "study_hours_per_week",
+      "failures",
+      "schoolsup",
+      "famsup",
+      "paid",
+      "activities",
+      "nursery",
+      "higher",
+      "internet",
+      "romantic",
+      "famrel",
+      "freetime",
+      "goout",
+      "Dalc",
+      "Walc",
+      "health",
+      "absences",
+      "attendance_percentage",
+      "assignment_completion_rate",
+      "previous_exam_marks",
+      "quiz_scores"
+    ],
+    "training_samples": 316,
+    "test_samples": 79,
+    "cross_validation_metrics": {
+      "model_family": "tree",
+      "mean_mae": 5.1485,
+      "std_mae": 0.9893,
+      "mean_rmse": 7.9882,
+      "std_rmse": 1.8608,
+      "mean_r2": 0.8598,
+      "std_r2": 0.0814,
+      "mean_smape": 28.0411,
+      "std_smape": 3.8883,
+      "folds": [
+        {
+          "mae": 4.126,
+          "rmse": 6.6104,
+          "r2": 0.9349,
+          "smape": 27.8486
+        },
+        {
+          "mae": 3.9868,
+          "rmse": 5.2015,
+          "r2": 0.9481,
+          "smape": 28.9833
+        },
+        {
+          "mae": 5.1764,
+          "rmse": 8.286,
+          "r2": 0.8897,
+          "smape": 33.1871
+        },
+        {
+          "mae": 6.5203,
+          "rmse": 10.1282,
+          "r2": 0.7724,
+          "smape": 29.018
+        },
+        {
+          "mae": 5.9332,
+          "rmse": 9.7148,
+          "r2": 0.754,
+          "smape": 21.1683
+        }
+      ]
+    },
+    "holdout_metrics": {
+      "champion_model": "Random Forest Regressor",
+      "holdout_mae": 4.7011,
+      "holdout_rmse": 7.0455,
+      "holdout_r2": 0.8955,
+      "holdout_smape": 25.1484,
+      "baseline_mae": 16.365,
+      "baseline_rmse": 21.8049,
+      "baseline_r2": -0.0004,
+      "baseline_smape": 39.0563,
+      "mae_reduction_pct": 71.27
+    },
+    "created_at": "2026-11-17T09:14:09.172981"
+  },
+  "math_m2_cls": {
+    "subject": "Mathematics",
+    "milestone": 2,
+    "task": "classification",
+    "model_name": "HistGradientBoosting Classifier",
+    "model_family": "hist_gradient_boosting",
+    "artifact_file": "math_milestone_2_classifier.joblib",
+    "target_variable": "academic_status",
+    "target_classes": [
+      "High Risk",
+      "Moderate Risk",
+      "Low Risk / On Track"
+    ],
+    "feature_count": 35,
+    "features": [
+      "school",
+      "sex",
+      "age",
+      "address",
+      "famsize",
+      "Pstatus",
+      "Medu",
+      "Fedu",
+      "Mjob",
+      "Fjob",
+      "reason",
+      "guardian",
+      "traveltime",
+      "studytime",
+      "study_hours_per_week",
+      "failures",
+      "schoolsup",
+      "famsup",
+      "paid",
+      "activities",
+      "nursery",
+      "higher",
+      "internet",
+      "romantic",
+      "famrel",
+      "freetime",
+      "goout",
+      "Dalc",
+      "Walc",
+      "health",
+      "absences",
+      "attendance_percentage",
+      "assignment_completion_rate",
+      "previous_exam_marks",
+      "quiz_scores"
+    ],
+    "training_samples": 316,
+    "test_samples": 79,
+    "cross_validation_metrics": {
+      "model_family": "hist_gradient_boosting",
+      "mean_macro_f1": 0.8695,
+      "std_macro_f1": 0.017,
+      "mean_weighted_f1": 0.8611,
+      "std_weighted_f1": 0.018,
+      "mean_balanced_accuracy": 0.868,
+      "std_balanced_accuracy": 0.0204,
+      "mean_precision": 0.8734,
+      "mean_recall": 0.868,
+      "folds": [
+        {
+          "macro_f1": 0.8975,
+          "weighted_f1": 0.8895,
+          "balanced_accuracy": 0.8995,
+          "precision": 0.8977,
+          "recall": 0.8995
+        },
+        {
+          "macro_f1": 0.8526,
+          "weighted_f1": 0.8432,
+          "balanced_accuracy": 0.8436,
+          "precision": 0.8651,
+          "recall": 0.8436
+        },
+        {
+          "macro_f1": 0.8559,
+          "weighted_f1": 0.8426,
+          "balanced_accuracy": 0.8546,
+          "precision": 0.8611,
+          "recall": 0.8546
+        },
+        {
+          "macro_f1": 0.8804,
+          "weighted_f1": 0.8726,
+          "balanced_accuracy": 0.8833,
+          "precision": 0.8795,
+          "recall": 0.8833
+        },
+        {
+          "macro_f1": 0.8611,
+          "weighted_f1": 0.8574,
+          "balanced_accuracy": 0.859,
+          "precision": 0.8637,
+          "recall": 0.859
+        }
+      ]
+    },
+    "holdout_metrics": {
+      "champion_model": "HistGradientBoosting Classifier",
+      "holdout_macro_f1": 0.8632,
+      "holdout_weighted_f1": 0.8708,
+      "holdout_balanced_accuracy": 0.8476,
+      "holdout_precision": 0.903,
+      "holdout_recall": 0.8476,
+      "baseline_macro_f1": 0.1964,
+      "baseline_weighted_f1": 0.2462,
+      "baseline_balanced_accuracy": 0.3333,
+      "f1_improvement_pct": 339.51
+    },
+    "confusion_matrix": [
+      [
+        24,
+        2,
+        0
+      ],
+      [
+        0,
+        32,
+        1
+      ],
+      [
+        0,
+        7,
+        13
+      ]
+    ],
+    "created_at": "2026-11-17T09:14:09.174980"
+  },
+  "portuguese_m0_reg": {
+    "subject": "Portuguese Language",
+    "milestone": 0,
+    "task": "regression",
+    "model_name": "Random Forest Regressor",
+    "model_family": "tree",
+    "artifact_file": "portuguese_milestone_0_regressor.joblib",
+    "target_variable": "final_exam_marks",
+    "feature_count": 33,
+    "features": [
+      "school",
+      "sex",
+      "age",
+      "address",
+      "famsize",
+      "Pstatus",
+      "Medu",
+      "Fedu",
+      "Mjob",
+      "Fjob",
+      "reason",
+      "guardian",
+      "traveltime",
+      "studytime",
+      "study_hours_per_week",
+      "failures",
+      "schoolsup",
+      "famsup",
+      "paid",
+      "activities",
+      "nursery",
+      "higher",
+      "internet",
+      "romantic",
+      "famrel",
+      "freetime",
+      "goout",
+      "Dalc",
+      "Walc",
+      "health",
+      "absences",
+      "attendance_percentage",
+      "assignment_completion_rate"
+    ],
+    "training_samples": 519,
+    "test_samples": 130,
+    "cross_validation_metrics": {
+      "model_family": "tree",
+      "mean_mae": 9.5514,
+      "std_mae": 1.0417,
+      "mean_rmse": 12.9046,
+      "std_rmse": 1.5585,
+      "mean_r2": 0.3266,
+      "std_r2": 0.0266,
+      "mean_smape": 18.6067,
+      "std_smape": 3.821,
+      "folds": [
+        {
+          "mae": 8.3426,
+          "rmse": 10.8476,
+          "r2": 0.3425,
+          "smape": 13.7511
+        },
+        {
+          "mae": 8.6428,
+          "rmse": 11.5373,
+          "r2": 0.3707,
+          "smape": 15.331
+        },
+        {
+          "mae": 10.9637,
+          "rmse": 14.6683,
+          "r2": 0.3001,
+          "smape": 23.4241
+        },
+        {
+          "mae": 9.2348,
+          "rmse": 12.8531,
+          "r2": 0.3041,
+          "smape": 18.0281
+        },
+        {
+          "mae": 10.5732,
+          "rmse": 14.6165,
+          "r2": 0.3154,
+          "smape": 22.4992
+        }
+      ]
+    },
+    "holdout_metrics": {
+      "champion_model": "Random Forest Regressor",
+      "holdout_mae": 10.617,
+      "holdout_rmse": 15.7298,
+      "holdout_r2": 0.165,
+      "holdout_smape": 21.4632,
+      "baseline_mae": 12.1316,
+      "baseline_rmse": 17.2183,
+      "baseline_r2": -0.0005,
+      "baseline_smape": 23.7501,
+      "mae_reduction_pct": 12.48
+    },
+    "created_at": "2026-11-17T09:14:26.345786"
+  },
+  "portuguese_m0_cls": {
+    "subject": "Portuguese Language",
+    "milestone": 0,
+    "task": "classification",
+    "model_name": "HistGradientBoosting Classifier",
+    "model_family": "hist_gradient_boosting",
+    "artifact_file": "portuguese_milestone_0_classifier.joblib",
+    "target_variable": "academic_status",
+    "target_classes": [
+      "High Risk",
+      "Moderate Risk",
+      "Low Risk / On Track"
+    ],
+    "feature_count": 33,
+    "features": [
+      "school",
+      "sex",
+      "age",
+      "address",
+      "famsize",
+      "Pstatus",
+      "Medu",
+      "Fedu",
+      "Mjob",
+      "Fjob",
+      "reason",
+      "guardian",
+      "traveltime",
+      "studytime",
+      "study_hours_per_week",
+      "failures",
+      "schoolsup",
+      "famsup",
+      "paid",
+      "activities",
+      "nursery",
+      "higher",
+      "internet",
+      "romantic",
+      "famrel",
+      "freetime",
+      "goout",
+      "Dalc",
+      "Walc",
+      "health",
+      "absences",
+      "attendance_percentage",
+      "assignment_completion_rate"
+    ],
+    "training_samples": 519,
+    "test_samples": 130,
+    "cross_validation_metrics": {
+      "model_family": "hist_gradient_boosting",
+      "mean_macro_f1": 0.5805,
+      "std_macro_f1": 0.0374,
+      "mean_weighted_f1": 0.6142,
+      "std_weighted_f1": 0.0387,
+      "mean_balanced_accuracy": 0.5761,
+      "std_balanced_accuracy": 0.0311,
+      "mean_precision": 0.6019,
+      "mean_recall": 0.5761,
+      "folds": [
+        {
+          "macro_f1": 0.546,
+          "weighted_f1": 0.5847,
+          "balanced_accuracy": 0.5401,
+          "precision": 0.5534,
+          "recall": 0.5401
+        },
+        {
+          "macro_f1": 0.549,
+          "weighted_f1": 0.5806,
+          "balanced_accuracy": 0.564,
+          "precision": 0.5408,
+          "recall": 0.564
+        },
+        {
+          "macro_f1": 0.5664,
+          "weighted_f1": 0.5861,
+          "balanced_accuracy": 0.56,
+          "precision": 0.5745,
+          "recall": 0.56
+        },
+        {
+          "macro_f1": 0.5943,
+          "weighted_f1": 0.6437,
+          "balanced_accuracy": 0.5854,
+          "precision": 0.6415,
+          "recall": 0.5854
+        },
+        {
+          "macro_f1": 0.647,
+          "weighted_f1": 0.676,
+          "balanced_accuracy": 0.6312,
+          "precision": 0.6991,
+          "recall": 0.6312
+        }
+      ]
+    },
+    "holdout_metrics": {
+      "champion_model": "HistGradientBoosting Classifier",
+      "holdout_macro_f1": 0.4711,
+      "holdout_weighted_f1": 0.5275,
+      "holdout_balanced_accuracy": 0.4578,
+      "holdout_precision": 0.5139,
+      "holdout_recall": 0.4578,
+      "baseline_macro_f1": 0.2355,
+      "baseline_weighted_f1": 0.3858,
+      "baseline_balanced_accuracy": 0.3333,
+      "f1_improvement_pct": 100.04
+    },
+    "confusion_matrix": [
+      [
+        5,
+        13,
+        2
+      ],
+      [
+        5,
+        47,
+        19
+      ],
+      [
+        0,
+        21,
+        18
+      ]
+    ],
+    "created_at": "2026-11-17T09:14:26.347786"
+  },
+  "portuguese_m1_reg": {
+    "subject": "Portuguese Language",
+    "milestone": 1,
+    "task": "regression",
+    "model_name": "Random Forest Regressor",
+    "model_family": "tree",
+    "artifact_file": "portuguese_milestone_1_regressor.joblib",
+    "target_variable": "final_exam_marks",
+    "feature_count": 34,
+    "features": [
+      "school",
+      "sex",
+      "age",
+      "address",
+      "famsize",
+      "Pstatus",
+      "Medu",
+      "Fedu",
+      "Mjob",
+      "Fjob",
+      "reason",
+      "guardian",
+      "traveltime",
+      "studytime",
+      "study_hours_per_week",
+      "failures",
+      "schoolsup",
+      "famsup",
+      "paid",
+      "activities",
+      "nursery",
+      "higher",
+      "internet",
+      "romantic",
+      "famrel",
+      "freetime",
+      "goout",
+      "Dalc",
+      "Walc",
+      "health",
+      "absences",
+      "attendance_percentage",
+      "assignment_completion_rate",
+      "previous_exam_marks"
+    ],
+    "training_samples": 519,
+    "test_samples": 130,
+    "cross_validation_metrics": {
+      "model_family": "tree",
+      "mean_mae": 5.9407,
+      "std_mae": 0.4884,
+      "mean_rmse": 8.3742,
+      "std_rmse": 0.9569,
+      "mean_r2": 0.7153,
+      "std_r2": 0.0233,
+      "mean_smape": 13.5296,
+      "std_smape": 2.9514,
+      "folds": [
+        {
+          "mae": 5.2995,
+          "rmse": 7.0535,
+          "r2": 0.722,
+          "smape": 9.4694
+        },
+        {
+          "mae": 5.4666,
+          "rmse": 7.4185,
+          "r2": 0.7398,
+          "smape": 11.0474
+        },
+        {
+          "mae": 6.0337,
+          "rmse": 9.1304,
+          "r2": 0.7288,
+          "smape": 15.9753
+        },
+        {
+          "mae": 6.3394,
+          "rmse": 8.8235,
+          "r2": 0.672,
+          "smape": 13.7704
+        },
+        {
+          "mae": 6.5644,
+          "rmse": 9.445,
+          "r2": 0.7141,
+          "smape": 17.3856
+        }
+      ]
+    },
+    "holdout_metrics": {
+      "champion_model": "Random Forest Regressor",
+      "holdout_mae": 6.3608,
+      "holdout_rmse": 9.5302,
+      "holdout_r2": 0.6935,
+      "holdout_smape": 17.0403,
+      "baseline_mae": 12.1316,
+      "baseline_rmse": 17.2183,
+      "baseline_r2": -0.0005,
+      "baseline_smape": 23.7501,
+      "mae_reduction_pct": 47.57
+    },
+    "created_at": "2026-11-17T09:14:46.467711"
+  },
+  "portuguese_m1_cls": {
+    "subject": "Portuguese Language",
+    "milestone": 1,
+    "task": "classification",
+    "model_name": "HistGradientBoosting Classifier",
+    "model_family": "hist_gradient_boosting",
+    "artifact_file": "portuguese_milestone_1_classifier.joblib",
+    "target_variable": "academic_status",
+    "target_classes": [
+      "High Risk",
+      "Moderate Risk",
+      "Low Risk / On Track"
+    ],
+    "feature_count": 34,
+    "features": [
+      "school",
+      "sex",
+      "age",
+      "address",
+      "famsize",
+      "Pstatus",
+      "Medu",
+      "Fedu",
+      "Mjob",
+      "Fjob",
+      "reason",
+      "guardian",
+      "traveltime",
+      "studytime",
+      "study_hours_per_week",
+      "failures",
+      "schoolsup",
+      "famsup",
+      "paid",
+      "activities",
+      "nursery",
+      "higher",
+      "internet",
+      "romantic",
+      "famrel",
+      "freetime",
+      "goout",
+      "Dalc",
+      "Walc",
+      "health",
+      "absences",
+      "attendance_percentage",
+      "assignment_completion_rate",
+      "previous_exam_marks"
+    ],
+    "training_samples": 519,
+    "test_samples": 130,
+    "cross_validation_metrics": {
+      "model_family": "hist_gradient_boosting",
+      "mean_macro_f1": 0.7244,
+      "std_macro_f1": 0.0333,
+      "mean_weighted_f1": 0.738,
+      "std_weighted_f1": 0.0254,
+      "mean_balanced_accuracy": 0.7285,
+      "std_balanced_accuracy": 0.0367,
+      "mean_precision": 0.728,
+      "mean_recall": 0.7285,
+      "folds": [
+        {
+          "macro_f1": 0.6884,
+          "weighted_f1": 0.7114,
+          "balanced_accuracy": 0.6908,
+          "precision": 0.6973,
+          "recall": 0.6908
+        },
+        {
+          "macro_f1": 0.7531,
+          "weighted_f1": 0.7507,
+          "balanced_accuracy": 0.7638,
+          "precision": 0.7445,
+          "recall": 0.7638
+        },
+        {
+          "macro_f1": 0.6906,
+          "weighted_f1": 0.712,
+          "balanced_accuracy": 0.7003,
+          "precision": 0.6829,
+          "recall": 0.7003
+        },
+        {
+          "macro_f1": 0.7718,
+          "weighted_f1": 0.7789,
+          "balanced_accuracy": 0.7813,
+          "precision": 0.7642,
+          "recall": 0.7813
+        },
+        {
+          "macro_f1": 0.7183,
+          "weighted_f1": 0.7368,
+          "balanced_accuracy": 0.7063,
+          "precision": 0.7513,
+          "recall": 0.7063
+        }
+      ]
+    },
+    "holdout_metrics": {
+      "champion_model": "HistGradientBoosting Classifier",
+      "holdout_macro_f1": 0.706,
+      "holdout_weighted_f1": 0.7365,
+      "holdout_balanced_accuracy": 0.698,
+      "holdout_precision": 0.7168,
+      "holdout_recall": 0.698,
+      "baseline_macro_f1": 0.2355,
+      "baseline_weighted_f1": 0.3858,
+      "baseline_balanced_accuracy": 0.3333,
+      "f1_improvement_pct": 199.79
+    },
+    "confusion_matrix": [
+      [
+        11,
+        9,
+        0
+      ],
+      [
+        6,
+        55,
+        10
+      ],
+      [
+        0,
+        9,
+        30
+      ]
+    ],
+    "created_at": "2026-11-17T09:14:46.469711"
+  },
+  "portuguese_m2_reg": {
+    "subject": "Portuguese Language",
+    "milestone": 2,
+    "task": "regression",
+    "model_name": "Random Forest Regressor",
+    "model_family": "tree",
+    "artifact_file": "portuguese_milestone_2_regressor.joblib",
+    "target_variable": "final_exam_marks",
+    "feature_count": 35,
+    "features": [
+      "school",
+      "sex",
+      "age",
+      "address",
+      "famsize",
+      "Pstatus",
+      "Medu",
+      "Fedu",
+      "Mjob",
+      "Fjob",
+      "reason",
+      "guardian",
+      "traveltime",
+      "studytime",
+      "study_hours_per_week",
+      "failures",
+      "schoolsup",
+      "famsup",
+      "paid",
+      "activities",
+      "nursery",
+      "higher",
+      "internet",
+      "romantic",
+      "famrel",
+      "freetime",
+      "goout",
+      "Dalc",
+      "Walc",
+      "health",
+      "absences",
+      "attendance_percentage",
+      "assignment_completion_rate",
+      "previous_exam_marks",
+      "quiz_scores"
+    ],
+    "training_samples": 519,
+    "test_samples": 130,
+    "cross_validation_metrics": {
+      "model_family": "tree",
+      "mean_mae": 4.1238,
+      "std_mae": 0.436,
+      "mean_rmse": 6.5883,
+      "std_rmse": 1.2687,
+      "mean_r2": 0.8245,
+      "std_r2": 0.0364,
+      "mean_smape": 10.6434,
+      "std_smape": 2.9858,
+      "folds": [
+        {
+          "mae": 3.9834,
+          "rmse": 5.2847,
+          "r2": 0.8439,
+          "smape": 7.1895
+        },
+        {
+          "mae": 3.5125,
+          "rmse": 4.886,
+          "r2": 0.8871,
+          "smape": 7.793
+        },
+        {
+          "mae": 4.4332,
+          "rmse": 7.7775,
+          "r2": 0.8032,
+          "smape": 13.6146
+        },
+        {
+          "mae": 3.9186,
+          "rmse": 7.0574,
+          "r2": 0.7902,
+          "smape": 10.0584
+        },
+        {
+          "mae": 4.7714,
+          "rmse": 7.936,
+          "r2": 0.7982,
+          "smape": 14.5615
+        }
+      ]
+    },
+    "holdout_metrics": {
+      "champion_model": "Random Forest Regressor",
+      "holdout_mae": 3.7176,
+      "holdout_rmse": 5.3618,
+      "holdout_r2": 0.903,
+      "holdout_smape": 12.9783,
+      "baseline_mae": 12.1316,
+      "baseline_rmse": 17.2183,
+      "baseline_r2": -0.0005,
+      "baseline_smape": 23.7501,
+      "mae_reduction_pct": 69.36
+    },
+    "created_at": "2026-11-17T09:15:03.312738"
+  },
+  "portuguese_m2_cls": {
+    "subject": "Portuguese Language",
+    "milestone": 2,
+    "task": "classification",
+    "model_name": "HistGradientBoosting Classifier",
+    "model_family": "hist_gradient_boosting",
+    "artifact_file": "portuguese_milestone_2_classifier.joblib",
+    "target_variable": "academic_status",
+    "target_classes": [
+      "High Risk",
+      "Moderate Risk",
+      "Low Risk / On Track"
+    ],
+    "feature_count": 35,
+    "features": [
+      "school",
+      "sex",
+      "age",
+      "address",
+      "famsize",
+      "Pstatus",
+      "Medu",
+      "Fedu",
+      "Mjob",
+      "Fjob",
+      "reason",
+      "guardian",
+      "traveltime",
+      "studytime",
+      "study_hours_per_week",
+      "failures",
+      "schoolsup",
+      "famsup",
+      "paid",
+      "activities",
+      "nursery",
+      "higher",
+      "internet",
+      "romantic",
+      "famrel",
+      "freetime",
+      "goout",
+      "Dalc",
+      "Walc",
+      "health",
+      "absences",
+      "attendance_percentage",
+      "assignment_completion_rate",
+      "previous_exam_marks",
+      "quiz_scores"
+    ],
+    "training_samples": 519,
+    "test_samples": 130,
+    "cross_validation_metrics": {
+      "model_family": "hist_gradient_boosting",
+      "mean_macro_f1": 0.8175,
+      "std_macro_f1": 0.042,
+      "mean_weighted_f1": 0.8306,
+      "std_weighted_f1": 0.0339,
+      "mean_balanced_accuracy": 0.8158,
+      "std_balanced_accuracy": 0.0553,
+      "mean_precision": 0.8308,
+      "mean_recall": 0.8158,
+      "folds": [
+        {
+          "macro_f1": 0.8293,
+          "weighted_f1": 0.8351,
+          "balanced_accuracy": 0.8415,
+          "precision": 0.8333,
+          "recall": 0.8415
+        },
+        {
+          "macro_f1": 0.8505,
+          "weighted_f1": 0.8555,
+          "balanced_accuracy": 0.8529,
+          "precision": 0.8492,
+          "recall": 0.8529
+        },
+        {
+          "macro_f1": 0.801,
+          "weighted_f1": 0.808,
+          "balanced_accuracy": 0.8087,
+          "precision": 0.7941,
+          "recall": 0.8087
+        },
+        {
+          "macro_f1": 0.8621,
+          "weighted_f1": 0.875,
+          "balanced_accuracy": 0.8643,
+          "precision": 0.8601,
+          "recall": 0.8643
+        },
+        {
+          "macro_f1": 0.7444,
+          "weighted_f1": 0.7795,
+          "balanced_accuracy": 0.7116,
+          "precision": 0.8171,
+          "recall": 0.7116
+        }
+      ]
+    },
+    "holdout_metrics": {
+      "champion_model": "HistGradientBoosting Classifier",
+      "holdout_macro_f1": 0.8121,
+      "holdout_weighted_f1": 0.8386,
+      "holdout_balanced_accuracy": 0.8103,
+      "holdout_precision": 0.814,
+      "holdout_recall": 0.8103,
+      "baseline_macro_f1": 0.2355,
+      "baseline_weighted_f1": 0.3858,
+      "baseline_balanced_accuracy": 0.3333,
+      "f1_improvement_pct": 244.84
+    },
+    "confusion_matrix": [
+      [
+        14,
+        6,
+        0
+      ],
+      [
+        6,
+        61,
+        4
+      ],
+      [
+        0,
+        5,
+        34
+      ]
+    ],
+    "created_at": "2026-11-17T09:15:03.314735"
+  }
+}
