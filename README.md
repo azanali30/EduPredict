@@ -19,61 +19,93 @@ EduPredict is a standalone AI/ML-powered Educational Performance Prediction and 
 ---
 
 ## Technology Stack
-- **Backend**: Python 3.12, Flask, PyMongo / Flask-PyMongo, Flask-Login, Flask-WTF
-- **Database**: MongoDB 6.x (running locally on port 27017)
+- **Backend**: Python 3.12, Flask, PyMongo, Flask-Login, Flask-WTF, python-dotenv
+- **Database**: MongoDB 6.x (running locally on port 27017, database: `edupredict`)
 - **Machine Learning**: Scikit-learn, NumPy, Pandas, Joblib
 - **Frontend**: Responsive HTML5, CSS3, JavaScript, Bootstrap 5, Chart.js
-- **Testing**: Pytest
+- **Testing**: Pytest, pytest-flask
 
 ---
 
 ## Project Structure
 ```text
 EduPredict/
-├── .gitignore
-├── .env.example
-├── requirements.txt
-├── README.md
+├── .env                      # Local development secrets (untracked by git)
+├── .env.example              # Template environment configuration
+├── .gitignore                # Exclusion rules for git (excludes .venv, secrets, cache)
+├── requirements.txt          # Python dependencies
+├── README.md                 # Project README
 ├── backend/
-│   ├── app.py
-│   ├── models/
-│   ├── routes/
-│   └── services/
+│   ├── __init__.py           # Package initializer
+│   ├── app.py                # Application factory (create_app)
+│   ├── config.py             # Environment configuration (Dev, Test, Prod)
+│   ├── extensions.py         # Extensions (PyMongo manager, CSRF, LoginManager)
+│   ├── models/               # MongoDB models and schemas
+│   ├── routes/               # Modular Flask blueprints (health, auth, etc.)
+│   └── services/             # Core business & analytics services
 ├── data/
-│   ├── raw/
-│   └── processed/
+│   ├── raw/                  # Raw academic datasets
+│   └── processed/            # Preprocessed feature datasets
 ├── documentation/
-│   ├── PROJECT_OVERVIEW.md
 │   ├── ARCHITECTURE.md
+│   ├── BIG_DATA_IMPLEMENTATION_PLAN.md
 │   ├── DEVELOPMENT_LOG.md
-│   ├── TEST_REPORT.md
-│   └── GITHUB_BACKUP.md
+│   ├── GITHUB_BACKUP.md
+│   ├── PROJECT_OVERVIEW.md
+│   ├── TECHNOLOGY_FEASIBILITY.md
+│   └── TEST_REPORT.md
 ├── frontend/
-│   ├── index.html
 │   ├── css/
-│   └── js/
+│   ├── js/
+│   └── index.html
 ├── ml_models/
 ├── notebooks/
 └── tests/
+    ├── conftest.py
+    ├── test_app_factory.py
+    ├── test_config.py
+    ├── test_health_routes.py
+    └── test_mongo_connectivity.py
 ```
 
 ---
 
 ## Getting Started
+
 ### 1. Environment Setup
 The project uses Python 3.12 inside a dedicated virtual environment (`.venv`).
-```bash
+```powershell
 # Activate virtual environment (PowerShell)
 .\.venv\Scripts\Activate.ps1
 ```
 
-### 2. Database Connection
-Ensure MongoDB 6.x service is running locally (`localhost:27017`).
-Create a `.env` file based on `.env.example`:
+### 2. Configure Environment
+Ensure your local `.env` file exists (copied from `.env.example`):
 ```env
 FLASK_APP=backend.app
 FLASK_ENV=development
+FLASK_DEBUG=1
 SECRET_KEY=your_secret_key_here
-MONGO_URI=mongodb://localhost:27017/edupredict
 PORT=5000
+HOST=127.0.0.1
+MONGO_URI=mongodb://localhost:27017/edupredict
+MONGO_DB_NAME=edupredict
+```
+
+### 3. Run the Application
+Start the Flask development server:
+```powershell
+.\.venv\Scripts\python.exe -m backend.app
+```
+Access the server at `http://127.0.0.1:5000/`.
+
+Health endpoints:
+- `http://127.0.0.1:5000/health` – Lightweight uptime & DB check
+- `http://127.0.0.1:5000/api/health` – Detailed system and MongoDB 6 diagnostics
+- `http://127.0.0.1:5000/api/health/db` – Dedicated MongoDB connectivity check
+
+### 4. Run Automated Tests
+Execute the pytest suite:
+```powershell
+.\.venv\Scripts\pytest.exe -v
 ```
