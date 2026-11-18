@@ -56,6 +56,8 @@
 | **Phase 5C** | `3052088` | feat(phase-5c): modern prediction workspaces, dynamic forms, model disagreement handling, and role-based analytics | Pushed to `origin/main` | Yes |
 | **Phase 5C Docs** | `d50ce8f` | docs(phase-5c): record Phase 5C commit hash in backup log | Pushed to `origin/main` | Yes |
 | **Phase 5C Fixes** | `55812ca` | fix(phase-5c): resolve m0 advisory key mismatch, correct holdout sample counts, and bind admin total predictions | Pushed to `origin/main` | Yes |
+| **Phase 5C Docs** | `993e011` | docs(phase-5c): record Phase 5C remediation commit hash in backup log | Pushed to `origin/main` | Yes |
+| **Phase 5D-B** | `4a64abc` | feat(phase-5d): implement teacher workspace foundation, official branding, and component library | Pushed to `origin/main` | Yes |
 
 ---
 
