@@ -258,22 +258,22 @@ export const TeacherReports: React.FC = () => {
       csvRows.push(`Total Assigned Students,${cohortMetrics.totalAssigned},Total roster size mapped to instructor`);
       csvRows.push(`Evaluated Learners,${cohortMetrics.evaluated},Learners with at least one assessment`);
       csvRows.push(`Unscreened Learners,${cohortMetrics.unscreened},Awaiting baseline evaluation (Never low risk)`);
-      csvRows.push(`Cohort Average Projected Mark,${cohortMetrics.avgMark} / 20,Continuous regression projection`);
-      csvRows.push(`High Risk Learners,${cohortMetrics.highRisk},Projected mark < 10 / 20`);
-      csvRows.push(`Moderate Risk Learners,${cohortMetrics.modRisk},Projected mark 10 - 13.9 / 20`);
-      csvRows.push(`Low Risk / On Track,${cohortMetrics.lowRisk},Projected mark >= 14 / 20`);
+      csvRows.push(`Cohort Average Projected Mark,${cohortMetrics.avgMark} / 100,Continuous regression projection`);
+      csvRows.push(`High Risk Learners,${cohortMetrics.highRisk},Projected mark < 50%`);
+      csvRows.push(`Moderate Risk Learners,${cohortMetrics.modRisk},Projected mark 50% - 69%`);
+      csvRows.push(`Low Risk / On Track,${cohortMetrics.lowRisk},Projected mark >= 70%`);
       csvRows.push('');
-      csvRows.push('Subject,Evaluated Students,Average Mark (0-20),High Risk,Moderate Risk,Low Risk');
+      csvRows.push('Subject,Evaluated Students,Average Mark (0-100),High Risk,Moderate Risk,Low Risk');
       csvRows.push(`Mathematics,${cohortMetrics.math.count},${cohortMetrics.math.avg},${cohortMetrics.math.high},${cohortMetrics.math.mod},${cohortMetrics.math.low}`);
       csvRows.push(`Portuguese Language,${cohortMetrics.port.count},${cohortMetrics.port.avg},${cohortMetrics.port.high},${cohortMetrics.port.mod},${cohortMetrics.port.low}`);
       csvRows.push('');
-      csvRows.push('Milestone,Assessment Count,Average Projected Mark');
+      csvRows.push('Milestone,Assessment Count,Average Projected Mark (0-100)');
       csvRows.push(`Milestone 0 (Pre-Enrollment),${cohortMetrics.milestones.m0.count},${cohortMetrics.milestones.m0.avg}`);
       csvRows.push(`Milestone 1 (Mid-Term),${cohortMetrics.milestones.m1.count},${cohortMetrics.milestones.m1.avg}`);
       csvRows.push(`Milestone 2 (Pre-Final),${cohortMetrics.milestones.m2.count},${cohortMetrics.milestones.m2.avg}`);
     } else if (activeTab === 'AT_RISK') {
       filename = `edupredict_at_risk_students_${today}.csv`;
-      csvRows.push('Student ID,Student Name,Email,Subject,Milestone,Predicted Mark (0-20),Risk Status,Confidence Pct,Uncertainty Warning,Recommended Action,Assessment Date');
+      csvRows.push('Student ID,Student Name,Email,Subject,Milestone,Predicted Mark (0-100),Risk Status,Confidence Pct,Uncertainty Warning,Recommended Action,Assessment Date');
       atRiskList.forEach(({ student, pred }) => {
         csvRows.push([
           escapeCsvField(student.id),
@@ -291,7 +291,7 @@ export const TeacherReports: React.FC = () => {
       });
     } else {
       filename = `edupredict_prediction_audit_${today}.csv`;
-      csvRows.push('Prediction ID,Student ID,Student Name,Subject,Milestone,Predicted Mark (0-20),Risk Status,Top Confidence,Uncertainty Warning,Regressor Model,Classifier Model,Created At');
+      csvRows.push('Prediction ID,Student ID,Student Name,Subject,Milestone,Predicted Mark (0-100),Risk Status,Top Confidence,Uncertainty Warning,Regressor Model,Classifier Model,Created At');
       auditList.forEach((p) => {
         const student = studentMap.get(p.student_id);
         csvRows.push([
@@ -477,7 +477,7 @@ export const TeacherReports: React.FC = () => {
             Scope & Pedagogical Transparency Notice:
           </span>
           <p className="text-slate-600 leading-relaxed text-[11px]">
-            This report represents the authorized assigned cohort of <strong>{user?.full_name}</strong> and loaded historical assessments. Predicted marks are regression estimates (0–20 scale), not official final transcript grades. Unscreened students are awaiting baseline diagnostic assessment and must never be classified as low risk.
+            This report represents the authorized assigned cohort of <strong>{user?.full_name}</strong> and loaded historical assessments. Predicted marks are regression estimates (0–100% scale), not official final transcript grades. Unscreened students are awaiting baseline diagnostic assessment and must never be classified as low risk.
           </p>
         </div>
       </div>
@@ -518,7 +518,7 @@ export const TeacherReports: React.FC = () => {
             />
             <StatCard
               title="Cohort Average Projected Mark"
-              value={cohortMetrics.avgMark !== 'N/A' ? `${cohortMetrics.avgMark} / 20` : 'N/A'}
+              value={cohortMetrics.avgMark !== 'N/A' ? `${cohortMetrics.avgMark} / 100` : 'N/A'}
               subtitle="Continuous regression mean"
               icon={<BarChart3 size={20} />}
               badgeText="Score Mean"
@@ -545,7 +545,7 @@ export const TeacherReports: React.FC = () => {
                     : '0%'}
                 </div>
                 <p className="text-[11px] text-slate-600 leading-normal">
-                  Projected continuous mark &lt;10 / 20. Immediate remedial intervention required.
+                  Projected continuous mark &lt;50%. Immediate remedial intervention required.
                 </p>
               </div>
 
@@ -560,7 +560,7 @@ export const TeacherReports: React.FC = () => {
                     : '0%'}
                 </div>
                 <p className="text-[11px] text-slate-600 leading-normal">
-                  Projected continuous mark 10–13.9 / 20. Proactive check-ins recommended.
+                  Projected continuous mark 50–69%. Proactive check-ins recommended.
                 </p>
               </div>
 
@@ -575,7 +575,7 @@ export const TeacherReports: React.FC = () => {
                     : '0%'}
                 </div>
                 <p className="text-[11px] text-slate-600 leading-normal">
-                  Projected continuous mark &ge;14 / 20. Student on track for standard mastery.
+                  Projected continuous mark &ge;70%. Student on track for standard mastery.
                 </p>
               </div>
             </div>
@@ -604,7 +604,7 @@ export const TeacherReports: React.FC = () => {
                       <td className="py-3 px-3 font-bold text-navy-900">Mathematics</td>
                       <td className="py-3 px-3">{cohortMetrics.math.count}</td>
                       <td className="py-3 px-3 font-semibold text-brand-royal">
-                        {cohortMetrics.math.avg !== 'N/A' ? `${cohortMetrics.math.avg} / 20` : 'N/A'}
+                        {cohortMetrics.math.avg !== 'N/A' ? `${cohortMetrics.math.avg} / 100` : 'N/A'}
                       </td>
                       <td className="py-3 px-3 text-right font-mono text-[11px]">
                         <span className="text-rose-600 font-bold">{cohortMetrics.math.high}</span> /{' '}
@@ -616,7 +616,7 @@ export const TeacherReports: React.FC = () => {
                       <td className="py-3 px-3 font-bold text-navy-900">Portuguese Language</td>
                       <td className="py-3 px-3">{cohortMetrics.port.count}</td>
                       <td className="py-3 px-3 font-semibold text-brand-royal">
-                        {cohortMetrics.port.avg !== 'N/A' ? `${cohortMetrics.port.avg} / 20` : 'N/A'}
+                        {cohortMetrics.port.avg !== 'N/A' ? `${cohortMetrics.port.avg} / 100` : 'N/A'}
                       </td>
                       <td className="py-3 px-3 text-right font-mono text-[11px]">
                         <span className="text-rose-600 font-bold">{cohortMetrics.port.high}</span> /{' '}
@@ -652,7 +652,7 @@ export const TeacherReports: React.FC = () => {
                       </td>
                       <td className="py-3 px-3">{cohortMetrics.milestones.m0.count}</td>
                       <td className="py-3 px-3 text-right font-semibold text-slate-800">
-                        {cohortMetrics.milestones.m0.avg !== 'N/A' ? `${cohortMetrics.milestones.m0.avg} / 20` : 'N/A'}
+                        {cohortMetrics.milestones.m0.avg !== 'N/A' ? `${cohortMetrics.milestones.m0.avg} / 100` : 'N/A'}
                       </td>
                     </tr>
                     <tr>
@@ -662,7 +662,7 @@ export const TeacherReports: React.FC = () => {
                       </td>
                       <td className="py-3 px-3">{cohortMetrics.milestones.m1.count}</td>
                       <td className="py-3 px-3 text-right font-semibold text-slate-800">
-                        {cohortMetrics.milestones.m1.avg !== 'N/A' ? `${cohortMetrics.milestones.m1.avg} / 20` : 'N/A'}
+                        {cohortMetrics.milestones.m1.avg !== 'N/A' ? `${cohortMetrics.milestones.m1.avg} / 100` : 'N/A'}
                       </td>
                     </tr>
                     <tr>
@@ -672,7 +672,7 @@ export const TeacherReports: React.FC = () => {
                       </td>
                       <td className="py-3 px-3">{cohortMetrics.milestones.m2.count}</td>
                       <td className="py-3 px-3 text-right font-semibold text-slate-800">
-                        {cohortMetrics.milestones.m2.avg !== 'N/A' ? `${cohortMetrics.milestones.m2.avg} / 20` : 'N/A'}
+                        {cohortMetrics.milestones.m2.avg !== 'N/A' ? `${cohortMetrics.milestones.m2.avg} / 100` : 'N/A'}
                       </td>
                     </tr>
                   </tbody>
@@ -767,12 +767,12 @@ export const TeacherReports: React.FC = () => {
                         <td className="py-3 px-3">
                           <span
                             className={`font-black text-sm ${
-                              pred.predicted_marks < 10 ? 'text-rose-600' : 'text-amber-600'
+                              pred.predicted_marks < 50 ? 'text-rose-600' : 'text-amber-600'
                             }`}
                           >
                             {pred.predicted_marks.toFixed(1)}
                           </span>
-                          <span className="text-[10px] text-slate-400"> / 20</span>
+                          <span className="text-[10px] text-slate-400"> / 100</span>
                         </td>
                         <td className="py-3 px-3">
                           <StatusBadge status={pred.predicted_status} />
@@ -899,7 +899,7 @@ export const TeacherReports: React.FC = () => {
                             <span className="font-black text-sm text-navy-900">
                               {p.predicted_marks.toFixed(1)}
                             </span>
-                            <span className="text-[10px] text-slate-400"> / 20</span>
+                            <span className="text-[10px] text-slate-400"> / 100</span>
                           </td>
                           <td className="py-3 px-3">
                             <StatusBadge status={p.predicted_status} />

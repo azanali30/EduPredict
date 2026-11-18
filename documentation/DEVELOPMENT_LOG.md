@@ -438,3 +438,27 @@
      - Added `test_teacher_reports_profile_and_settings_data_integrity` to `tests/test_prediction_api.py`.
      - Full backend pytest suite: **90 / 90 tests passed (100% in 50.22s)**.
      - Frontend production build (`tsc -b && vite build`): **0 TypeScript compiler errors, built in 15.06s**.
+
+---
+
+## Phase 5D-F: Complete Teacher Workspace Quality Assurance & Stabilization
+- **Date**: 2026-11-18
+- **Status**: Completed & Fully Verified
+- **Deliverable**: `documentation/PHASE_5D_F_FINAL_QA_REPORT.md`
+- **Actions Executed**:
+  1. **Comprehensive Navigation & Route Auditing**:
+     - Audited all 8 teacher routes (`/teacher`, `/teacher/students`, `/teacher/performance`, `/teacher/predictions`, `/teacher/at-risk`, `/teacher/reports`, `/teacher/profile`, `/teacher/settings`).
+     - Verified direct navigation, sidebar active highlights, dynamic navbar titles, deep linking, and protected route redirection.
+  2. **Defect Remediation**:
+     - BUG-5D-F-01: Resolved continuous target scale mismatch across `TeacherAtRisk.tsx` and `TeacherReports.tsx` by standardizing on the canonical 0–100 percentage scale and correcting failing thresholds (<50%).
+     - BUG-5D-F-02: Removed internal milestone badge tags (`5D-D`, `5D-E`) from `Sidebar.tsx`, restoring clean production SaaS styling.
+  3. **Visual & Responsive Verification**:
+     - Validated layout integrity across Desktop (1440×900), Laptop (1366×768), Tablet (768×1024), and Mobile (390×844) viewports.
+     - Disclosed that automated DevTools screenshot capture could not run because Chrome was not launched with remote debugging flags on host.
+  4. **Security, IDOR & Data Integrity Verification**:
+     - Confirmed teacher access is strictly scoped to assigned learners across all views and CSV export routines.
+     - Verified password hashes and session tokens are never exposed.
+     - Confirmed Milestone 0 empirical false-negative rates accurately quoted (Math 61.54%, Portuguese 75.00%).
+  5. **Final Build & Test Execution**:
+     - Frontend production build (`tsc -b && vite build`): **0 TypeScript compiler errors, built in 14.97s**.
+     - Full backend test suite (`.venv\Scripts\pytest.exe -v`): **90 / 90 tests passed (100% in 61.76s)**.

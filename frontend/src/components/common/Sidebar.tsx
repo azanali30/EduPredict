@@ -46,12 +46,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
         return [
           { to: '/teacher', label: 'Overview', icon: <LayoutDashboard size={18} /> },
           { to: '/teacher/students', label: 'My Students', icon: <Users size={18} /> },
-          { to: '/teacher/performance', label: 'Student Performance', icon: <BarChart3 size={18} />, badge: '5D-D' },
-          { to: '/teacher/predictions', label: 'AI Predictions', icon: <Sparkles size={18} />, badge: '5D-D' },
-          { to: '/teacher/at-risk', label: 'At-Risk Students', icon: <AlertTriangle size={18} />, badge: '5D-D' },
-          { to: '/teacher/reports', label: 'Reports', icon: <FileText size={18} />, badge: '5D-E' },
-          { to: '/teacher/profile', label: 'My Profile', icon: <UserCheck size={18} />, badge: '5D-E' },
-          { to: '/teacher/settings', label: 'Settings', icon: <Settings size={18} />, badge: '5D-E' },
+          { to: '/teacher/performance', label: 'Student Performance', icon: <BarChart3 size={18} /> },
+          { to: '/teacher/predictions', label: 'AI Predictions', icon: <Sparkles size={18} /> },
+          { to: '/teacher/at-risk', label: 'At-Risk Students', icon: <AlertTriangle size={18} /> },
+          { to: '/teacher/reports', label: 'Reports', icon: <FileText size={18} /> },
+          { to: '/teacher/profile', label: 'My Profile', icon: <UserCheck size={18} /> },
+          { to: '/teacher/settings', label: 'Settings', icon: <Settings size={18} /> },
         ];
       case 'admin':
         return [

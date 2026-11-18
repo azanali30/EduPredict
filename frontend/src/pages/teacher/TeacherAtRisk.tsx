@@ -94,7 +94,7 @@ export const TeacherAtRisk: React.FC = () => {
         urgent++;
       } else if (pred.predicted_status === 'Moderate Risk') {
         mod++;
-        if (pred.uncertainty_warning || pred.predicted_marks < 10) {
+        if (pred.uncertainty_warning || pred.predicted_marks < 55) {
           urgent++;
         }
       }
@@ -210,7 +210,7 @@ export const TeacherAtRisk: React.FC = () => {
         <StatCard
           title="High-Risk Queue"
           value={highRiskCount}
-          subtitle="Immediate pedagogical intervention required (<10 / 20)"
+          subtitle="Immediate pedagogical intervention required (<50%)"
           icon={<ShieldAlert size={20} />}
           badgeText="Critical"
           badgeVariant="danger"
@@ -219,7 +219,7 @@ export const TeacherAtRisk: React.FC = () => {
         <StatCard
           title="Moderate-Risk Queue"
           value={modRiskCount}
-          subtitle="Proactive academic monitoring (10 - 13 / 20)"
+          subtitle="Proactive academic monitoring (50% - 69%)"
           icon={<AlertTriangle size={20} />}
           badgeText="Monitor"
           badgeVariant="warning"
@@ -291,7 +291,7 @@ export const TeacherAtRisk: React.FC = () => {
         <div className="flex items-center gap-2 text-[11px] text-amber-900 font-medium pt-1 border-t border-amber-200/70">
           <HelpCircle size={14} className="shrink-0 text-amber-700" />
           <span>
-            <strong>Safety Protocol:</strong> Unscreened students must NEVER be classified as low risk. Predicted marks are continuous regression projections (0–20 scale), not transcript grades. Holistic teacher observation remains essential.
+            <strong>Safety Protocol:</strong> Unscreened students must NEVER be classified as low risk. Predicted marks are continuous regression projections (0–100% scale), not transcript grades. Holistic teacher observation remains essential.
           </span>
         </div>
       </div>
@@ -569,16 +569,16 @@ export const TeacherAtRisk: React.FC = () => {
                             <div className="flex items-baseline gap-1 mt-0.5">
                               <span
                                 className={`text-lg font-black tracking-tight ${
-                                  pred.predicted_marks < 10
+                                  pred.predicted_marks < 50
                                     ? 'text-rose-600'
-                                    : pred.predicted_marks < 14
+                                    : pred.predicted_marks < 70
                                     ? 'text-amber-600'
                                     : 'text-emerald-600'
                                 }`}
                               >
                                 {pred.predicted_marks.toFixed(1)}
                               </span>
-                              <span className="text-xs text-slate-400 font-medium">/ 20</span>
+                              <span className="text-xs text-slate-400 font-medium">/ 100</span>
                             </div>
                           </div>
 
