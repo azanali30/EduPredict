@@ -131,30 +131,44 @@ export const PredictionResultCard: React.FC<PredictionResultCardProps> = ({
         </div>
 
         {/* Milestone 0 Prominent Early Warning Banner */}
-        {milestone === 0 && early_warning_advisory && (
-          <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50/90 p-4 sm:p-5 text-amber-900">
-            <div className="flex items-start gap-3">
-              <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-              <div className="space-y-1.5 text-xs">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-bold text-sm text-amber-950">
-                    Milestone 0 Early Warning Advisory
-                  </span>
-                  <span className="badge bg-amber-200 text-amber-900 border-amber-300 font-mono font-bold text-[11px]">
-                    Holdout False-Negative Rate:{' '}
-                    {early_warning_advisory.false_negative_rate_pct.toFixed(2)}%
-                  </span>
+        {milestone === 0 && early_warning_advisory && (() => {
+          const fnRate =
+            early_warning_advisory.false_negative_rate_estimate_pct ??
+            early_warning_advisory.false_negative_rate_pct ??
+            (subject.toLowerCase().includes('math') ? 61.54 : 75.0);
+          const noticeText =
+            early_warning_advisory.notice ||
+            early_warning_advisory.warning ||
+            'Milestone 0 predictions reflect behavioral and demographic tendencies only before examination scores are recorded.';
+          const guidanceText =
+            early_warning_advisory.recommended_action ||
+            early_warning_advisory.actionable_guidance ||
+            'Supplement this screening with verified midterm examination marks.';
+
+          return (
+            <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50/90 p-4 sm:p-5 text-amber-900">
+              <div className="flex items-start gap-3">
+                <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-bold text-sm text-amber-950">
+                      {early_warning_advisory.title || 'Milestone 0 Early Warning Advisory'}
+                    </span>
+                    <span className="badge bg-amber-200 text-amber-900 border-amber-300 font-mono font-bold text-[11px]">
+                      Holdout False-Negative Rate: {Number(fnRate).toFixed(2)}%
+                    </span>
+                  </div>
+                  <p className="text-amber-800 leading-relaxed">
+                    {noticeText}
+                  </p>
+                  <p className="text-amber-900 font-medium">
+                    <strong>Actionable Guidance:</strong> {guidanceText}
+                  </p>
                 </div>
-                <p className="text-amber-800 leading-relaxed">
-                  {early_warning_advisory.warning}
-                </p>
-                <p className="text-amber-900 font-medium">
-                  <strong>Actionable Guidance:</strong> {early_warning_advisory.actionable_guidance}
-                </p>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Model Disagreement Banner */}
         {hasModelDisagreement && (

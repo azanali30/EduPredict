@@ -81,20 +81,41 @@ export const PredictionDetailModal: React.FC<PredictionDetailModalProps> = ({
         </div>
 
         {/* Milestone 0 Safety Advisory Notice */}
-        {milestone === 0 && early_warning_advisory && (
-          <div className="p-4 rounded-xl border border-amber-300 bg-amber-50/80 text-amber-950 space-y-1.5">
-            <div className="flex items-center gap-2">
-              <ShieldAlert size={16} className="text-amber-600" />
-              <span className="font-bold text-sm">Milestone 0 Safety Advisory</span>
-              <span className="badge bg-amber-200 text-amber-900 font-mono font-bold text-[10px]">
-                False Negative Rate: {early_warning_advisory.false_negative_rate_pct.toFixed(2)}%
-              </span>
+        {milestone === 0 && early_warning_advisory && (() => {
+          const fnRate =
+            early_warning_advisory.false_negative_rate_estimate_pct ??
+            early_warning_advisory.false_negative_rate_pct ??
+            (subject.toLowerCase().includes('math') ? 61.54 : 75.0);
+          const noticeText =
+            early_warning_advisory.notice ||
+            early_warning_advisory.warning ||
+            'Milestone 0 predictions reflect behavioral and demographic tendencies only before examination scores are recorded.';
+          const guidanceText =
+            early_warning_advisory.recommended_action ||
+            early_warning_advisory.actionable_guidance;
+
+          return (
+            <div className="p-4 rounded-xl border border-amber-300 bg-amber-50/80 text-amber-950 space-y-1.5">
+              <div className="flex items-center gap-2">
+                <ShieldAlert size={16} className="text-amber-600 shrink-0" />
+                <span className="font-bold text-sm">
+                  {early_warning_advisory.title || 'Milestone 0 Safety Advisory'}
+                </span>
+                <span className="badge bg-amber-200 text-amber-900 font-mono font-bold text-[10px]">
+                  Holdout False-Negative Rate: {Number(fnRate).toFixed(2)}%
+                </span>
+              </div>
+              <p className="text-[11px] text-amber-800 leading-relaxed">
+                {noticeText}
+              </p>
+              {guidanceText && (
+                <p className="text-[11px] text-amber-900 font-medium">
+                  <strong>Recommended Action:</strong> {guidanceText}
+                </p>
+              )}
             </div>
-            <p className="text-[11px] text-amber-800 leading-relaxed">
-              {early_warning_advisory.warning}
-            </p>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Inference Provenance */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

@@ -245,7 +245,7 @@ export const TeacherOverview: React.FC = () => {
                 Cohort Academic Risk Classification Distribution
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Evaluation results across your {students.length} assigned learners
+                Evaluation results across your {students.length} assigned learners (mapped from latest {predictions.length} recorded predictions)
               </p>
             </div>
             <span className="badge badge-info text-[10px]">Real-Time Model Inference</span>
@@ -269,6 +269,15 @@ export const TeacherOverview: React.FC = () => {
                 <Bar dataKey="count" radius={[6, 6, 0, 0]} name="Students" />
               </BarChart>
             </ResponsiveContainer>
+          </div>
+
+          <div className="mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1">
+            <span>
+              <strong>Data Coverage Note:</strong> Evaluated from the latest {predictions.length} prediction records assigned to you. Unscreened indicates assigned learners without a prediction record in this sample.
+            </span>
+            <span className="font-mono text-slate-500 shrink-0">
+              {scoreCount} of {students.length} Evaluated
+            </span>
           </div>
         </div>
       )}

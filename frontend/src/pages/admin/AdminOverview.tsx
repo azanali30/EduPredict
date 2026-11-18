@@ -41,6 +41,7 @@ export const AdminOverview: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [health, setHealth] = useState<any>(null);
   const [predictions, setPredictions] = useState<PredictionRecord[]>([]);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,6 +59,7 @@ export const AdminOverview: React.FC = () => {
         setUsers(usersRes.users || []);
         setHealth(healthRes);
         setPredictions(predsRes.predictions || []);
+        setTotalCount(predsRes.total_count ?? (predsRes.predictions || []).length);
       } catch (err: any) {
         setError(err?.message || 'Failed to retrieve administrative telemetry.');
       } finally {
@@ -79,7 +81,9 @@ export const AdminOverview: React.FC = () => {
   ].filter((item) => item.value > 0);
 
   // Prediction Analytics calculations
-  const totalPredictions = predictions.length;
+  const totalPredictions = totalCount;
+  const loadedSampleCount = predictions.length;
+  const hasTruncatedSample = totalCount > loadedSampleCount;
   const mathPredictions = predictions.filter((p) => p.subject === 'Mathematics').length;
   const portPredictions = predictions.filter((p) => p.subject === 'Portuguese Language').length;
 
@@ -251,15 +255,15 @@ export const AdminOverview: React.FC = () => {
             <StatCard
               title="Total Predictions"
               value={totalPredictions}
-              subtitle="Persisted inference audits"
-              badgeText="Live"
+              subtitle="All persisted inference audits"
+              badgeText="Database"
               badgeVariant="info"
               icon={<TrendingUp size={20} />}
             />
             <StatCard
               title="High Risk Detected"
               value={highRiskCount}
-              subtitle="Academic status < 50"
+              subtitle={hasTruncatedSample ? `In loaded sample (latest ${loadedSampleCount})` : "Academic status < 50"}
               badgeText={highRiskCount > 0 ? "Flagged" : "Clear"}
               badgeVariant={highRiskCount > 0 ? "danger" : "success"}
               icon={<AlertTriangle size={20} />}
@@ -267,7 +271,7 @@ export const AdminOverview: React.FC = () => {
             <StatCard
               title="Mathematics Inferences"
               value={mathPredictions}
-              subtitle="Stem curriculum models"
+              subtitle={hasTruncatedSample ? `In loaded sample (latest ${loadedSampleCount})` : "Stem curriculum models"}
               badgeText="M0–M2"
               badgeVariant="info"
               icon={<BrainCircuit size={20} />}
@@ -275,7 +279,7 @@ export const AdminOverview: React.FC = () => {
             <StatCard
               title="Portuguese Inferences"
               value={portPredictions}
-              subtitle="Language models"
+              subtitle={hasTruncatedSample ? `In loaded sample (latest ${loadedSampleCount})` : "Language models"}
               badgeText="M0–M2"
               badgeVariant="warning"
               icon={<BrainCircuit size={20} />}
@@ -283,22 +287,34 @@ export const AdminOverview: React.FC = () => {
           </div>
         )}
 
-        {/* Prediction Visualizations Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Risk Category Distribution */}
-          <div className="card p-6">
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-              <div>
-                <h3 className="text-base font-bold text-navy-900 flex items-center gap-2">
-                  <AlertCircle size={18} className="text-rose-500" />
-                  Academic Risk Category Distribution
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Classifier outputs across all student performance predictions
-                </p>
-              </div>
-              <span className="badge badge-info text-[10px]">{totalPredictions} Inferences</span>
+        {/* Prediction Visualizations Grid with Coverage Notice */}
+        <div className="space-y-4 mb-6">
+          {hasTruncatedSample && (
+            <div className="p-3 rounded-xl bg-sky-50 border border-sky-200 text-sky-900 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+              <span>
+                <strong>Data Coverage Notice:</strong> Category breakdown charts reflect the {loadedSampleCount} most recent prediction audits (out of {totalPredictions} total institutional records). Server-side analytical aggregation pipeline is scheduled for Phase 6.
+              </span>
+              <span className="badge bg-sky-100 text-sky-800 font-mono text-[10px] shrink-0">
+                Sample: {loadedSampleCount} of {totalPredictions}
+              </span>
             </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Risk Category Distribution */}
+            <div className="card p-6">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                <div>
+                  <h3 className="text-base font-bold text-navy-900 flex items-center gap-2">
+                    <AlertCircle size={18} className="text-rose-500" />
+                    Academic Risk Category Distribution
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Classifier outputs across {hasTruncatedSample ? `latest ${loadedSampleCount}` : 'all'} predictions
+                  </p>
+                </div>
+                <span className="badge badge-info text-[10px]">{loadedSampleCount} Inferences</span>
+              </div>
 
             {loading ? (
               <LoadingSkeleton height="200px" />
@@ -383,6 +399,7 @@ export const AdminOverview: React.FC = () => {
             )}
           </div>
         </div>
+      </div>
 
         {/* Recent Prediction Activity Table */}
         <div className="card p-6 mb-6">

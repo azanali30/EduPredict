@@ -291,3 +291,26 @@
      - Executed production Vite build (`tsc -b && vite build`): bundle compiled in 19.44s with **0 TypeScript errors**.
      - Executed full backend pytest suite: **86 / 86 tests passed (100% pass rate)**.
      - Authored comprehensive documentation `documentation/PHASE_5C_FRONTEND_PREDICTION_WORKSPACES.md`.
+
+---
+
+## Phase 5C Remediation: Critical Bug Fixes & Precision Improvements
+- **Date**: 2026-11-18
+- **Status**: Remediated & Fully Verified
+- **Commits**: Pending Commit (`fix(phase-5c): resolve m0 advisory key mismatch, correct holdout sample counts, and bind admin total predictions`)
+- **Actions Executed**:
+  1. **BUG-5C-01 (CRITICAL) - Advisory Property Key Alignment**:
+     - Updated `EarlyWarningAdvisory` in `frontend/src/types/index.ts` to include canonical backend keys `false_negative_rate_estimate_pct`, `notice`, `recommended_action`, and `title`.
+     - In `PredictionResultCard.tsx` and `PredictionDetailModal.tsx`, implemented safe fallback property access and wrapped rate formatting in `Number(fnRate).toFixed(2)` to eliminate `undefined.toFixed()` exceptions.
+  2. **BUG-5C-02 (MAJOR) - Historical Holdout Evaluation Counts Correction**:
+     - Corrected holdout test counts in `PredictionForm.tsx` to exact Phase 5A evaluation figures: missed **16 of 26** failing students ($61.54\%$) for Mathematics and missed **15 of 20** failing students ($75.00\%$) for Portuguese Language.
+     - Labeled text prominently as historical holdout test partition metrics rather than individual student evaluation outcomes.
+  3. **BUG-5C-03 (MAJOR) - Admin Institutional Total Count Binding**:
+     - Updated `AdminOverview.tsx` to bind the "Total Predictions" KPI directly to `predsRes.total_count` instead of `predictions.length`, preventing the 100-record pagination cap from truncating institutional metrics.
+  4. **BUG-5C-04 (MEDIUM) - Data Coverage Disclosures**:
+     - Added clear visual notices in `AdminOverview.tsx` and `TeacherOverview.tsx` disclosing that client-side category distributions reflect the currently loaded 100-record sample.
+  5. **Regression Testing & Verification**:
+     - Added 2 new tests to `tests/test_prediction_api.py` (`test_milestone_0_advisory_canonical_keys_and_empirical_metrics` and `test_admin_list_predictions_pagination_total_count`).
+     - Executed full pytest suite: **88 / 88 tests passed (100% in 51.45s)**.
+     - Executed frontend production build (`tsc -b && vite build`): **0 TypeScript compiler errors, bundle built in 21.09s**.
+     - Authored documentation `documentation/PHASE_5C_CORRECTION_REPORT.md`.

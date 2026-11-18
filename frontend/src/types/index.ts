@@ -55,12 +55,17 @@ export type PredictionMilestone = 0 | 1 | 2;
 export type AcademicRiskStatus = 'High Risk' | 'Moderate Risk' | 'Low Risk / On Track';
 
 export interface EarlyWarningAdvisory {
-  milestone: number;
-  false_negative_rate_pct: number;
-  false_negatives_count: number;
-  total_failing_count: number;
-  warning: string;
-  actionable_guidance: string;
+  title?: string;
+  notice?: string;
+  false_negative_rate_estimate_pct?: number;
+  recommended_action?: string;
+  // Optional aliases for backward compatibility
+  milestone?: number;
+  false_negative_rate_pct?: number;
+  warning?: string;
+  actionable_guidance?: string;
+  false_negatives_count?: number;
+  total_failing_count?: number;
   model_type?: string;
 }
 

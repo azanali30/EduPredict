@@ -438,3 +438,85 @@ def test_prediction_detail_rbac(client, clean_db, test_student, test_teacher, te
     res_admin = client.get(f"/api/predictions/{pred_id}")
     assert res_admin.status_code == 200
     assert res_admin.get_json()["prediction"]["id"] == pred_id
+
+
+# ==============================================================================
+# 5. Phase 5C Remediation Regression Tests
+# ==============================================================================
+
+def test_milestone_0_advisory_canonical_keys_and_empirical_metrics(client, clean_db, test_student):
+    """
+    Verify canonical M0 advisory response keys and verify subject-specific
+    false-negative rate estimates against Phase 5A holdout confusion matrices.
+    """
+    login_user(client, test_student.email, "StudentPassword123!")
+
+    # 1. Mathematics M0 Prediction
+    res_math = client.post("/api/predictions", json={
+        "subject": "Mathematics",
+        "milestone": 0,
+        "features": SAMPLE_M0_FEATURES,
+    })
+    assert res_math.status_code == 201
+    pred_math = res_math.get_json()["prediction"]
+    adv_math = pred_math["early_warning_advisory"]
+    assert adv_math is not None
+
+    # Canonical backend keys
+    assert "title" in adv_math
+    assert "notice" in adv_math
+    assert "false_negative_rate_estimate_pct" in adv_math
+    assert "recommended_action" in adv_math
+
+    # Mathematics: 16 false negatives out of 26 failing students (61.54%)
+    assert adv_math["false_negative_rate_estimate_pct"] == 61.5
+
+    # 2. Portuguese Language M0 Prediction
+    res_port = client.post("/api/predictions", json={
+        "subject": "Portuguese Language",
+        "milestone": 0,
+        "features": SAMPLE_M0_FEATURES,
+    })
+    assert res_port.status_code == 201
+    pred_port = res_port.get_json()["prediction"]
+    adv_port = pred_port["early_warning_advisory"]
+    assert adv_port is not None
+
+    # Canonical backend keys
+    assert "title" in adv_port
+    assert "notice" in adv_port
+    assert "false_negative_rate_estimate_pct" in adv_port
+    assert "recommended_action" in adv_port
+
+    # Portuguese: 15 false negatives out of 20 failing students (75.00%)
+    assert adv_port["false_negative_rate_estimate_pct"] == 75.0
+
+
+def test_admin_list_predictions_pagination_total_count(client, clean_db, test_student, test_admin):
+    """
+    Verify Admin prediction listing returns accurate total_count even when
+    the paginated limit is strictly smaller than the total record count.
+    """
+    login_user(client, test_student.email, "StudentPassword123!")
+
+    # Create 3 predictions for test_student
+    for _ in range(3):
+        client.post("/api/predictions", json={
+            "subject": "Mathematics",
+            "milestone": 0,
+            "features": SAMPLE_M0_FEATURES,
+        })
+
+    login_user(client, test_admin.email, "AdminPassword123!")
+
+    # Request with limit=1
+    res_page = client.get("/api/predictions?limit=1&skip=0")
+    assert res_page.status_code == 200
+    data = res_page.get_json()
+
+    assert data["limit"] == 1
+    assert len(data["predictions"]) == 1
+    assert data["total_count"] == 3
+    # Confirms total_count exceeds paginated record slice
+    assert data["total_count"] > len(data["predictions"])
+

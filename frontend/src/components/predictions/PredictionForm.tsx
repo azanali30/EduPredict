@@ -162,11 +162,18 @@ export const PredictionForm: React.FC<PredictionFormProps> = ({
     await onSubmit(payload);
   };
 
-  // Empirical False Negative Rates
-  const mathFnRate = '61.54%';
-  const portFnRate = '75.00%';
-  const currentFnRate = subject === 'Mathematics' ? mathFnRate : portFnRate;
-  const failingCount = subject === 'Mathematics' ? '8 of 13' : '9 of 12';
+  // Historical Empirical False Negative Rates from Phase 5A 20% Holdout Evaluation
+  const mathHoldoutStats = {
+    falseNegatives: 16,
+    totalActualFailing: 26,
+    fnRate: '61.54%',
+  };
+  const portHoldoutStats = {
+    falseNegatives: 15,
+    totalActualFailing: 20,
+    fnRate: '75.00%',
+  };
+  const currentHoldoutStats = subject === 'Mathematics' ? mathHoldoutStats : portHoldoutStats;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -319,11 +326,11 @@ export const PredictionForm: React.FC<PredictionFormProps> = ({
                     Milestone 0 Safety Advisory ({subject})
                   </span>
                   <span className="badge bg-amber-200 text-amber-900 border-amber-300 text-[10px] font-mono font-bold">
-                    Empirical False Negative Rate: {currentFnRate}
+                    Historical Holdout False Negative Rate: {currentHoldoutStats.fnRate}
                   </span>
                 </div>
                 <p className="text-amber-800 leading-relaxed text-[11px]">
-                  In holdout evaluation, this early warning model failed to detect {failingCount} failing students because examination scores are not yet available. Behavioral indicators alone are insufficient for reliable failure diagnosis. Predictions must be confirmed with midterm exam results.
+                  <strong>Historical Holdout Evaluation Metric (Not individual prediction outcome):</strong> In Phase 5A model evaluation on unseen holdout test data, this early warning model missed <strong>{currentHoldoutStats.falseNegatives} of {currentHoldoutStats.totalActualFailing}</strong> actual high-risk students ({currentHoldoutStats.fnRate}) because academic examination scores are not yet recorded. Behavioral indicators alone are insufficient for reliable failure diagnosis. Predictions must be corroborated with midterm exam results.
                 </p>
               </div>
             </div>
