@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from '../components/common/Sidebar';
 import { Navbar } from '../components/common/Navbar';
+import { LoadingState } from '../components/common/LoadingState';
 
 export const DashboardLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -36,7 +37,9 @@ export const DashboardLayout: React.FC = () => {
         <Navbar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} title={getPageTitle()} />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
-          <Outlet />
+          <Suspense fallback={<LoadingState title="Loading Workspace View..." description="Synchronizing classroom analytics..." />}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>

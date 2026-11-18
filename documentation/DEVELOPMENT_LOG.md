@@ -374,3 +374,38 @@
      - Added `test_teacher_overview_and_roster_data_integrity` to `tests/test_prediction_api.py`.
      - Full backend pytest suite: **89 / 89 tests passed (100% in 50.17s)**.
      - Frontend production build: **0 TypeScript compiler errors, built in 18.72s**.
+
+---
+
+## Phase 5D-D: Student Performance, AI Predictions Hub & At-Risk Triage
+- **Date**: 2026-11-18
+- **Status**: Completed & Fully Verified
+- **Deliverable**: `documentation/PHASE_5D_D_IMPLEMENTATION_REPORT.md`
+- **Actions Executed**:
+  1. **Student Performance Analytics (`/teacher/performance`)**:
+     - 4 Top Telemetry StatCards: Cohort Evaluated Ratio, Highest Projected Mark, Median Cohort Mark, Lowest Projected Mark.
+     - Pedagogical disclaimer distinguishing continuous regression estimates (0–20 scale) from official transcript grades.
+     - Cohort Grade Band Distribution (Distinction 80-100%, Merit 70-79%, Pass 50-69%, At Risk <50%) with interactive Recharts BarChart.
+     - Subject Comparative Analytics: Comparative metrics for Mathematics vs Portuguese Language.
+     - Milestone Telemetry Comparison: Assessment volume, average marks, and confidence trends across M0, M1, and M2.
+     - Multi-Milestone Progression Trajectories: Longitudinal tracking of students evaluated at multiple milestones with mark deltas and directional trend indicators.
+     - Filterable Student Performance Registry Table with search and subject dropdown.
+     - Integrated `StudentProfileDrawer` and `TeacherPredictionModal`.
+  2. **AI Predictions Hub (`/teacher/predictions`)**:
+     - Dedicated prediction management console with server-side backend pagination (`limit: 15`, `skip`, `total_count`).
+     - Multi-criteria filter bar: Student selector, Subject dropdown, Milestone dropdown, Risk Tier dropdown, and Reset button.
+     - Comprehensive audit table displaying student, subject, milestone, projected score /20, `StatusBadge`, confidence %, uncertainty warning chip, ML model provenance (`regressor_model`, `classifier_model`), and assessment timestamp.
+     - Working modals: `PredictionDetailModal` for deep inspection and `TeacherPredictionModal` for prediction generation.
+  3. **At-Risk Intervention & Monitoring (`/teacher/at-risk`)**:
+     - Categorized triage queues: High-Risk Queue (<10/20), Moderate-Risk Queue (10-13.9/20), Urgent Attention Index, and Unscreened Learners (never classified as low risk).
+     - Mandatory Milestone 0 Safety & Empirical False-Negative Disclosure Box:
+       - Mathematics M0 holdout: 16 false negatives out of 26 failing students (61.54% false-negative rate; 38.46% sensitivity).
+       - Portuguese Language M0 holdout: 15 false negatives out of 20 failing students (75.00% false-negative rate; 25.00% sensitivity).
+       - Explicit caveats that M0 is an exploratory screening heuristic that does not catch all failing students, low-risk predictions do not guarantee passing, unscreened learners must never be assumed safe, and holistic teacher judgment remains essential.
+     - Actionable intervention cards with evidence-based recommended actions from model advisory, working `StudentProfileDrawer`, `PredictionDetailModal`, `TeacherPredictionModal`, and real `mailto:` browser email client trigger.
+  4. **Performance & Route-Based Code Splitting**:
+     - Converted all 17 public, student, teacher, and admin route components to `React.lazy()` dynamic imports in `App.tsx`.
+     - Embedded `<Suspense>` boundaries in `App.tsx`, `DashboardLayout.tsx`, and `AuthLayout.tsx` ensuring layout stability and smooth transitions without flickering.
+  5. **Verification**:
+     - Frontend production build (`tsc -b && vite build`): **0 TypeScript compiler errors, 2,043 modules transformed into optimized code-split chunks in 14.73s**.
+     - Full backend test suite (`.venv\Scripts\pytest.exe -v`): **89 / 89 tests passed (100% in 48.73s)**.

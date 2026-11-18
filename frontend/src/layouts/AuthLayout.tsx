@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import { GraduationCap, Sparkles, TrendingUp, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { LoadingState } from '../components/common/LoadingState';
 
 export const AuthLayout: React.FC = () => {
   return (
@@ -110,7 +111,9 @@ export const AuthLayout: React.FC = () => {
 
         {/* Form Card Container */}
         <div className="w-full max-w-md bg-white rounded-2xl shadow-card p-8 sm:p-10 border border-slate-200/80">
-          <Outlet />
+          <Suspense fallback={<LoadingState title="Loading Authenticator..." description="Please wait..." />}>
+            <Outlet />
+          </Suspense>
         </div>
 
         {/* Mobile Footer */}

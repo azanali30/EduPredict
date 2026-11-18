@@ -495,3 +495,46 @@ tests/test_rbac.py (6 tests) ......................................... PASSED [1
 ============================= 89 passed in 50.17s =============================
 ```
 Status: **100% Passing, 0 Type Errors, 0 Build Warnings.**
+
+---
+
+## Phase 5D-D: Student Performance, Predictions Hub, At-Risk Triage & Code-Splitting Verification
+- **Date**: 2026-11-18
+- **Target**: Student Performance Analytics (`/teacher/performance`), AI Predictions Hub (`/teacher/predictions`), At-Risk Triage (`/teacher/at-risk`), Route-Based Code-Splitting (`App.tsx`, `DashboardLayout.tsx`), and Regression Safety
+- **Result**: **All 89 Backend Tests & Frontend Production Build with Code-Splitting PASSED (100%)**
+
+### Verification Matrix
+| Test / Build Step | Target Tested | Expected Result | Actual Result | Status |
+|---|---|---|---|---|
+| **TypeScript Type Check** | `tsc -b` | 0 type errors across all code-split pages and layout components | 0 errors | **PASS** |
+| **Vite Production Build** | `vite build` | Production bundle compiled with chunk splitting | 2,043 modules transformed into optimized chunks in 14.73s | **PASS** |
+| **Route Code Splitting** | `React.lazy()` / `<Suspense>` | Independent JS chunks per route; shell layout state preserved | `TeacherPerformance` (21.76 kB), `TeacherAtRisk` (18.74 kB), `TeacherOverview` (11.64 kB), `TeacherPredictions` (9.80 kB) | **PASS** |
+| **Performance Analytics** | `TeacherPerformance.tsx` | Telemetry KPIs, grade band distribution, subject comparison, milestone telemetry, trajectories | Real data calculations verified; regression disclaimer present | **PASS** |
+| **Predictions Hub** | `TeacherPredictions.tsx` | Server-side pagination, multi-criteria filtering, model provenance, modal triggers | Verified `total_count` paging, inspect dialog, and re-assess trigger | **PASS** |
+| **At-Risk Triage & M0 Safety** | `TeacherAtRisk.tsx` | High/Moderate queues, Unscreened queue, M0 false-negative disclosure (61.54% Math, 75.00% Port) | Verified prominent holdout advisory, actionable guidance, real mailto action | **PASS** |
+| **Backend Test Suite** | `.venv\Scripts\pytest.exe -v` | 89 / 89 tests passing without regressions | 89 passed in 48.73s | **PASS** |
+
+### Complete Backend Pytest Execution Summary (89 Tests)
+```text
+============================= test session starts =============================
+platform win32 -- Python 3.12.16, pytest-9.2.0, pluggy-1.7.0
+rootdir: C:\Users\Azan's PC\Documents\EduPredict
+plugins: flask-1.3.0
+collected 89 items
+
+tests/test_admin.py (7 tests) ........................................ PASSED [  7%]
+tests/test_app_factory.py (3 tests) .................................. PASSED [ 11%]
+tests/test_auth.py (10 tests) ........................................ PASSED [ 22%]
+tests/test_config.py (4 tests) ....................................... PASSED [ 26%]
+tests/test_data_pipeline.py (13 tests) ............................... PASSED [ 41%]
+tests/test_feature_leakage.py (10 tests) ............................. PASSED [ 52%]
+tests/test_health_routes.py (4 tests) ................................ PASSED [ 57%]
+tests/test_ml_models.py (8 tests) .................................... PASSED [ 66%]
+tests/test_models.py (4 tests) ....................................... PASSED [ 70%]
+tests/test_mongo_connectivity.py (3 tests) ........................... PASSED [ 74%]
+tests/test_prediction_api.py (17 tests) .............................. PASSED [ 93%]
+tests/test_rbac.py (6 tests) ......................................... PASSED [100%]
+
+============================= 89 passed in 48.73s =============================
+```
+Status: **100% Passing, 0 Type Errors, 0 Build Warnings.**
