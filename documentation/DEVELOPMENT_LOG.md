@@ -349,3 +349,28 @@
   5. **Verification**:
      - Frontend production build (`tsc -b && vite build`): **0 TypeScript compiler errors, built in 19.55s**.
      - Full backend test suite (`.venv\Scripts\pytest.exe -v`): **88 / 88 tests passed (100% in 50.70s)**.
+
+---
+
+## Phase 5D-C: Teacher Overview & Student Roster Redesign
+- **Date**: 2026-11-18
+- **Status**: Completed & Fully Verified
+- **Deliverable**: `documentation/PHASE_5D_C_IMPLEMENTATION_REPORT.md`
+- **Actions Executed**:
+  1. **Teacher Classroom Overview (`/teacher`)**:
+     - Implemented 4 core real-data KPIs: Total Assigned Students, High Risk, Moderate Risk, Not Yet Screened.
+     - Recharts Student Risk Distribution Bar Chart with sample coverage disclosure.
+     - Priority Attention Queue: Filtered and prioritized High and Moderate risk learners with live status badges, projected marks, and direct "View Student" and "Re-Assess" actions.
+     - Recent AI Predictions Stream: Live assessment audit feed with deep inspection dialog (`PredictionDetailModal`).
+     - Integrated `LoadingState`, `ErrorState`, and `EmptyState`.
+  2. **My Students Directory (`/teacher/students`)**:
+     - Multi-criteria search bar (name, email, database ID).
+     - Risk filter (`All Cohort`, `High Risk`, `Moderate Risk`, `Low Risk / On Track`, `Not Yet Screened`).
+     - Subject filter based on actual recorded predictions (`Mathematics`, `Portuguese Language`).
+     - Student roster table with verified identity, email, enrollment date, status badges, and projected marks.
+     - Working slide-over `StudentProfileDrawer` displaying authorized fields without sensitive credentials.
+     - Integrated `TeacherPredictionModal` for assessment generation.
+  3. **Automated Testing & Build Verification**:
+     - Added `test_teacher_overview_and_roster_data_integrity` to `tests/test_prediction_api.py`.
+     - Full backend pytest suite: **89 / 89 tests passed (100% in 50.17s)**.
+     - Frontend production build: **0 TypeScript compiler errors, built in 18.72s**.

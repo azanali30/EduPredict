@@ -520,3 +520,69 @@ def test_admin_list_predictions_pagination_total_count(client, clean_db, test_st
     # Confirms total_count exceeds paginated record slice
     assert data["total_count"] > len(data["predictions"])
 
+
+def test_teacher_overview_and_roster_data_integrity(client, clean_db, test_teacher, test_student):
+    """
+    Phase 5D-C: Verify teacher assigned student visibility, empty prediction
+    handling, and student profile inspection safety for overview/roster.
+    """
+    # 1. Initially no students assigned to teacher
+    login_user(client, test_teacher.email, "TeacherPassword123!")
+    res_empty_students = client.get("/api/teacher/students")
+    assert res_empty_students.status_code == 200
+    assert res_empty_students.get_json()["students"] == []
+    assert res_empty_students.get_json()["count"] == 0
+
+    # 2. Assign test_student to test_teacher
+    AssignmentService.assign_teacher_to_student(
+        db=clean_db,
+        teacher_id=test_teacher.id,
+        student_id=test_student.id,
+        admin_id=ObjectId(),
+    )
+
+    # 3. Teacher queries assigned students -> returns test_student
+    res_students = client.get("/api/teacher/students")
+    assert res_students.status_code == 200
+    students_data = res_students.get_json()["students"]
+    assert len(students_data) == 1
+    assert students_data[0]["id"] == str(test_student.id)
+    assert students_data[0]["email"] == test_student.email
+    assert "password_hash" not in students_data[0]
+
+    # 4. Teacher queries predictions for assigned student with 0 records -> empty list
+    res_empty_preds = client.get(f"/api/predictions?student_id={test_student.id}")
+    assert res_empty_preds.status_code == 200
+    assert res_empty_preds.get_json()["predictions"] == []
+    assert res_empty_preds.get_json()["total_count"] == 0
+
+    # 5. Teacher inspects student profile via /api/students/<student_id>
+    res_details = client.get(f"/api/students/{test_student.id}")
+    assert res_details.status_code == 200
+    student_details = res_details.get_json()["student"]
+    assert student_details["id"] == str(test_student.id)
+    assert student_details["full_name"] == test_student.full_name
+    assert "password_hash" not in student_details
+
+    # 6. Generate prediction for assigned student
+    res_create = client.post("/api/predictions", json={
+        "student_id": str(test_student.id),
+        "subject": "Mathematics",
+        "milestone": 0,
+        "features": SAMPLE_M0_FEATURES,
+    })
+    assert res_create.status_code == 201
+
+    # 7. Predictions list for teacher now contains 1 record for this student
+    res_preds = client.get("/api/predictions?limit=100")
+    assert res_preds.status_code == 200
+    preds_data = res_preds.get_json()
+    assert preds_data["total_count"] == 1
+    pred = preds_data["predictions"][0]
+    assert pred["student_id"] == str(test_student.id)
+    assert pred["subject"] == "Mathematics"
+    assert pred["milestone"] == 0
+    assert "predicted_marks" in pred
+    assert "predicted_status" in pred
+
+
