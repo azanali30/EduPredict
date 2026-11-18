@@ -58,6 +58,7 @@
 | **Phase 5C Fixes** | `55812ca` | fix(phase-5c): resolve m0 advisory key mismatch, correct holdout sample counts, and bind admin total predictions | Pushed to `origin/main` | Yes |
 | **Phase 5C Docs** | `993e011` | docs(phase-5c): record Phase 5C remediation commit hash in backup log | Pushed to `origin/main` | Yes |
 | **Phase 5D-B** | `4a64abc` | feat(phase-5d): implement teacher workspace foundation, official branding, and component library | Pushed to `origin/main` | Yes |
+| **Phase 5D-C** | `d3c5302` | feat(phase-5d): redesign teacher overview and student roster with priority queue and drawer | Pushed to `origin/main` | Yes |
 
 ---
 
