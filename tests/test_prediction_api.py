@@ -586,3 +586,120 @@ def test_teacher_overview_and_roster_data_integrity(client, clean_db, test_teach
     assert "predicted_status" in pred
 
 
+def test_teacher_reports_profile_and_settings_data_integrity(client, clean_db, test_teacher, test_student, test_admin):
+    """
+    Phase 5D-E: Verify teacher profile inspection/modification, password updating,
+    and strict data-scoping isolation for academic telemetry reports.
+    """
+    from backend.services.user_service import UserService
+
+    # 1. Login as teacher
+    login_user(client, test_teacher.email, "TeacherPassword123!")
+
+    # 2. Inspect profile via GET /api/me
+    res_me = client.get("/api/me")
+    assert res_me.status_code == 200
+    user_data = res_me.get_json()["user"]
+    assert user_data["email"] == test_teacher.email
+    assert user_data["role"] == "teacher"
+    assert "password_hash" not in user_data
+
+    # 3. Update profile via PUT /api/me
+    res_update = client.put("/api/me", json={"full_name": "Prof. Robert Smith"})
+    assert res_update.status_code == 200
+    updated_user = res_update.get_json()["user"]
+    assert updated_user["full_name"] == "Prof. Robert Smith"
+    assert updated_user["role"] == "teacher"
+    assert updated_user["email"] == test_teacher.email
+
+    # 4. Password change testing
+    # 4a. Wrong current password fails
+    res_pwd_fail = client.put("/api/me/password", json={
+        "current_password": "WrongPassword999!",
+        "new_password": "NewTeacherPassword456!",
+    })
+    assert res_pwd_fail.status_code == 400
+
+    # 4b. Weak/short new password fails
+    res_pwd_weak = client.put("/api/me/password", json={
+        "current_password": "TeacherPassword123!",
+        "new_password": "short",
+    })
+    assert res_pwd_weak.status_code == 400
+
+    # 4c. Valid password change succeeds
+    res_pwd_ok = client.put("/api/me/password", json={
+        "current_password": "TeacherPassword123!",
+        "new_password": "NewTeacherPassword456!",
+    })
+    assert res_pwd_ok.status_code == 200
+    assert "successfully updated" in res_pwd_ok.get_json()["message"]
+
+    # 4d. Re-login with new password succeeds
+    client.post("/auth/logout")
+    login_user(client, test_teacher.email, "NewTeacherPassword456!")
+
+    # 5. Teacher Report Scoping & Isolation
+    # Create an unassigned student B
+    unassigned_student, _ = UserService.create_user(
+        db=clean_db,
+        email="unassigned.student@edupredict.com",
+        plain_password="StudentPassword123!",
+        full_name="Bob Unassigned",
+        role="student",
+    )
+
+    # Assign only test_student to test_teacher
+    AssignmentService.assign_teacher_to_student(
+        db=clean_db,
+        teacher_id=test_teacher.id,
+        student_id=test_student.id,
+        admin_id=ObjectId(),
+    )
+
+    # Create prediction for assigned student
+    res_pred_assigned = client.post("/api/predictions", json={
+        "student_id": str(test_student.id),
+        "subject": "Mathematics",
+        "milestone": 0,
+        "features": SAMPLE_M0_FEATURES,
+    })
+    assert res_pred_assigned.status_code == 201
+    assigned_pred_id = res_pred_assigned.get_json()["prediction"]["id"]
+
+    # Admin generates prediction for unassigned student B
+    login_user(client, test_admin.email, "AdminPassword123!")
+    res_pred_unassigned = client.post("/api/predictions", json={
+        "student_id": str(unassigned_student.id),
+        "subject": "Portuguese Language",
+        "milestone": 0,
+        "features": SAMPLE_M0_FEATURES,
+    })
+    assert res_pred_unassigned.status_code == 201
+
+    # Switch back to teacher
+    login_user(client, test_teacher.email, "NewTeacherPassword456!")
+
+    # Teacher queries reports predictions feed -> must ONLY see assigned student
+    res_report_preds = client.get("/api/predictions?limit=100")
+    assert res_report_preds.status_code == 200
+    report_preds_data = res_report_preds.get_json()
+    assert report_preds_data["total_count"] == 1
+    returned_pred_ids = [p["id"] for p in report_preds_data["predictions"]]
+    assert assigned_pred_id in returned_pred_ids
+    assert res_pred_unassigned.get_json()["prediction"]["id"] not in returned_pred_ids
+
+    # Teacher queries assigned students -> must ONLY see test_student
+    res_report_students = client.get("/api/teacher/students")
+    assert res_report_students.status_code == 200
+    report_students = res_report_students.get_json()["students"]
+    returned_student_ids = [s["id"] for s in report_students]
+    assert str(test_student.id) in returned_student_ids
+    assert str(unassigned_student.id) not in returned_student_ids
+
+    # Teacher attempting to inspect unassigned student profile -> 403 Forbidden
+    res_forbidden = client.get(f"/api/students/{unassigned_student.id}")
+    assert res_forbidden.status_code == 403
+
+
+

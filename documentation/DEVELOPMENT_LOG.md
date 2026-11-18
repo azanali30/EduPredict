@@ -409,3 +409,32 @@
   5. **Verification**:
      - Frontend production build (`tsc -b && vite build`): **0 TypeScript compiler errors, 2,043 modules transformed into optimized code-split chunks in 14.73s**.
      - Full backend test suite (`.venv\Scripts\pytest.exe -v`): **89 / 89 tests passed (100% in 48.73s)**.
+
+---
+
+## Phase 5D-E: Teacher Reports, Profile & Settings
+- **Date**: 2026-11-18
+- **Status**: Completed & Fully Verified
+- **Deliverable**: `documentation/PHASE_5D_E_IMPLEMENTATION_REPORT.md`
+- **Actions Executed**:
+  1. **Academic Telemetry & Reports Suite (`/teacher/reports`)**:
+     - Implemented tri-category reporting interface: Cohort Summary, At-Risk Students Report, and Prediction Audit Log.
+     - Cohort Summary: 4 macro KPIs, risk distribution splits, curriculum subject metrics (Math vs Portuguese), and milestone gate telemetry.
+     - At-Risk Report: Filterable intervention registry with student identities, subjects, milestones, projected marks /20, confidence %, assessment dates, and recommended pedagogical actions.
+     - Prediction Audit Log: Chronological audit trail with model provenance (`regressor_model`, `classifier_model`), timestamps, and prediction IDs.
+     - Data Export Engine: Client-side RFC 4180 CSV export with UTF-8 BOM encoding (`\uFEFF`) and `@media print` styling for clean browser printing.
+     - Pedagogical and data-scope disclosure notices.
+  2. **Instructor Profile (`/teacher/profile`)**:
+     - Display name editing via backend `PUT /api/me` with instant `refreshUser()` cache update.
+     - Institutional email lock notice (governed by administrator).
+     - Live assigned student cohort counter (`api.getTeacherStudents()`).
+     - Role, account status (`Active`), and database ID indicators.
+  3. **Teacher Workspace Settings (`/teacher/settings`)**:
+     - Cryptographic password changing via `PUT /api/me/password`.
+     - Current password verification, 8+ character complexity validation, and confirmation matching.
+     - Zero credential storage in browser local/session storage.
+     - Security architecture overview covering bcrypt hashing, CSRF tokens, and RBAC scoping.
+  4. **Automated Testing & Build Verification**:
+     - Added `test_teacher_reports_profile_and_settings_data_integrity` to `tests/test_prediction_api.py`.
+     - Full backend pytest suite: **90 / 90 tests passed (100% in 50.22s)**.
+     - Frontend production build (`tsc -b && vite build`): **0 TypeScript compiler errors, built in 15.06s**.

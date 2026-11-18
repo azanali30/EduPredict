@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import { PageHeader } from '../../components/common/PageHeader';
@@ -6,15 +6,26 @@ import { SectionCard } from '../../components/common/SectionCard';
 import { InputField } from '../../components/forms/InputField';
 import { Button } from '../../components/forms/Button';
 import { ErrorAlert } from '../../components/common/ErrorAlert';
-import { UserCheck, Save, ArrowLeft } from 'lucide-react';
+import { UserCheck, Save, ArrowLeft, ShieldCheck, Users, Calendar, Mail, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const TeacherProfile: React.FC = () => {
   const { user, refreshUser } = useAuth();
   const [fullName, setFullName] = useState(user?.full_name || '');
+  const [assignedCount, setAssignedCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user?.full_name) {
+      setFullName(user.full_name);
+    }
+    // Load assigned students count
+    api.getTeacherStudents()
+      .then((res) => setAssignedCount(res.count ?? (res.students?.length || 0)))
+      .catch(() => setAssignedCount(null));
+  }, [user]);
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,8 +67,9 @@ export const TeacherProfile: React.FC = () => {
       <ErrorAlert message={error || ''} onDismiss={() => setError(null)} />
 
       {success && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
-          {success}
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+          <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+          <span>{success}</span>
         </div>
       )}
 
@@ -75,19 +87,39 @@ export const TeacherProfile: React.FC = () => {
             <span className="badge badge-teacher text-xs py-0.5 px-2.5 font-bold">
               Teacher Workspace
             </span>
+            <span className="badge badge-success text-[10px] py-0.5 px-2 font-bold">
+              Active
+            </span>
           </div>
 
-          <div className="mt-6 pt-6 border-t border-slate-100 text-left space-y-3 text-xs">
+          <div className="mt-6 pt-6 border-t border-slate-100 text-left space-y-3.5 text-xs">
             <div className="flex items-center justify-between text-slate-600">
-              <span className="text-slate-400">Account Role</span>
+              <span className="text-slate-400 flex items-center gap-1.5">
+                <ShieldCheck size={14} /> Account Role
+              </span>
               <span className="font-semibold text-navy-900 capitalize">{user?.role}</span>
             </div>
+
             <div className="flex items-center justify-between text-slate-600">
-              <span className="text-slate-400">Database ID</span>
+              <span className="text-slate-400 flex items-center gap-1.5">
+                <Users size={14} /> Assigned Cohort
+              </span>
+              <span className="font-semibold text-brand-royal">
+                {assignedCount !== null ? `${assignedCount} Students` : 'Loading...'}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between text-slate-600">
+              <span className="text-slate-400 flex items-center gap-1.5">
+                <Mail size={14} /> Database ID
+              </span>
               <span className="font-mono text-[11px] text-slate-700">{user?.id?.slice(-8)}</span>
             </div>
+
             <div className="flex items-center justify-between text-slate-600">
-              <span className="text-slate-400">Created</span>
+              <span className="text-slate-400 flex items-center gap-1.5">
+                <Calendar size={14} /> Account Created
+              </span>
               <span className="font-semibold text-slate-700">
                 {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
               </span>
@@ -104,21 +136,25 @@ export const TeacherProfile: React.FC = () => {
         >
           <form onSubmit={handleUpdate} className="space-y-4">
             <InputField
-              label="Full Name"
+              label="Full Display Name"
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
-              helperText="This name will appear on all student prediction reports and assessment audits."
+              helperText="This display name will appear on all student prediction reports, assessment audits, and classroom exports."
             />
 
             <InputField
-              label="Institutional Email"
+              label="Institutional Email Address"
               type="email"
               value={user?.email || ''}
               disabled
-              helperText="Email addresses are managed through administrator governance and cannot be modified directly."
+              helperText="Institutional email addresses are managed through administrator governance and cannot be modified directly."
             />
+
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 leading-relaxed">
+              <strong>Account Governance:</strong> Only your display name can be self-administered. Role promotions, email changes, and student roster assignments must be configured by an institutional administrator.
+            </div>
 
             <div className="pt-2 flex justify-end">
               <Button

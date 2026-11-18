@@ -244,3 +244,36 @@ h1, h2, h3, h4, h5, h6 {
 .data-table tr:last-child td {
   border-bottom: none;
 }
+
+/* Print Styles for Educational Reports */
+@media print {
+  .no-print,
+  nav,
+  aside,
+  header,
+  button,
+  .print-hidden {
+    display: none !important;
+  }
+
+  body, html {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    page-break-inside: avoid;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+}
