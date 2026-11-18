@@ -23,6 +23,12 @@ import { StudentPredictions } from './pages/student/StudentPredictions';
 // Teacher Pages
 import { TeacherOverview } from './pages/teacher/TeacherOverview';
 import { TeacherStudents } from './pages/teacher/TeacherStudents';
+import { TeacherPerformance } from './pages/teacher/TeacherPerformance';
+import { TeacherPredictions } from './pages/teacher/TeacherPredictions';
+import { TeacherAtRisk } from './pages/teacher/TeacherAtRisk';
+import { TeacherReports } from './pages/teacher/TeacherReports';
+import { TeacherProfile } from './pages/teacher/TeacherProfile';
+import { TeacherSettings } from './pages/teacher/TeacherSettings';
 
 // Admin Pages
 import { AdminOverview } from './pages/admin/AdminOverview';
@@ -83,6 +89,12 @@ export const App: React.FC = () => {
           >
             <Route path="/teacher" element={<TeacherOverview />} />
             <Route path="/teacher/students" element={<TeacherStudents />} />
+            <Route path="/teacher/performance" element={<TeacherPerformance />} />
+            <Route path="/teacher/predictions" element={<TeacherPredictions />} />
+            <Route path="/teacher/at-risk" element={<TeacherAtRisk />} />
+            <Route path="/teacher/reports" element={<TeacherReports />} />
+            <Route path="/teacher/profile" element={<TeacherProfile />} />
+            <Route path="/teacher/settings" element={<TeacherSettings />} />
           </Route>
 
           {/* Administrator Protected Workspace */}

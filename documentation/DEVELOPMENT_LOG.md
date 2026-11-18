@@ -297,7 +297,7 @@
 ## Phase 5C Remediation: Critical Bug Fixes & Precision Improvements
 - **Date**: 2026-11-18
 - **Status**: Remediated & Fully Verified
-- **Commits**: Pending Commit (`fix(phase-5c): resolve m0 advisory key mismatch, correct holdout sample counts, and bind admin total predictions`)
+- **Commits**: `55812ca`, `993e011`
 - **Actions Executed**:
   1. **BUG-5C-01 (CRITICAL) - Advisory Property Key Alignment**:
      - Updated `EarlyWarningAdvisory` in `frontend/src/types/index.ts` to include canonical backend keys `false_negative_rate_estimate_pct`, `notice`, `recommended_action`, and `title`.
@@ -314,3 +314,38 @@
      - Executed full pytest suite: **88 / 88 tests passed (100% in 51.45s)**.
      - Executed frontend production build (`tsc -b && vite build`): **0 TypeScript compiler errors, bundle built in 21.09s**.
      - Authored documentation `documentation/PHASE_5C_CORRECTION_REPORT.md`.
+
+---
+
+## Phase 5D-A: Teacher Dashboard UI/UX Audit & Architecture Blueprint
+- **Date**: 2026-11-18
+- **Status**: Completed & Approved
+- **Deliverable**: `documentation/PHASE_5D_TEACHER_DASHBOARD_DESIGN_BLUEPRINT.md`
+- **Actions Executed**:
+  1. Conducted 27-file read-only audit of existing frontend and backend teacher capabilities.
+  2. Delineated real available data (assigned students, prediction inference, holdout advisories) from future roadmap modules (attendance register, timetable, assignments).
+  3. Defined official EduPredict branding system (Royal Blue `#2455C5`, Ocean Blue `#168CCB`, Mint Teal `#18D6B5`, and primary gradient).
+  4. Designed 8-section teacher navigation architecture and page-by-page specifications.
+
+---
+
+## Phase 5D-B: Teacher Workspace Foundation & Branding
+- **Date**: 2026-11-18
+- **Status**: Completed & Verified
+- **Deliverable**: `documentation/PHASE_5D_B_IMPLEMENTATION_REPORT.md`
+- **Actions Executed**:
+  1. **Official Brand Integration**:
+     - Verified and deployed user-supplied official brand assets to `frontend/public/brand/` (`edupredict-logo-full.jpg`, `edupredict-emblem.jpg`).
+     - Configured Tailwind theme extensions and root CSS design tokens for royal, ocean, and mint brand colors and gradients.
+  2. **Navigation Suite Redesign**:
+     - Upgraded `Sidebar.tsx` with official emblem, brand typography, and 8 teacher navigation links (Overview, My Students, Performance, Predictions, At-Risk, Reports, Profile, Settings) with active route highlighting.
+     - Upgraded `Navbar.tsx` with dynamic page title, health telemetry connection to MongoDB, brand avatar styling, and instructor profile/settings links.
+  3. **Reusable Component Library (`frontend/src/components/common/`)**:
+     - Built `PageHeader.tsx`, `SectionCard.tsx`, `StatusBadge.tsx`, `DataTable.tsx`, `LoadingState.tsx`, `ErrorState.tsx`, and `StudentProfileDrawer.tsx` (slide-over panel without fake data).
+     - Upgraded `StatCard.tsx` with brand variant tokens.
+  4. **Routing & Foundation Stubs**:
+     - Created foundation placeholder pages in `frontend/src/pages/teacher/` (`TeacherPerformance.tsx`, `TeacherPredictions.tsx`, `TeacherAtRisk.tsx`, `TeacherReports.tsx`, `TeacherProfile.tsx`, `TeacherSettings.tsx`).
+     - Registered all 8 routes in `App.tsx` and `DashboardLayout.tsx` to eliminate broken links or 404s.
+  5. **Verification**:
+     - Frontend production build (`tsc -b && vite build`): **0 TypeScript compiler errors, built in 19.55s**.
+     - Full backend test suite (`.venv\Scripts\pytest.exe -v`): **88 / 88 tests passed (100% in 50.70s)**.

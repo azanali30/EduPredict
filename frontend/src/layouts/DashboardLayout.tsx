@@ -14,6 +14,12 @@ export const DashboardLayout: React.FC = () => {
     if (path.startsWith('/student/predictions')) return 'AI Performance Predictions & Risk Model';
     if (path.startsWith('/student')) return 'Student Performance Dashboard';
     if (path.startsWith('/teacher/students')) return 'Assigned Students Roster';
+    if (path.startsWith('/teacher/performance')) return 'Student Performance Analytics';
+    if (path.startsWith('/teacher/predictions')) return 'AI Performance Predictions Hub';
+    if (path.startsWith('/teacher/at-risk')) return 'At-Risk Early Warning Triage';
+    if (path.startsWith('/teacher/reports')) return 'Academic Reports & Telemetry Export';
+    if (path.startsWith('/teacher/profile')) return 'Instructor Profile & Assignments';
+    if (path.startsWith('/teacher/settings')) return 'Teacher Workspace Settings';
     if (path.startsWith('/teacher')) return 'Teacher Classroom Analytics';
     if (path.startsWith('/admin/users')) return 'User Governance Directory';
     if (path.startsWith('/admin/assignments')) return 'Teacher-Student Link Management';

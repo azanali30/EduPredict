@@ -16,6 +16,10 @@ export default {
           600: '#3d6c9e',
         },
         brand: {
+          royal: '#2455C5',
+          ocean: '#168CCB',
+          mint: '#18D6B5',
+          teal: '#18D6B5',
           50: '#f0f9ff',
           100: '#e0f2fe',
           200: '#bae6fd',
@@ -32,6 +36,11 @@ export default {
           subtle: '#f1f5f9',
           border: '#e2e8f0',
         },
+      },
+      backgroundImage: {
+        'brand-gradient': 'linear-gradient(110deg, #2455C5 0%, #168CCB 52%, #18D6B5 100%)',
+        'brand-gradient-hover': 'linear-gradient(110deg, #1d46a8 0%, #1279b0 52%, #14b89b 100%)',
+        'brand-gradient-subtle': 'linear-gradient(135deg, rgba(36, 85, 197, 0.08) 0%, rgba(22, 140, 203, 0.06) 50%, rgba(24, 214, 181, 0.08) 100%)',
       },
       fontFamily: {
         heading: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],

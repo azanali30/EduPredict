@@ -3,6 +3,12 @@
 @tailwind utilities;
 
 :root {
+  --brand-royal: #2455C5;
+  --brand-ocean: #168CCB;
+  --brand-mint: #18D6B5;
+  --brand-gradient: linear-gradient(110deg, #2455C5 0%, #168CCB 52%, #18D6B5 100%);
+  --brand-gradient-hover: linear-gradient(110deg, #1d46a8 0%, #1279b0 52%, #14b89b 100%);
+  
   --primary-navy: #0B192C;
   --primary-dark: #1E3E62;
   --brand-blue: #0284c7;
@@ -157,6 +163,40 @@ h1, h2, h3, h4, h5, h6 {
   background: #f0f9ff;
   color: #0284c7;
   border: 1px solid #bae6fd;
+}
+
+.badge-brand {
+  background: linear-gradient(110deg, rgba(36, 85, 197, 0.12) 0%, rgba(22, 140, 203, 0.1) 50%, rgba(24, 214, 181, 0.12) 100%);
+  color: #2455C5;
+  border: 1px solid rgba(36, 85, 197, 0.25);
+}
+
+.badge-mint {
+  background: #f0fdfa;
+  color: #0d9488;
+  border: 1px solid #99f6e4;
+}
+
+.badge-royal {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+/* Slide-over Drawer Animation */
+@keyframes drawerSlideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-drawer-in {
+  animation: drawerSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Data Table Component */
