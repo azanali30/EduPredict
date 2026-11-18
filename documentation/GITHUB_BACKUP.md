@@ -61,6 +61,7 @@
 | **Phase 5D-C** | `d3c5302` | feat(phase-5d): redesign teacher overview and student roster with priority queue and drawer | Pushed to `origin/main` | Yes |
 | **Phase 5D-D** | `31b835a` | feat(phase-5d): implement performance analytics, predictions hub, at-risk triage, and route code-splitting | Pushed to `origin/main` | Yes |
 | **Phase 5D-E** | `d26e840` | feat(phase-5d): implement teacher reports suite, profile governance, settings, and authorization tests | Pushed to `origin/main` | Yes |
+| **Phase 5D-F** | `af55085` | feat(phase-5d): complete teacher workspace qa, target scale standardization, and final stabilization | Pushed to `origin/main` | Yes |
 
 ---
 
