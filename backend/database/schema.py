@@ -55,6 +55,16 @@ def init_db_indexes(db: Database) -> dict[str, list[str]]:
             db.predictions.create_index([("predicted_status", ASCENDING)], name="idx_preds_predicted_status"),
             db.predictions.create_index([("risk_level", ASCENDING)], name="idx_preds_risk_level"),
             db.predictions.create_index([("created_at", DESCENDING)], name="idx_preds_created_at"),
+            db.predictions.create_index(
+                [("student_id", ASCENDING), ("subject_id", ASCENDING), ("created_at", DESCENDING)],
+                name="idx_preds_student_subject_created",
+                sparse=True,
+            ),
+            db.predictions.create_index(
+                [("subject_id", ASCENDING), ("created_at", DESCENDING)],
+                name="idx_preds_subject_created",
+                sparse=True,
+            ),
         ]
         created_indexes["predictions"] = preds_idx
 
@@ -100,6 +110,50 @@ def init_db_indexes(db: Database) -> dict[str, list[str]]:
             db.analytical_academic_records.create_index([("final_exam_marks", DESCENDING)], name="idx_analytical_final_marks"),
         ]
         created_indexes["analytical_academic_records"] = analytical_idx
+
+        # 7. Subjects collection indexes (Phase 6A Subject Catalog)
+        subjects_idx = [
+            db.subjects.create_index([("code", ASCENDING)], unique=True, name="idx_subjects_code_unique"),
+            db.subjects.create_index([("canonical_key", ASCENDING)], unique=True, name="idx_subjects_canonical_unique"),
+            db.subjects.create_index([("is_active", ASCENDING)], name="idx_subjects_is_active"),
+        ]
+        created_indexes["subjects"] = subjects_idx
+
+        # 8. Teacher-Subject Assignments collection indexes (Phase 6A)
+        teacher_subj_idx = [
+            db.teacher_subject_assignments.create_index(
+                [("teacher_id", ASCENDING), ("subject_id", ASCENDING), ("academic_term", ASCENDING)],
+                unique=True,
+                name="idx_teacher_subj_term_unique",
+            ),
+            db.teacher_subject_assignments.create_index(
+                [("teacher_id", ASCENDING), ("status", ASCENDING)],
+                name="idx_teacher_subj_status",
+            ),
+            db.teacher_subject_assignments.create_index(
+                [("subject_id", ASCENDING), ("status", ASCENDING)],
+                name="idx_subj_teachers_status",
+            ),
+        ]
+        created_indexes["teacher_subject_assignments"] = teacher_subj_idx
+
+        # 9. Student-Subject Enrollments collection indexes (Phase 6A)
+        student_subj_idx = [
+            db.student_subject_enrollments.create_index(
+                [("student_id", ASCENDING), ("subject_id", ASCENDING), ("academic_term", ASCENDING)],
+                unique=True,
+                name="idx_student_subj_term_unique",
+            ),
+            db.student_subject_enrollments.create_index(
+                [("student_id", ASCENDING), ("status", ASCENDING)],
+                name="idx_student_subj_status",
+            ),
+            db.student_subject_enrollments.create_index(
+                [("subject_id", ASCENDING), ("status", ASCENDING)],
+                name="idx_subj_students_status",
+            ),
+        ]
+        created_indexes["student_subject_enrollments"] = student_subj_idx
 
         logger.info("MongoDB 6.x indexes successfully initialized.")
         return created_indexes

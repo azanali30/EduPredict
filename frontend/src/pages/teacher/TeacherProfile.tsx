@@ -6,11 +6,13 @@ import { SectionCard } from '../../components/common/SectionCard';
 import { InputField } from '../../components/forms/InputField';
 import { Button } from '../../components/forms/Button';
 import { ErrorAlert } from '../../components/common/ErrorAlert';
-import { UserCheck, Save, ArrowLeft, ShieldCheck, Users, Calendar, Mail, CheckCircle2 } from 'lucide-react';
+import { UserCheck, Save, ArrowLeft, ShieldCheck, Users, Calendar, Mail, CheckCircle2, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTeacherSubject } from '../../context/TeacherSubjectContext';
 
 export const TeacherProfile: React.FC = () => {
   const { user, refreshUser } = useAuth();
+  const { assignedSubjects } = useTeacherSubject();
   const [fullName, setFullName] = useState(user?.full_name || '');
   const [assignedCount, setAssignedCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
@@ -106,6 +108,17 @@ export const TeacherProfile: React.FC = () => {
               </span>
               <span className="font-semibold text-brand-royal">
                 {assignedCount !== null ? `${assignedCount} Students` : 'Loading...'}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between text-slate-600">
+              <span className="text-slate-400 flex items-center gap-1.5">
+                <BookOpen size={14} /> Assigned Subjects
+              </span>
+              <span className="font-semibold text-brand-royal text-right">
+                {assignedSubjects.length > 0
+                  ? assignedSubjects.map((s) => s.code).join(', ')
+                  : 'None'}
               </span>
             </div>
 

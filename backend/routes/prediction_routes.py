@@ -46,6 +46,7 @@ def create_prediction():
     subject = data.get("subject")
     milestone = data.get("milestone")
     features = data.get("features")
+    academic_term = data.get("academic_term")
 
     if subject is None:
         return jsonify({
@@ -96,6 +97,7 @@ def create_prediction():
         subject=subject,
         milestone=milestone,
         features=features,
+        academic_term=academic_term,
     )
 
     if err or not prediction:

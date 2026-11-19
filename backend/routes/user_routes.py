@@ -8,6 +8,7 @@ from flask_login import login_required, current_user
 from backend.extensions import mongo
 from backend.services.user_service import UserService
 from backend.services.assignment_service import AssignmentService
+from backend.services.enrollment_service import EnrollmentService
 from backend.utils.decorators import role_required, can_access_student_data
 from backend.utils.security import to_object_id
 
@@ -153,11 +154,62 @@ def get_student_details(student_id):
     }), 200
 
 
+@user_bp.route("/api/teacher/subjects", methods=["GET"])
+@role_required("teacher")
+def get_teacher_subjects():
+    """Retrieve list of subjects actively assigned to the authenticated teacher."""
+    subjects = AssignmentService.get_subjects_for_teacher(mongo.db, current_user.id)
+    return jsonify({
+        "subjects": subjects,
+        "count": len(subjects),
+        "status_code": 200,
+    }), 200
+
+
+@user_bp.route("/api/student/subjects", methods=["GET"])
+@role_required("student")
+def get_student_subjects():
+    """Retrieve list of subjects actively enrolled by the authenticated student."""
+    subjects = EnrollmentService.get_student_enrolled_subjects(mongo.db, current_user.id)
+    return jsonify({
+        "subjects": subjects,
+        "count": len(subjects),
+        "status_code": 200,
+    }), 200
+
+
 @user_bp.route("/api/teacher/students", methods=["GET"])
 @role_required("teacher")
 def get_assigned_students():
-    """Retrieve list of students assigned to the authenticated teacher."""
-    students = AssignmentService.get_students_for_teacher(mongo.db, current_user.id)
+    """
+    Retrieve list of students assigned to the authenticated teacher.
+    Strictly requires active subject-based teacher assignment and student enrollment.
+    Legacy student-level assignments never grant roster access.
+    """
+    subject_id = request.args.get("subject_id")
+    academic_term = request.args.get("academic_term")
+
+    # Check if teacher has any active subject assignments
+    has_subject_assignments = mongo.db.teacher_subject_assignments.count_documents({
+        "teacher_id": current_user.id,
+        "status": "active",
+    }) > 0
+
+    if not has_subject_assignments:
+        return jsonify({
+            "students": [],
+            "count": 0,
+            "message": "No active subject assignments. Please contact an administrator to configure subject assignments.",
+            "status_code": 200,
+        }), 200
+
+    students = AssignmentService.get_students_for_teacher_by_subject(
+        mongo.db,
+        current_user.id,
+        subject_id=subject_id,
+        academic_term=academic_term,
+    )
+
     return jsonify({
         "students": students,
         "count": len(students),

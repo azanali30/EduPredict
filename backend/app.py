@@ -13,6 +13,7 @@ from backend.routes.auth_routes import auth_bp
 from backend.routes.user_routes import user_bp
 from backend.routes.admin_routes import admin_bp
 from backend.routes.prediction_routes import prediction_bp
+from backend.routes.analyst_routes import analyst_bp
 from backend.commands.admin_commands import create_admin_command, init_db_command
 from backend.services.user_service import UserService
 from backend.database.schema import init_db_indexes
@@ -75,6 +76,7 @@ def create_app(config_name=None):
     app.register_blueprint(user_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(prediction_bp)
+    app.register_blueprint(analyst_bp)
 
     # 4. Register CLI Commands
     app.cli.add_command(create_admin_command)

@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { StatCard } from '../../components/common/StatCard';
+import { api } from '../../services/api';
+import { SubjectItem } from '../../types';
 import {
   CalendarCheck,
   Clock,
@@ -36,6 +38,13 @@ import {
 
 export const StudentOverview: React.FC = () => {
   const { user } = useAuth();
+  const [enrolledSubjects, setEnrolledSubjects] = useState<SubjectItem[]>([]);
+
+  useEffect(() => {
+    api.getStudentSubjects()
+      .then((res) => setEnrolledSubjects(res.subjects || []))
+      .catch((err) => console.error('Failed to load student subjects:', err));
+  }, []);
 
   // Curricular baseline indicator benchmarks (for visual representation)
   const benchmarkTrajectory = [
@@ -101,6 +110,39 @@ export const StudentOverview: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Enrolled Courses Card */}
+      {enrolledSubjects.length > 0 && (
+        <div className="card p-5 bg-white border border-slate-200">
+          <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <BookOpen size={16} className="text-brand-600" />
+              <h3 className="text-xs font-bold uppercase tracking-wider text-navy-900">
+                Your Enrolled Academic Courses ({enrolledSubjects.length})
+              </h3>
+            </div>
+            <span className="badge badge-student text-[10px]">Active Enrollments</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {enrolledSubjects.map((s) => (
+              <div key={s.id} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white transition-all">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-bold text-xs text-navy-900">{s.name}</span>
+                  {s.code && (
+                    <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-white text-slate-600 border border-slate-200">
+                      {s.code}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-slate-500 mt-2">
+                  <span>Term: <strong className="text-brand-royal font-mono">{s.academic_term || '2026-T1'}</strong></span>
+                  <span className="badge badge-success text-[9px] py-0 px-1.5">Enrolled</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Primary KPI Metrics */}
       <div>

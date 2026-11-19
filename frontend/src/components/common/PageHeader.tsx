@@ -3,6 +3,7 @@ import React from 'react';
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
+  icon?: React.ReactNode;
   badgeText?: string;
   badgeVariant?: 'brand' | 'teacher' | 'info' | 'success' | 'warning';
   actions?: React.ReactNode;
@@ -12,6 +13,7 @@ interface PageHeaderProps {
 export const PageHeader: React.FC<PageHeaderProps> = ({
   title,
   subtitle,
+  icon,
   badgeText,
   badgeVariant = 'brand',
   actions,
@@ -54,6 +56,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         )}
 
         <div className="flex items-center gap-2.5 flex-wrap">
+          {icon && <span className="shrink-0">{icon}</span>}
           <h1 className="text-2xl sm:text-3xl font-extrabold text-navy-900 tracking-tight">
             {title}
           </h1>

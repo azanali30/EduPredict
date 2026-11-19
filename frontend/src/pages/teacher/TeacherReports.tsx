@@ -24,12 +24,15 @@ import {
   Users,
   Search,
   CheckCircle,
+  Lock,
 } from 'lucide-react';
+import { useTeacherSubject, TeacherSubjectSelector } from '../../context/TeacherSubjectContext';
 
 type ReportCategory = 'COHORT_SUMMARY' | 'AT_RISK' | 'PREDICTION_AUDIT';
 
 export const TeacherReports: React.FC = () => {
   const { user } = useAuth();
+  const { assignedSubjects, selectedSubject, selectedSubjectId, hasNoAssignments, loading: subjectsLoading } = useTeacherSubject();
   const [students, setStudents] = useState<User[]>([]);
   const [predictions, setPredictions] = useState<PredictionRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,26 +50,39 @@ export const TeacherReports: React.FC = () => {
   const [exportNotice, setExportNotice] = useState<string | null>(null);
 
   const loadData = async () => {
+    if (hasNoAssignments || !selectedSubjectId) {
+      setStudents([]);
+      setPredictions([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
+    setStudents([]);
+    setPredictions([]);
     try {
       const [studentsRes, predsRes] = await Promise.all([
-        api.getTeacherStudents(),
-        api.listPredictions({ limit: 100 }),
+        api.getTeacherStudents({ subject_id: selectedSubjectId }),
+        api.listPredictions({ subject: selectedSubject?.name, limit: 100 }),
       ]);
       setStudents(studentsRes.students || []);
       setPredictions(predsRes.predictions || []);
     } catch (err: any) {
       console.error('Failed to load telemetry reports data:', err);
       setError(err?.message || 'Failed to retrieve academic report telemetry from server.');
+      setStudents([]);
+      setPredictions([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (!subjectsLoading) {
+      loadData();
+    }
+  }, [selectedSubjectId, subjectsLoading, hasNoAssignments]);
 
   // Map studentId -> User
   const studentMap = useMemo(() => {
@@ -96,10 +112,6 @@ export const TeacherReports: React.FC = () => {
     let lowRisk = 0;
     let markSum = 0;
 
-    // Subject breakdown
-    const math = { count: 0, markSum: 0, high: 0, mod: 0, low: 0 };
-    const port = { count: 0, markSum: 0, high: 0, mod: 0, low: 0 };
-
     // Milestone breakdown
     const m0 = { count: 0, markSum: 0 };
     const m1 = { count: 0, markSum: 0 };
@@ -115,20 +127,6 @@ export const TeacherReports: React.FC = () => {
         else if (pred.predicted_status === 'Moderate Risk') modRisk++;
         else lowRisk++;
 
-        if (pred.subject === 'Mathematics') {
-          math.count++;
-          math.markSum += pred.predicted_marks;
-          if (pred.predicted_status === 'High Risk') math.high++;
-          else if (pred.predicted_status === 'Moderate Risk') math.mod++;
-          else math.low++;
-        } else if (pred.subject === 'Portuguese Language') {
-          port.count++;
-          port.markSum += pred.predicted_marks;
-          if (pred.predicted_status === 'High Risk') port.high++;
-          else if (pred.predicted_status === 'Moderate Risk') port.mod++;
-          else port.low++;
-        }
-
         if (pred.milestone === 0) {
           m0.count++;
           m0.markSum += pred.predicted_marks;
@@ -142,6 +140,37 @@ export const TeacherReports: React.FC = () => {
       }
     });
 
+    // Dynamic subject breakdown for assigned subjects
+    const subjectBreakdown = assignedSubjects.map((s) => {
+      let count = 0;
+      let sMarkSum = 0;
+      let sHigh = 0;
+      let sMod = 0;
+      let sLow = 0;
+
+      students.forEach((stud) => {
+        const pred = latestPredMap.get(stud.id);
+        if (pred && pred.subject === s.name) {
+          count++;
+          sMarkSum += pred.predicted_marks;
+          if (pred.predicted_status === 'High Risk') sHigh++;
+          else if (pred.predicted_status === 'Moderate Risk') sMod++;
+          else sLow++;
+        }
+      });
+
+      return {
+        id: s.id,
+        code: s.code,
+        name: s.name,
+        count,
+        avg: count > 0 ? (sMarkSum / count).toFixed(1) : 'N/A',
+        high: sHigh,
+        mod: sMod,
+        low: sLow,
+      };
+    });
+
     const unscreened = totalAssigned - evaluated;
     const avgMark = evaluated > 0 ? (markSum / evaluated).toFixed(1) : 'N/A';
 
@@ -153,27 +182,14 @@ export const TeacherReports: React.FC = () => {
       modRisk,
       lowRisk,
       avgMark,
-      math: {
-        count: math.count,
-        avg: math.count > 0 ? (math.markSum / math.count).toFixed(1) : 'N/A',
-        high: math.high,
-        mod: math.mod,
-        low: math.low,
-      },
-      port: {
-        count: port.count,
-        avg: port.count > 0 ? (port.markSum / port.count).toFixed(1) : 'N/A',
-        high: port.high,
-        mod: port.mod,
-        low: port.low,
-      },
+      subjectBreakdown,
       milestones: {
         m0: { count: m0.count, avg: m0.count > 0 ? (m0.markSum / m0.count).toFixed(1) : 'N/A' },
         m1: { count: m1.count, avg: m1.count > 0 ? (m1.markSum / m1.count).toFixed(1) : 'N/A' },
         m2: { count: m2.count, avg: m2.count > 0 ? (m2.markSum / m2.count).toFixed(1) : 'N/A' },
       },
     };
-  }, [students, latestPredMap]);
+  }, [students, latestPredMap, assignedSubjects]);
 
   // At-Risk Students list
   const atRiskList = useMemo(() => {
@@ -264,8 +280,9 @@ export const TeacherReports: React.FC = () => {
       csvRows.push(`Low Risk / On Track,${cohortMetrics.lowRisk},Projected mark >= 70%`);
       csvRows.push('');
       csvRows.push('Subject,Evaluated Students,Average Mark (0-100),High Risk,Moderate Risk,Low Risk');
-      csvRows.push(`Mathematics,${cohortMetrics.math.count},${cohortMetrics.math.avg},${cohortMetrics.math.high},${cohortMetrics.math.mod},${cohortMetrics.math.low}`);
-      csvRows.push(`Portuguese Language,${cohortMetrics.port.count},${cohortMetrics.port.avg},${cohortMetrics.port.high},${cohortMetrics.port.mod},${cohortMetrics.port.low}`);
+      cohortMetrics.subjectBreakdown.forEach((sb) => {
+        csvRows.push(`${escapeCsvField(sb.name)},${sb.count},${sb.avg},${sb.high},${sb.mod},${sb.low}`);
+      });
       csvRows.push('');
       csvRows.push('Milestone,Assessment Count,Average Projected Mark (0-100)');
       csvRows.push(`Milestone 0 (Pre-Enrollment),${cohortMetrics.milestones.m0.count},${cohortMetrics.milestones.m0.avg}`);
@@ -326,7 +343,7 @@ export const TeacherReports: React.FC = () => {
     setTimeout(() => setExportNotice(null), 4000);
   };
 
-  if (loading) {
+  if (loading || subjectsLoading) {
     return (
       <div className="space-y-6">
         <PageHeader
@@ -338,6 +355,24 @@ export const TeacherReports: React.FC = () => {
         <LoadingState
           title="Compiling Academic Reports..."
           description="Aggregating cohort performance telemetry and assessment history."
+        />
+      </div>
+    );
+  }
+
+  if (hasNoAssignments) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Academic Telemetry & Reports Suite"
+          subtitle="Generate exportable cohort summaries, at-risk rosters, and verifiable prediction audit documentation."
+          badgeText="Instructor Analytics"
+          badgeVariant="brand"
+        />
+        <EmptyState
+          icon={<Lock size={36} className="text-amber-500" />}
+          title="No Academic Subjects Assigned"
+          description="Your instructor account does not currently have any active subject assignments. Please contact an institution administrator to assign you to academic subjects and terms in the Admin Workspace."
         />
       </div>
     );
@@ -388,6 +423,7 @@ export const TeacherReports: React.FC = () => {
           badgeVariant="brand"
           actions={
             <div className="flex flex-wrap items-center gap-2">
+              <TeacherSubjectSelector showLabel={false} />
               <Button
                 variant="outline"
                 size="sm"
@@ -428,11 +464,10 @@ export const TeacherReports: React.FC = () => {
       <div className="no-print flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3">
         <button
           onClick={() => setActiveTab('COHORT_SUMMARY')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-            activeTab === 'COHORT_SUMMARY'
-              ? 'bg-brand-royal text-white shadow-sm'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-          }`}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${activeTab === 'COHORT_SUMMARY'
+            ? 'bg-brand-royal text-white shadow-sm'
+            : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+            }`}
         >
           <BarChart3 size={15} />
           <span>1. Cohort Summary</span>
@@ -440,11 +475,10 @@ export const TeacherReports: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('AT_RISK')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-            activeTab === 'AT_RISK'
-              ? 'bg-rose-600 text-white shadow-sm'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-          }`}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${activeTab === 'AT_RISK'
+            ? 'bg-rose-600 text-white shadow-sm'
+            : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+            }`}
         >
           <ShieldAlert size={15} />
           <span>2. At-Risk Students Report</span>
@@ -455,11 +489,10 @@ export const TeacherReports: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('PREDICTION_AUDIT')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-            activeTab === 'PREDICTION_AUDIT'
-              ? 'bg-navy-900 text-white shadow-sm'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-          }`}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${activeTab === 'PREDICTION_AUDIT'
+            ? 'bg-navy-900 text-white shadow-sm'
+            : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+            }`}
         >
           <History size={15} />
           <span>3. Prediction Audit Log</span>
@@ -600,30 +633,27 @@ export const TeacherReports: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    <tr>
-                      <td className="py-3 px-3 font-bold text-navy-900">Mathematics</td>
-                      <td className="py-3 px-3">{cohortMetrics.math.count}</td>
-                      <td className="py-3 px-3 font-semibold text-brand-royal">
-                        {cohortMetrics.math.avg !== 'N/A' ? `${cohortMetrics.math.avg} / 100` : 'N/A'}
-                      </td>
-                      <td className="py-3 px-3 text-right font-mono text-[11px]">
-                        <span className="text-rose-600 font-bold">{cohortMetrics.math.high}</span> /{' '}
-                        <span className="text-amber-600 font-bold">{cohortMetrics.math.mod}</span> /{' '}
-                        <span className="text-emerald-600 font-bold">{cohortMetrics.math.low}</span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="py-3 px-3 font-bold text-navy-900">Portuguese Language</td>
-                      <td className="py-3 px-3">{cohortMetrics.port.count}</td>
-                      <td className="py-3 px-3 font-semibold text-brand-royal">
-                        {cohortMetrics.port.avg !== 'N/A' ? `${cohortMetrics.port.avg} / 100` : 'N/A'}
-                      </td>
-                      <td className="py-3 px-3 text-right font-mono text-[11px]">
-                        <span className="text-rose-600 font-bold">{cohortMetrics.port.high}</span> /{' '}
-                        <span className="text-amber-600 font-bold">{cohortMetrics.port.mod}</span> /{' '}
-                        <span className="text-emerald-600 font-bold">{cohortMetrics.port.low}</span>
-                      </td>
-                    </tr>
+                    {cohortMetrics.subjectBreakdown.map((sb) => (
+                      <tr key={sb.id}>
+                        <td className="py-3 px-3 font-bold text-navy-900">{sb.name}</td>
+                        <td className="py-3 px-3">{sb.count}</td>
+                        <td className="py-3 px-3 font-semibold text-brand-royal">
+                          {sb.avg !== 'N/A' ? `${sb.avg} / 100` : 'N/A'}
+                        </td>
+                        <td className="py-3 px-3 text-right font-mono text-[11px]">
+                          <span className="text-rose-600 font-bold">{sb.high}</span> /{' '}
+                          <span className="text-amber-600 font-bold">{sb.mod}</span> /{' '}
+                          <span className="text-emerald-600 font-bold">{sb.low}</span>
+                        </td>
+                      </tr>
+                    ))}
+                    {cohortMetrics.subjectBreakdown.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="py-4 text-center text-slate-400">
+                          No subjects assigned
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -707,9 +737,12 @@ export const TeacherReports: React.FC = () => {
                 onChange={(e) => setSubjectFilter(e.target.value)}
                 className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white text-slate-700 font-medium"
               >
-                <option value="ALL">All Subjects</option>
-                <option value="Mathematics">Mathematics</option>
-                <option value="Portuguese Language">Portuguese Language</option>
+                <option value="ALL">All Assigned Subjects</option>
+                {assignedSubjects.map((s) => (
+                  <option key={s.id} value={s.name}>
+                    {s.name}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -766,9 +799,8 @@ export const TeacherReports: React.FC = () => {
                         </td>
                         <td className="py-3 px-3">
                           <span
-                            className={`font-black text-sm ${
-                              pred.predicted_marks < 50 ? 'text-rose-600' : 'text-amber-600'
-                            }`}
+                            className={`font-black text-sm ${pred.predicted_marks < 50 ? 'text-rose-600' : 'text-amber-600'
+                              }`}
                           >
                             {pred.predicted_marks.toFixed(1)}
                           </span>
@@ -830,9 +862,12 @@ export const TeacherReports: React.FC = () => {
                 onChange={(e) => setSubjectFilter(e.target.value)}
                 className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white text-slate-700 font-medium"
               >
-                <option value="ALL">All Subjects</option>
-                <option value="Mathematics">Mathematics</option>
-                <option value="Portuguese Language">Portuguese Language</option>
+                <option value="ALL">All Assigned Subjects</option>
+                {assignedSubjects.map((s) => (
+                  <option key={s.id} value={s.name}>
+                    {s.name}
+                  </option>
+                ))}
               </select>
             </div>
 

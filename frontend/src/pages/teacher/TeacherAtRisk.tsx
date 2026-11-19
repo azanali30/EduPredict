@@ -13,6 +13,7 @@ import { TeacherPredictionModal } from '../../components/predictions/TeacherPred
 import { PredictionDetailModal } from '../../components/predictions/PredictionDetailModal';
 import { Button } from '../../components/forms/Button';
 import { Link } from 'react-router-dom';
+import { useTeacherSubject, TeacherSubjectSelector } from '../../context/TeacherSubjectContext';
 import {
   AlertTriangle,
   ShieldAlert,
@@ -25,9 +26,11 @@ import {
   Clock,
   Activity,
   HelpCircle,
+  Lock,
 } from 'lucide-react';
 
 export const TeacherAtRisk: React.FC = () => {
+  const { assignedSubjects, selectedSubject, selectedSubjectId, hasNoAssignments, loading: subjectsLoading } = useTeacherSubject();
   const [students, setStudents] = useState<User[]>([]);
   const [predictions, setPredictions] = useState<PredictionRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,26 +48,42 @@ export const TeacherAtRisk: React.FC = () => {
   const [inspectingPrediction, setInspectingPrediction] = useState<PredictionRecord | null>(null);
 
   const loadData = async () => {
+    if (hasNoAssignments || !selectedSubjectId) {
+      setStudents([]);
+      setPredictions([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
+    setStudents([]);
+    setPredictions([]);
+    setSelectedStudent(null);
+    setPredictingStudent(null);
+    setInspectingPrediction(null);
     try {
       const [studentsRes, predsRes] = await Promise.all([
-        api.getTeacherStudents(),
-        api.listPredictions({ limit: 100 }),
+        api.getTeacherStudents({ subject_id: selectedSubjectId }),
+        api.listPredictions({ subject: selectedSubject?.name, limit: 100 }),
       ]);
       setStudents(studentsRes.students || []);
       setPredictions(predsRes.predictions || []);
     } catch (err: any) {
       console.error('Failed to load at-risk intervention telemetry:', err);
       setError(err?.message || 'Failed to retrieve at-risk student records from server.');
+      setStudents([]);
+      setPredictions([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (!subjectsLoading) {
+      loadData();
+    }
+  }, [selectedSubjectId, subjectsLoading, hasNoAssignments]);
 
   // Map studentId -> Latest PredictionRecord
   const latestPredMap = useMemo(() => {
@@ -150,7 +169,7 @@ export const TeacherAtRisk: React.FC = () => {
     });
   }, [students, latestPredMap, selectedTab, searchTerm, subjectFilter, milestoneFilter]);
 
-  if (loading) {
+  if (loading || subjectsLoading) {
     return (
       <div className="space-y-6">
         <PageHeader
@@ -162,6 +181,24 @@ export const TeacherAtRisk: React.FC = () => {
         <LoadingState
           title="Retrieving At-Risk Telemetry..."
           description="Connecting to MongoDB predictive telemetry and active advisories."
+        />
+      </div>
+    );
+  }
+
+  if (hasNoAssignments) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="At-Risk Intervention & Monitoring"
+          subtitle="Proactive triage console for assigned students flagged as High Risk or Moderate Risk across your cohort."
+          badgeText="Instructor Analytics"
+          badgeVariant="warning"
+        />
+        <EmptyState
+          icon={<Lock size={36} className="text-amber-500" />}
+          title="No Academic Subjects Assigned"
+          description="Your instructor account does not currently have any active subject assignments. Please contact an institution administrator to assign you to academic subjects and terms in the Admin Workspace."
         />
       </div>
     );
@@ -191,6 +228,7 @@ export const TeacherAtRisk: React.FC = () => {
         badgeVariant={highRiskCount > 0 ? 'warning' : 'info'}
         actions={
           <div className="flex items-center gap-2">
+            <TeacherSubjectSelector showLabel={false} />
             <Link to="/teacher/predictions">
               <Button variant="outline" size="sm" leftIcon={<Activity size={14} />}>
                 Predictions Hub
@@ -395,9 +433,12 @@ export const TeacherAtRisk: React.FC = () => {
                 onChange={(e) => setSubjectFilter(e.target.value)}
                 className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-slate-700 font-medium"
               >
-                <option value="ALL">All Subjects</option>
-                <option value="Mathematics">Mathematics</option>
-                <option value="Portuguese Language">Portuguese Language</option>
+                <option value="ALL">All Assigned Subjects</option>
+                {assignedSubjects.map((s) => (
+                  <option key={s.id} value={s.name}>
+                    {s.name}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -702,6 +743,7 @@ export const TeacherAtRisk: React.FC = () => {
         isOpen={Boolean(predictingStudent)}
         onClose={() => setPredictingStudent(null)}
         student={predictingStudent}
+        students={students}
         onPredictionCreated={() => {
           loadData();
         }}

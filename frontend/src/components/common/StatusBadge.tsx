@@ -23,6 +23,7 @@ export type StatusBadgeType =
 
 interface StatusBadgeProps {
   status?: string | StatusBadgeType | null;
+  type?: string | StatusBadgeType | null;
   label?: string;
   size?: 'sm' | 'md';
   showIcon?: boolean;
@@ -31,12 +32,13 @@ interface StatusBadgeProps {
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({
   status,
+  type,
   label,
   size = 'sm',
   showIcon = true,
   className = '',
 }) => {
-  const normStatus = (status || 'neutral').trim();
+  const normStatus = (type || status || 'neutral').trim();
 
   let badgeClass = 'bg-slate-100 text-slate-600 border-slate-200';
   let icon = <HelpCircle size={size === 'sm' ? 11 : 13} />;

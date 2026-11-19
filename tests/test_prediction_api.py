@@ -9,6 +9,8 @@ import pytest
 from bson import ObjectId
 from backend.services.user_service import UserService
 from backend.services.assignment_service import AssignmentService
+from backend.services.subject_service import SubjectService
+from backend.services.enrollment_service import EnrollmentService
 
 # Sample valid feature vectors
 SAMPLE_M0_FEATURES = {
@@ -194,6 +196,17 @@ def test_teacher_predict_assigned_vs_unassigned_student(client, clean_db, test_t
         student_id=test_student.id,
         admin_id=ObjectId(),
     )
+    SubjectService.ensure_canonical_subjects(clean_db)
+    math_subj = SubjectService.get_subject_by_canonical_key(clean_db, "mathematics")
+    if math_subj:
+        AssignmentService.assign_teacher_to_subject(
+            db=clean_db,
+            teacher_id=test_teacher.id,
+            subject_id=math_subj.id,
+            academic_term="2026-T1",
+            admin_id=ObjectId(),
+        )
+        EnrollmentService.enroll_student(clean_db, test_student.id, math_subj.id, "2026-T1")
 
     login_user(client, test_teacher.email, "TeacherPassword123!")
 
@@ -389,6 +402,17 @@ def test_prediction_history_teacher_scoping(client, clean_db, test_teacher, test
         student_id=test_student.id,
         admin_id=ObjectId(),
     )
+    SubjectService.ensure_canonical_subjects(clean_db)
+    math_subj = SubjectService.get_subject_by_canonical_key(clean_db, "mathematics")
+    if math_subj:
+        AssignmentService.assign_teacher_to_subject(
+            db=clean_db,
+            teacher_id=test_teacher.id,
+            subject_id=math_subj.id,
+            academic_term="2026-T1",
+            admin_id=ObjectId(),
+        )
+        EnrollmentService.enroll_student(clean_db, test_student.id, math_subj.id, "2026-T1")
 
     # Generate prediction for assigned student
     login_user(client, test_teacher.email, "TeacherPassword123!")
@@ -540,6 +564,17 @@ def test_teacher_overview_and_roster_data_integrity(client, clean_db, test_teach
         student_id=test_student.id,
         admin_id=ObjectId(),
     )
+    SubjectService.ensure_canonical_subjects(clean_db)
+    math_subj = SubjectService.get_subject_by_canonical_key(clean_db, "mathematics")
+    if math_subj:
+        AssignmentService.assign_teacher_to_subject(
+            db=clean_db,
+            teacher_id=test_teacher.id,
+            subject_id=math_subj.id,
+            academic_term="2026-T1",
+            admin_id=ObjectId(),
+        )
+        EnrollmentService.enroll_student(clean_db, test_student.id, math_subj.id, "2026-T1")
 
     # 3. Teacher queries assigned students -> returns test_student
     res_students = client.get("/api/teacher/students")
@@ -656,6 +691,17 @@ def test_teacher_reports_profile_and_settings_data_integrity(client, clean_db, t
         student_id=test_student.id,
         admin_id=ObjectId(),
     )
+    SubjectService.ensure_canonical_subjects(clean_db)
+    math_subj = SubjectService.get_subject_by_canonical_key(clean_db, "mathematics")
+    if math_subj:
+        AssignmentService.assign_teacher_to_subject(
+            db=clean_db,
+            teacher_id=test_teacher.id,
+            subject_id=math_subj.id,
+            academic_term="2026-T1",
+            admin_id=ObjectId(),
+        )
+        EnrollmentService.enroll_student(clean_db, test_student.id, math_subj.id, "2026-T1")
 
     # Create prediction for assigned student
     res_pred_assigned = client.post("/api/predictions", json={

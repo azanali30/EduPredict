@@ -20,6 +20,10 @@ interface PredictionFormProps {
   loading: boolean;
   studentId?: string; // Optional if teacher/admin is generating for a student
   studentName?: string;
+  authorizedSubjects?: Array<{ name: string; code?: string; canonical_key?: string }> | string[];
+  initialSubject?: string;
+  onSubjectChange?: (newSubject: string) => void;
+  academicTerm?: string;
 }
 
 // Sensible baseline preset for rapid testing & evaluation
@@ -69,11 +73,34 @@ export const PredictionForm: React.FC<PredictionFormProps> = ({
   loading,
   studentId,
   studentName,
+  authorizedSubjects,
+  initialSubject,
+  onSubjectChange,
+  academicTerm,
 }) => {
-  const [subject, setSubject] = useState<PredictionSubject>('Mathematics');
+  const parsedSubjects = React.useMemo<string[]>(() => {
+    if (!authorizedSubjects) return ['Mathematics', 'Portuguese Language'];
+    return authorizedSubjects.map((s) => (typeof s === 'string' ? s : s.name));
+  }, [authorizedSubjects]);
+
+  const defaultSubj = (parsedSubjects.includes(initialSubject as any)
+    ? initialSubject
+    : parsedSubjects[0] || 'Mathematics') as PredictionSubject;
+
+  const [subject, setSubject] = useState<PredictionSubject>(defaultSubj);
   const [milestone, setMilestone] = useState<PredictionMilestone>(0);
   const [formData, setFormData] = useState<Record<string, any>>(DEFAULT_STUDENT_PROFILE);
   const [activeSection, setActiveSection] = useState<'profile' | 'habits' | 'proxies' | 'exams'>('profile');
+
+  React.useEffect(() => {
+    if (parsedSubjects.length > 0 && !parsedSubjects.includes(subject)) {
+      const nextSubj = (parsedSubjects.includes(initialSubject as any)
+        ? initialSubject
+        : parsedSubjects[0]) as PredictionSubject;
+      setSubject(nextSubj);
+      if (onSubjectChange) onSubjectChange(nextSubj);
+    }
+  }, [parsedSubjects, initialSubject, subject, onSubjectChange]);
 
   // Handle field change
   const handleChange = (field: string, value: any) => {
@@ -158,6 +185,9 @@ export const PredictionForm: React.FC<PredictionFormProps> = ({
     if (studentId) {
       payload.student_id = studentId;
     }
+    if (academicTerm) {
+      payload.academic_term = academicTerm;
+    }
 
     await onSubmit(payload);
   };
@@ -203,43 +233,59 @@ export const PredictionForm: React.FC<PredictionFormProps> = ({
         <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-3">
           1. Academic Course Subject
         </label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => setSubject('Mathematics')}
-            className={`p-4 rounded-xl border text-left transition-all ${
-              subject === 'Mathematics'
-                ? 'border-brand-500 bg-brand-50/50 ring-2 ring-brand-500/20'
-                : 'border-slate-200 hover:border-slate-300 bg-white'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-bold text-sm text-navy-900">Mathematics</span>
-              <span className="badge bg-slate-100 text-slate-600 text-[10px]">395 Records</span>
-            </div>
-            <p className="text-xs text-slate-500">
-              STEM curriculum evaluation model with continuous performance scaling (0 - 100).
-            </p>
-          </button>
+        {parsedSubjects.length === 0 ? (
+          <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">
+            No authorized course subjects available for this learner.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {parsedSubjects.includes('Mathematics') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSubject('Mathematics');
+                  if (onSubjectChange) onSubjectChange('Mathematics');
+                }}
+                className={`p-4 rounded-xl border text-left transition-all ${
+                  subject === 'Mathematics'
+                    ? 'border-brand-500 bg-brand-50/50 ring-2 ring-brand-500/20'
+                    : 'border-slate-200 hover:border-slate-300 bg-white'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-bold text-sm text-navy-900">Mathematics</span>
+                  <span className="badge bg-slate-100 text-slate-600 text-[10px]">STEM Model</span>
+                </div>
+                <p className="text-xs text-slate-500">
+                  STEM curriculum evaluation model with continuous performance scaling (0 - 100).
+                </p>
+              </button>
+            )}
 
-          <button
-            type="button"
-            onClick={() => setSubject('Portuguese Language')}
-            className={`p-4 rounded-xl border text-left transition-all ${
-              subject === 'Portuguese Language'
-                ? 'border-brand-500 bg-brand-50/50 ring-2 ring-brand-500/20'
-                : 'border-slate-200 hover:border-slate-300 bg-white'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-bold text-sm text-navy-900">Portuguese Language</span>
-              <span className="badge bg-slate-100 text-slate-600 text-[10px]">649 Records</span>
-            </div>
-            <p className="text-xs text-slate-500">
-              Language & humanities evaluation model with continuous performance scaling (0 - 100).
-            </p>
-          </button>
-        </div>
+            {parsedSubjects.includes('Portuguese Language') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSubject('Portuguese Language');
+                  if (onSubjectChange) onSubjectChange('Portuguese Language');
+                }}
+                className={`p-4 rounded-xl border text-left transition-all ${
+                  subject === 'Portuguese Language'
+                    ? 'border-brand-500 bg-brand-50/50 ring-2 ring-brand-500/20'
+                    : 'border-slate-200 hover:border-slate-300 bg-white'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-bold text-sm text-navy-900">Portuguese Language</span>
+                  <span className="badge bg-slate-100 text-slate-600 text-[10px]">Humanities Model</span>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Language & humanities evaluation model with continuous performance scaling (0 - 100).
+                </p>
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Step 2: Milestone Selection */}

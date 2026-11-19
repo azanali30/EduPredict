@@ -30,6 +30,8 @@ class PredictionRecord:
         uncertainty_warning: bool = False,
         uncertainty_message: Optional[str] = None,
         early_warning_advisory: Optional[Dict[str, Any]] = None,
+        subject_id: Optional[ObjectId | str] = None,
+        academic_term: Optional[str] = None,
         record_id: Optional[ObjectId | str] = None,
         created_at: Optional[datetime] = None,
     ):
@@ -40,6 +42,8 @@ class PredictionRecord:
 
         self.created_by = to_object_id(created_by) or self.student_id
         self.subject = str(subject).strip()
+        self.subject_id = to_object_id(subject_id)
+        self.academic_term = str(academic_term).strip() if academic_term else None
         self.milestone = int(milestone)
         if self.milestone not in (0, 1, 2):
             raise ValueError(f"Invalid milestone {self.milestone}. Must be 0, 1, or 2.")
@@ -64,6 +68,8 @@ class PredictionRecord:
             "student_id": self.student_id,
             "created_by": self.created_by,
             "subject": self.subject,
+            "subject_id": self.subject_id,
+            "academic_term": self.academic_term,
             "milestone": self.milestone,
             "predicted_marks": self.predicted_marks,
             "predicted_status": self.predicted_status,
@@ -86,6 +92,8 @@ class PredictionRecord:
             "student_id": str(self.student_id),
             "created_by": str(self.created_by),
             "subject": self.subject,
+            "subject_id": str(self.subject_id) if self.subject_id else None,
+            "academic_term": self.academic_term,
             "milestone": self.milestone,
             "predicted_marks": self.predicted_marks,
             "predicted_status": self.predicted_status,
@@ -123,6 +131,8 @@ class PredictionRecord:
             uncertainty_warning=doc.get("uncertainty_warning", False),
             uncertainty_message=doc.get("uncertainty_message"),
             early_warning_advisory=doc.get("early_warning_advisory"),
+            subject_id=doc.get("subject_id"),
+            academic_term=doc.get("academic_term"),
             features_summary=doc.get("features_summary", {}),
             regressor_model=doc.get("regressor_model", ""),
             classifier_model=doc.get("classifier_model", ""),

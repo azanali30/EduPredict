@@ -37,6 +37,14 @@ def register():
     email = data.get("email")
     password = data.get("password")
     full_name = data.get("full_name")
+    requested_role = data.get("role")
+
+    if requested_role and requested_role != "student":
+        return jsonify({
+            "error": "Bad Request",
+            "message": "Public registration is only permitted for student accounts. Other roles must be provisioned by an administrator.",
+            "status_code": 400,
+        }), 400
 
     if not email or not password or not full_name:
         return jsonify({

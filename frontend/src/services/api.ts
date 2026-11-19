@@ -5,6 +5,11 @@ import {
   PredictionRecord,
   PredictionOptions,
   CreatePredictionPayload,
+  SubjectItem,
+  TeacherSubjectAssignmentItem,
+  StudentSubjectEnrollmentItem,
+  AnalystOverviewResponse,
+  AnalystCurriculumStatsResponse,
 } from '../types';
 
 let cachedCsrfToken: string | null = null;
@@ -128,8 +133,21 @@ export const api = {
   getStudentDetails: (studentId: string) =>
     apiRequest<{ student: User; status_code: number }>(`/api/students/${studentId}`),
 
-  getTeacherStudents: () =>
-    apiRequest<{ students: User[]; count: number; status_code: number }>('/api/teacher/students'),
+  getTeacherSubjects: () =>
+    apiRequest<{ subjects: SubjectItem[]; count: number; status_code: number }>('/api/teacher/subjects'),
+
+  getTeacherStudents: (params?: { subject_id?: string; academic_term?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.subject_id) query.set('subject_id', params.subject_id);
+    if (params?.academic_term) query.set('academic_term', params.academic_term);
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest<{ students: User[]; count: number; message?: string; status_code: number }>(
+      `/api/teacher/students${qs}`
+    );
+  },
+
+  getStudentSubjects: () =>
+    apiRequest<{ subjects: SubjectItem[]; count: number; status_code: number }>('/api/student/subjects'),
 
   // Admin Routes
   getAdminUsers: (role?: string) => {
@@ -148,6 +166,109 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ teacher_id: teacherId, student_id: studentId }),
     }),
+
+  // Admin Subject & Course Allocation Routes (Phase 6B & 6C)
+  adminListSubjects: (activeOnly?: boolean) => {
+    const qs = activeOnly !== undefined ? `?active_only=${activeOnly}` : '';
+    return apiRequest<{ subjects: SubjectItem[]; count: number; status_code: number }>(`/api/admin/subjects${qs}`);
+  },
+
+  adminCreateSubject: (payload: {
+    code: string;
+    name: string;
+    canonical_key: string;
+    department?: string;
+    description?: string;
+    target_scale?: string;
+  }) =>
+    apiRequest<{ message: string; subject: SubjectItem; status_code: number }>('/api/admin/subjects', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  adminUpdateSubjectStatus: (subjectId: string, isActive: boolean) =>
+    apiRequest<{ message: string; subject: SubjectItem; status_code: number }>(`/api/admin/subjects/${subjectId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ is_active: isActive }),
+    }),
+
+  adminListTeacherSubjects: (params?: {
+    teacher_id?: string;
+    subject_id?: string;
+    academic_term?: string;
+    status?: string;
+  }) => {
+    const query = new URLSearchParams();
+    if (params?.teacher_id) query.set('teacher_id', params.teacher_id);
+    if (params?.subject_id) query.set('subject_id', params.subject_id);
+    if (params?.academic_term) query.set('academic_term', params.academic_term);
+    if (params?.status) query.set('status', params.status);
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest<{ assignments: TeacherSubjectAssignmentItem[]; count: number; status_code: number }>(
+      `/api/admin/teacher-subjects${qs}`
+    );
+  },
+
+  adminAssignTeacherSubject: (payload: {
+    teacher_id: string;
+    subject_id: string;
+    academic_term: string;
+  }) =>
+    apiRequest<{ message: string; assignment: TeacherSubjectAssignmentItem; status_code: number }>(
+      '/api/admin/teacher-subjects',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    ),
+
+  adminUpdateTeacherSubjectStatus: (assignmentId: string, status: 'active' | 'inactive') =>
+    apiRequest<{ message: string; assignment: TeacherSubjectAssignmentItem; status_code: number }>(
+      `/api/admin/teacher-subjects/${assignmentId}/status`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ status }),
+      }
+    ),
+
+  adminListStudentEnrollments: (params?: {
+    student_id?: string;
+    subject_id?: string;
+    academic_term?: string;
+    status?: string;
+  }) => {
+    const query = new URLSearchParams();
+    if (params?.student_id) query.set('student_id', params.student_id);
+    if (params?.subject_id) query.set('subject_id', params.subject_id);
+    if (params?.academic_term) query.set('academic_term', params.academic_term);
+    if (params?.status) query.set('status', params.status);
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest<{ enrollments: StudentSubjectEnrollmentItem[]; count: number; status_code: number }>(
+      `/api/admin/student-enrollments${qs}`
+    );
+  },
+
+  adminEnrollStudent: (payload: {
+    student_id: string;
+    subject_id: string;
+    academic_term: string;
+  }) =>
+    apiRequest<{ message: string; enrollment: StudentSubjectEnrollmentItem; status_code: number }>(
+      '/api/admin/student-enrollments',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    ),
+
+  adminUpdateStudentEnrollmentStatus: (enrollmentId: string, status: 'active' | 'dropped' | 'completed') =>
+    apiRequest<{ message: string; enrollment: StudentSubjectEnrollmentItem; status_code: number }>(
+      `/api/admin/student-enrollments/${enrollmentId}/status`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ status }),
+      }
+    ),
 
   getAuditLogs: (limit: number = 50) =>
     apiRequest<{ logs: SystemLog[]; count: number; status_code: number }>(`/api/admin/logs?limit=${limit}`),
@@ -197,5 +318,17 @@ export const api = {
   getPredictionDetail: (predictionId: string) =>
     apiRequest<{ prediction: PredictionRecord; status_code: number }>(
       `/api/predictions/${predictionId}`
+    ),
+
+  // Analyst APIs (Phase 7A & SDC Privacy Safeguards)
+  getAnalystOverview: () =>
+    apiRequest<AnalystOverviewResponse>('/api/analyst/overview'),
+
+  getAnalystCurriculumStats: () =>
+    apiRequest<AnalystCurriculumStatsResponse>('/api/analyst/curriculum-stats'),
+
+  getAnalystDiagnostics: () =>
+    apiRequest<{ status: string; role: string; message: string; status_code: number }>(
+      '/api/analyst/diagnostics'
     ),
 };

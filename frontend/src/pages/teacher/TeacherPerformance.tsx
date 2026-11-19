@@ -12,6 +12,7 @@ import { StudentProfileDrawer } from '../../components/common/StudentProfileDraw
 import { TeacherPredictionModal } from '../../components/predictions/TeacherPredictionModal';
 import { Button } from '../../components/forms/Button';
 import { Link } from 'react-router-dom';
+import { useTeacherSubject, TeacherSubjectSelector } from '../../context/TeacherSubjectContext';
 import {
   BarChart3,
   TrendingUp,
@@ -26,6 +27,7 @@ import {
   ArrowRight,
   TrendingDown,
   Minus,
+  Lock,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -38,6 +40,7 @@ import {
 } from 'recharts';
 
 export const TeacherPerformance: React.FC = () => {
+  const { assignedSubjects, selectedSubject, selectedSubjectId, hasNoAssignments, loading: subjectsLoading } = useTeacherSubject();
   const [students, setStudents] = useState<User[]>([]);
   const [predictions, setPredictions] = useState<PredictionRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,26 +55,41 @@ export const TeacherPerformance: React.FC = () => {
   const [predictingStudent, setPredictingStudent] = useState<User | null>(null);
 
   const loadData = async () => {
+    if (hasNoAssignments || !selectedSubjectId) {
+      setStudents([]);
+      setPredictions([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
+    setStudents([]);
+    setPredictions([]);
+    setSelectedStudent(null);
+    setPredictingStudent(null);
     try {
       const [studentsRes, predsRes] = await Promise.all([
-        api.getTeacherStudents(),
-        api.listPredictions({ limit: 100 }),
+        api.getTeacherStudents({ subject_id: selectedSubjectId }),
+        api.listPredictions({ subject: selectedSubject?.name, limit: 100 }),
       ]);
       setStudents(studentsRes.students || []);
       setPredictions(predsRes.predictions || []);
     } catch (err: any) {
       console.error('Failed to load performance analytics telemetry:', err);
       setError(err?.message || 'Failed to retrieve performance telemetry from server.');
+      setStudents([]);
+      setPredictions([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (!subjectsLoading) {
+      loadData();
+    }
+  }, [selectedSubjectId, subjectsLoading, hasNoAssignments]);
 
   // Map of studentId -> Latest Prediction
   const latestPredMap = useMemo(() => {
@@ -85,34 +103,28 @@ export const TeacherPerformance: React.FC = () => {
     return map;
   }, [predictions]);
 
-  // Subject-wise telemetry aggregation
-  const subjectStats = useMemo(() => {
-    const mathPreds = predictions.filter((p) => p.subject === 'Mathematics');
-    const portPreds = predictions.filter((p) => p.subject === 'Portuguese Language');
-
+  // Dynamic subject statistics for assigned subjects
+  const subjectStatsList = useMemo(() => {
     const calcAvg = (arr: PredictionRecord[]) => {
       if (arr.length === 0) return '--';
       const sum = arr.reduce((acc, p) => acc + p.predicted_marks, 0);
       return (sum / arr.length).toFixed(1);
     };
 
-    return {
-      math: {
-        count: mathPreds.length,
-        avg: calcAvg(mathPreds),
-        highRisk: mathPreds.filter((p) => p.predicted_status === 'High Risk').length,
-        modRisk: mathPreds.filter((p) => p.predicted_status === 'Moderate Risk').length,
-        lowRisk: mathPreds.filter((p) => p.predicted_status === 'Low Risk / On Track').length,
-      },
-      port: {
-        count: portPreds.length,
-        avg: calcAvg(portPreds),
-        highRisk: portPreds.filter((p) => p.predicted_status === 'High Risk').length,
-        modRisk: portPreds.filter((p) => p.predicted_status === 'Moderate Risk').length,
-        lowRisk: portPreds.filter((p) => p.predicted_status === 'Low Risk / On Track').length,
-      },
-    };
-  }, [predictions]);
+    return assignedSubjects.map((subj) => {
+      const subjPreds = predictions.filter((p) => p.subject === subj.name);
+      return {
+        id: subj.id,
+        code: subj.code,
+        name: subj.name,
+        count: subjPreds.length,
+        avg: calcAvg(subjPreds),
+        highRisk: subjPreds.filter((p) => p.predicted_status === 'High Risk').length,
+        modRisk: subjPreds.filter((p) => p.predicted_status === 'Moderate Risk').length,
+        lowRisk: subjPreds.filter((p) => p.predicted_status === 'Low Risk / On Track').length,
+      };
+    });
+  }, [assignedSubjects, predictions]);
 
   // Grade Band Distribution
   const { gradeBandData, highestMark, lowestMark, medianMark, evaluatedCount } = useMemo(() => {
@@ -229,8 +241,26 @@ export const TeacherPerformance: React.FC = () => {
     });
   }, [students, searchTerm, subjectFilter, latestPredMap]);
 
-  if (loading) {
+  if (loading || subjectsLoading) {
     return <LoadingState title="Loading Academic Analytics..." description="Calculating cohort grade distributions and milestone comparisons." />;
+  }
+
+  if (hasNoAssignments) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Student Performance Analytics"
+          subtitle="Cohort grade band distributions, cross-subject evaluation benchmarks, and multi-milestone progression tracking."
+          badgeText="Academic Intelligence"
+          badgeVariant="brand"
+        />
+        <EmptyState
+          icon={<Lock size={36} className="text-amber-500" />}
+          title="No Academic Subjects Assigned"
+          description="Your instructor account does not currently have any active subject assignments. Please contact an institution administrator to assign you to academic subjects and terms in the Admin Workspace."
+        />
+      </div>
+    );
   }
 
   if (error) {
@@ -246,6 +276,7 @@ export const TeacherPerformance: React.FC = () => {
         badgeVariant="brand"
         actions={
           <div className="flex items-center gap-2">
+            <TeacherSubjectSelector showLabel={false} />
             <Link to="/teacher/students">
               <Button variant="outline" size="sm" rightIcon={<ArrowRight size={14} />}>
                 Student Roster
@@ -378,82 +409,47 @@ export const TeacherPerformance: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Subject-Wise Prediction Overview */}
         <SectionCard
-          title="Subject Evaluation Comparison"
-          subtitle="Comparative telemetry between Mathematics and Portuguese Language"
+          title="Subject Evaluation Overview"
+          subtitle="Performance telemetry across your authorized academic disciplines"
           icon={<BookOpen size={18} className="text-brand-royal" />}
         >
           <div className="space-y-4">
-            {/* Mathematics */}
-            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 text-brand-royal font-bold text-xs flex items-center justify-center">
-                    MA
+            {subjectStatsList.map((subj) => (
+              <div key={subj.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-blue-100 text-brand-royal font-bold text-xs flex items-center justify-center">
+                      {subj.code.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-navy-900">{subj.name}</h4>
+                      <span className="text-[11px] text-slate-500">{subj.count} Recorded Evaluations</span>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-navy-900">Mathematics</h4>
-                    <span className="text-[11px] text-slate-500">{subjectStats.math.count} Recorded Evaluations</span>
+                  <div className="text-right">
+                    <span className="text-xs text-slate-400 block">Avg Projected Mark</span>
+                    <span className="text-base font-extrabold text-navy-900 font-mono">
+                      {subj.avg !== '--' ? `${subj.avg}%` : '--'}
+                    </span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-xs text-slate-400 block">Avg Projected Mark</span>
-                  <span className="text-base font-extrabold text-navy-900 font-mono">
-                    {subjectStats.math.avg !== '--' ? `${subjectStats.math.avg}%` : '--'}
-                  </span>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-3 gap-2 text-center text-xs pt-1 border-t border-slate-200/60">
-                <div className="p-2 bg-white rounded-lg border border-slate-200/60">
-                  <span className="text-[10px] text-slate-400 block">High Risk</span>
-                  <span className="font-bold text-rose-600">{subjectStats.math.highRisk}</span>
-                </div>
-                <div className="p-2 bg-white rounded-lg border border-slate-200/60">
-                  <span className="text-[10px] text-slate-400 block">Moderate</span>
-                  <span className="font-bold text-amber-600">{subjectStats.math.modRisk}</span>
-                </div>
-                <div className="p-2 bg-white rounded-lg border border-slate-200/60">
-                  <span className="text-[10px] text-slate-400 block">Low Risk</span>
-                  <span className="font-bold text-emerald-600">{subjectStats.math.lowRisk}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Portuguese Language */}
-            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-teal-100 text-teal-800 font-bold text-xs flex items-center justify-center">
-                    PT
+                <div className="grid grid-cols-3 gap-2 text-center text-xs pt-1 border-t border-slate-200/60">
+                  <div className="p-2 bg-white rounded-lg border border-slate-200/60">
+                    <span className="text-[10px] text-slate-400 block">High Risk</span>
+                    <span className="font-bold text-rose-600">{subj.highRisk}</span>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-navy-900">Portuguese Language</h4>
-                    <span className="text-[11px] text-slate-500">{subjectStats.port.count} Recorded Evaluations</span>
+                  <div className="p-2 bg-white rounded-lg border border-slate-200/60">
+                    <span className="text-[10px] text-slate-400 block">Moderate</span>
+                    <span className="font-bold text-amber-600">{subj.modRisk}</span>
+                  </div>
+                  <div className="p-2 bg-white rounded-lg border border-slate-200/60">
+                    <span className="text-[10px] text-slate-400 block">Low Risk</span>
+                    <span className="font-bold text-emerald-600">{subj.lowRisk}</span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-xs text-slate-400 block">Avg Projected Mark</span>
-                  <span className="text-base font-extrabold text-navy-900 font-mono">
-                    {subjectStats.port.avg !== '--' ? `${subjectStats.port.avg}%` : '--'}
-                  </span>
-                </div>
               </div>
-
-              <div className="grid grid-cols-3 gap-2 text-center text-xs pt-1 border-t border-slate-200/60">
-                <div className="p-2 bg-white rounded-lg border border-slate-200/60">
-                  <span className="text-[10px] text-slate-400 block">High Risk</span>
-                  <span className="font-bold text-rose-600">{subjectStats.port.highRisk}</span>
-                </div>
-                <div className="p-2 bg-white rounded-lg border border-slate-200/60">
-                  <span className="text-[10px] text-slate-400 block">Moderate</span>
-                  <span className="font-bold text-amber-600">{subjectStats.port.modRisk}</span>
-                </div>
-                <div className="p-2 bg-white rounded-lg border border-slate-200/60">
-                  <span className="text-[10px] text-slate-400 block">Low Risk</span>
-                  <span className="font-bold text-emerald-600">{subjectStats.port.lowRisk}</span>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </SectionCard>
 
@@ -594,9 +590,12 @@ export const TeacherPerformance: React.FC = () => {
               onChange={(e) => setSubjectFilter(e.target.value)}
               className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 outline-none focus:border-brand-royal"
             >
-              <option value="ALL">All Subjects</option>
-              <option value="Mathematics">Mathematics</option>
-              <option value="Portuguese Language">Portuguese</option>
+              <option value="ALL">All Assigned Subjects</option>
+              {assignedSubjects.map((s) => (
+                <option key={s.id} value={s.name}>
+                  {s.name}
+                </option>
+              ))}
             </select>
           </div>
         }
@@ -704,6 +703,7 @@ export const TeacherPerformance: React.FC = () => {
       {/* Prediction Assessment Modal */}
       <TeacherPredictionModal
         student={predictingStudent}
+        students={students}
         isOpen={!!predictingStudent}
         onClose={() => setPredictingStudent(null)}
         onPredictionCreated={loadData}

@@ -21,7 +21,7 @@ from backend.data_engineering.leakage_guard import (
     REGRESSION_TARGET,
     CLASSIFICATION_TARGET,
 )
-from backend.utils.decorators import can_access_student_data
+from backend.utils.decorators import can_access_student_data, can_access_student_subject_data
 from backend.utils.security import to_object_id
 
 logger = logging.getLogger(__name__)
@@ -203,10 +203,11 @@ class PredictionService:
         subject: str,
         milestone: int,
         features: Dict[str, Any],
+        academic_term: Optional[str] = None,
     ) -> Tuple[Optional[PredictionRecord], Optional[str], int]:
         """
-        Executes prediction, performs authorization, validates inputs, runs ML pipelines,
-        and records the prediction document in MongoDB.
+        Executes prediction, performs subject-based authorization, validates inputs,
+        runs ML pipelines, and records the prediction document in MongoDB.
         """
         target_student_oid = to_object_id(student_id)
         if not target_student_oid:
@@ -217,16 +218,20 @@ class PredictionService:
         if not student_doc or student_doc.get("role") != "student":
             return None, "Target student does not exist.", 404
 
-        # Enforce server-side authorization
-        if not can_access_student_data(actor_user, target_student_oid, db):
-            return None, "You are not authorized to generate predictions for this student.", 403
-
-        # Validate inputs and leakage
+        # Validate inputs and leakage first to normalize subject
         valid, err_msg, sanitized_features = cls.validate_prediction_inputs(subject, milestone, features)
         if not valid or sanitized_features is None:
             return None, err_msg or "Invalid input features.", 400
 
         canonical_subject = cls.normalize_subject(subject)
+
+        # Enforce server-side subject-based authorization
+        if not can_access_student_subject_data(actor_user, target_student_oid, canonical_subject, db, academic_term=academic_term):
+            return None, f"You are not authorized to generate predictions for this student in subject '{canonical_subject}'.", 403
+
+        # Resolve subject document for subject_id reference
+        subj_doc = db.subjects.find_one({"name": canonical_subject})
+        resolved_subject_id = subj_doc["_id"] if subj_doc else None
 
         # Convert sanitized features to 1-row DataFrame for inference
         df_input = pd.DataFrame([sanitized_features])
@@ -247,7 +252,7 @@ class PredictionService:
                 "is_estimated_proxy": feat in ESTIMATED_FEATURE_LABELS,
             }
 
-        # Build Domain Record
+        # Build Domain Record with subject_id and academic_term
         prediction_record = PredictionRecord(
             student_id=target_student_oid,
             created_by=actor_user.id,
@@ -261,6 +266,8 @@ class PredictionService:
             uncertainty_warning=pred_res["uncertainty_warning"],
             uncertainty_message=pred_res["uncertainty_message"],
             early_warning_advisory=pred_res["early_warning_advisory"],
+            subject_id=resolved_subject_id,
+            academic_term=academic_term,
             features_summary=features_summary,
             regressor_model=pred_res["regressor_model"],
             classifier_model=pred_res["classifier_model"],
@@ -282,7 +289,7 @@ class PredictionService:
         prediction_id: ObjectId | str,
         actor_user: User,
     ) -> Tuple[Optional[PredictionRecord], Optional[str], int]:
-        """Fetch a single prediction by ID with role-based access validation."""
+        """Fetch a single prediction by ID with subject-based role authorization."""
         pred_oid = to_object_id(prediction_id)
         if not pred_oid:
             return None, "Invalid prediction ID format.", 400
@@ -291,9 +298,11 @@ class PredictionService:
         if not doc:
             return None, "Prediction record not found.", 404
 
-        # Enforce authorization against the target student ID
+        # Enforce subject authorization against the target student ID and prediction subject
         student_oid = doc.get("student_id")
-        if not can_access_student_data(actor_user, student_oid, db):
+        pred_subject = doc.get("subject_id") or doc.get("subject")
+        pred_term = doc.get("academic_term")
+        if not can_access_student_subject_data(actor_user, student_oid, pred_subject, db, academic_term=pred_term):
             return None, "You are not authorized to view this prediction record.", 403
 
         record = PredictionRecord.from_doc(doc)
@@ -323,36 +332,113 @@ class PredictionService:
         # 1. Enforce Role Scoping
         if actor_role == "student":
             query["student_id"] = actor_user.id
+            if subject:
+                canonical_subj = cls.normalize_subject(subject)
+                if canonical_subj:
+                    subj_doc = db.subjects.find_one({"name": canonical_subj})
+                    if subj_doc:
+                        query["$or"] = [{"subject_id": subj_doc["_id"]}, {"subject": canonical_subj}]
+                    else:
+                        query["subject"] = canonical_subj
+
         elif actor_role == "teacher":
+            # 1. Fetch teacher's active subject assignments
+            t_assignments = list(db.teacher_subject_assignments.find({
+                "teacher_id": actor_user.id,
+                "status": "active",
+            }))
+            if not t_assignments:
+                # Teacher has no assigned subjects -> 0 authorized records
+                return [], 0, None, 200
+
+            # Map subject_id -> set of enrolled student ObjectIds
+            subj_enrolled_students: Dict[ObjectId, set] = {}
+            for a in t_assignments:
+                s_id = a.get("subject_id")
+                a_term = a.get("academic_term")
+                if s_id:
+                    if s_id not in subj_enrolled_students:
+                        subj_enrolled_students[s_id] = set()
+                    enroll_q: Dict[str, Any] = {"subject_id": s_id, "status": "active"}
+                    if a_term:
+                        enroll_q["academic_term"] = a_term
+                    enrollments = db.student_subject_enrollments.find(enroll_q)
+                    for e in enrollments:
+                        if "student_id" in e:
+                            subj_enrolled_students[s_id].add(e["student_id"])
+
+            all_authorized_students = set.union(*subj_enrolled_students.values()) if subj_enrolled_students else set()
+            if not all_authorized_students:
+                return [], 0, None, 200
+
+            # 2. Check student_id filter if provided by teacher
             if student_id:
                 target_oid = to_object_id(student_id)
                 if not target_oid:
                     return [], 0, "Invalid student ID format.", 400
-                if not can_access_student_data(actor_user, target_oid, db):
+                if target_oid not in all_authorized_students:
                     return [], 0, "You are not authorized to access this student's predictions.", 403
-                query["student_id"] = target_oid
+                # Narrow each subject's enrolled students to just target_oid
+                for s_id in list(subj_enrolled_students.keys()):
+                    if target_oid in subj_enrolled_students[s_id]:
+                        subj_enrolled_students[s_id] = {target_oid}
+                    else:
+                        subj_enrolled_students[s_id] = set()
+
+            # 3. Check subject filter if provided by teacher
+            requested_subject_doc = None
+            if subject:
+                canonical_subj_str = cls.normalize_subject(subject)
+                if not canonical_subj_str:
+                    return [], 0, f"Invalid subject '{subject}'.", 400
+                requested_subject_doc = db.subjects.find_one({"name": canonical_subj_str})
+                if not requested_subject_doc or requested_subject_doc["_id"] not in subj_enrolled_students:
+                    return [], 0, "You are not authorized to access predictions for this subject.", 403
+
+            # 4. Construct subject-scoped query clauses
+            subject_or_clauses = []
+            for s_id, student_set in subj_enrolled_students.items():
+                if not student_set:
+                    continue
+                if requested_subject_doc and s_id != requested_subject_doc["_id"]:
+                    continue
+
+                s_doc = db.subjects.find_one({"_id": s_id})
+                s_name = s_doc.get("name", "") if s_doc else ""
+                student_list = list(student_set)
+
+                clause = {
+                    "$and": [
+                        {"student_id": {"$in": student_list}},
+                        {"$or": [{"subject_id": s_id}, {"subject": s_name}]},
+                    ]
+                }
+                subject_or_clauses.append(clause)
+
+            if not subject_or_clauses:
+                return [], 0, None, 200
+
+            if len(subject_or_clauses) == 1:
+                query.update(subject_or_clauses[0])
             else:
-                # Query all assigned students
-                assignments = db.teacher_student_assignments.find({
-                    "teacher_id": actor_user.id,
-                    "status": "active",
-                })
-                assigned_student_ids = [a["student_id"] for a in assignments]
-                query["student_id"] = {"$in": assigned_student_ids}
+                query["$or"] = subject_or_clauses
+
         elif actor_role == "admin":
             if student_id:
                 target_oid = to_object_id(student_id)
                 if not target_oid:
                     return [], 0, "Invalid student ID format.", 400
                 query["student_id"] = target_oid
+            if subject:
+                canonical_subj = cls.normalize_subject(subject)
+                if canonical_subj:
+                    subj_doc = db.subjects.find_one({"name": canonical_subj})
+                    if subj_doc:
+                        query["$or"] = [{"subject_id": subj_doc["_id"]}, {"subject": canonical_subj}]
+                    else:
+                        query["subject"] = canonical_subj
         else:
             return [], 0, "Access denied.", 403
-
-        # 2. Optional Filters
-        if subject:
-            canonical_subj = cls.normalize_subject(subject)
-            if canonical_subj:
-                query["subject"] = canonical_subj
 
         if milestone is not None:
             try:

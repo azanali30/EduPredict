@@ -6,6 +6,8 @@ import pytest
 from backend.app import create_app
 from backend.extensions import mongo
 from backend.services.user_service import UserService
+from backend.services.subject_service import SubjectService
+from backend.services.enrollment_service import EnrollmentService
 from backend.database.schema import init_db_indexes
 
 
@@ -33,6 +35,9 @@ def clean_db(app):
             mongo.db.academic_records.delete_many({})
             mongo.db.predictions.delete_many({})
             mongo.db.system_logs.delete_many({})
+            mongo.db.subjects.delete_many({})
+            mongo.db.teacher_subject_assignments.delete_many({})
+            mongo.db.student_subject_enrollments.delete_many({})
     yield mongo.db
 
 
@@ -83,5 +88,18 @@ def test_admin(clean_db):
         plain_password="AdminPassword123!",
         full_name="Carol Administrator",
         role="admin",
+    )
+    return user
+
+
+@pytest.fixture(scope="function")
+def test_analyst(clean_db):
+    """Create and return a sample analyst user in the test database."""
+    user, _ = UserService.create_user(
+        db=clean_db,
+        email="analyst.test@edupredict.com",
+        plain_password="AnalystPassword123!",
+        full_name="Dave Analyst",
+        role="analyst",
     )
     return user

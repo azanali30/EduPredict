@@ -10,6 +10,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { PredictionDetailModal } from '../../components/predictions/PredictionDetailModal';
 import { TeacherPredictionModal } from '../../components/predictions/TeacherPredictionModal';
 import { Button } from '../../components/forms/Button';
+import { useTeacherSubject, TeacherSubjectSelector } from '../../context/TeacherSubjectContext';
 import {
   Sparkles,
   Eye,
@@ -19,11 +20,13 @@ import {
   ChevronRight,
   BrainCircuit,
   History,
+  Lock,
 } from 'lucide-react';
 
 const PAGE_SIZE = 15;
 
 export const TeacherPredictions: React.FC = () => {
+  const { assignedSubjects, selectedSubject, selectedSubjectId, hasNoAssignments, loading: subjectsLoading } = useTeacherSubject();
   const [students, setStudents] = useState<User[]>([]);
   const [predictions, setPredictions] = useState<PredictionRecord[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -33,7 +36,7 @@ export const TeacherPredictions: React.FC = () => {
 
   // Filters
   const [selectedStudentId, setSelectedStudentId] = useState<string>('ALL');
-  const [selectedSubject, setSelectedSubject] = useState<string>('ALL');
+  const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string>('ALL');
   const [selectedMilestone, setSelectedMilestone] = useState<string>('ALL');
   const [selectedRisk, setSelectedRisk] = useState<string>('ALL');
 
@@ -41,12 +44,16 @@ export const TeacherPredictions: React.FC = () => {
   const [inspectingPrediction, setInspectingPrediction] = useState<PredictionRecord | null>(null);
   const [predictingStudent, setPredictingStudent] = useState<User | null>(null);
 
-  // Load students once
+  // Load students for current subject
   useEffect(() => {
-    api.getTeacherStudents()
+    if (hasNoAssignments || !selectedSubjectId) {
+      setStudents([]);
+      return;
+    }
+    api.getTeacherStudents({ subject_id: selectedSubjectId })
       .then((res) => setStudents(res.students || []))
       .catch((err) => console.error('Failed to load assigned students:', err));
-  }, []);
+  }, [selectedSubjectId, hasNoAssignments]);
 
   // Map of studentId -> User
   const studentMap = useMemo(() => {
@@ -57,8 +64,17 @@ export const TeacherPredictions: React.FC = () => {
 
   // Load predictions for current page & filters
   const loadPredictions = async () => {
+    if (hasNoAssignments) {
+      setPredictions([]);
+      setTotalCount(0);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
+    setPredictions([]);
+    setTotalCount(0);
     try {
       const skip = (currentPage - 1) * PAGE_SIZE;
       const params: any = {
@@ -67,7 +83,11 @@ export const TeacherPredictions: React.FC = () => {
       };
 
       if (selectedStudentId !== 'ALL') params.student_id = selectedStudentId;
-      if (selectedSubject !== 'ALL') params.subject = selectedSubject;
+      if (selectedSubjectFilter !== 'ALL') {
+        params.subject = selectedSubjectFilter;
+      } else if (selectedSubject?.name) {
+        params.subject = selectedSubject.name;
+      }
       if (selectedMilestone !== 'ALL') params.milestone = parseInt(selectedMilestone, 10);
 
       const res = await api.listPredictions(params);
@@ -83,24 +103,57 @@ export const TeacherPredictions: React.FC = () => {
     } catch (err: any) {
       console.error('Failed to retrieve prediction records:', err);
       setError(err?.message || 'Failed to retrieve prediction records from server.');
+      setPredictions([]);
+      setTotalCount(0);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadPredictions();
-  }, [currentPage, selectedStudentId, selectedSubject, selectedMilestone, selectedRisk]);
+    setSelectedStudentId('ALL');
+    setSelectedSubjectFilter('ALL');
+    setInspectingPrediction(null);
+    setPredictingStudent(null);
+  }, [selectedSubjectId]);
+
+  useEffect(() => {
+    if (!subjectsLoading) {
+      loadPredictions();
+    }
+  }, [currentPage, selectedStudentId, selectedSubjectFilter, selectedSubject?.name, selectedMilestone, selectedRisk, subjectsLoading, hasNoAssignments]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   const handleResetFilters = () => {
     setSelectedStudentId('ALL');
-    setSelectedSubject('ALL');
+    setSelectedSubjectFilter('ALL');
     setSelectedMilestone('ALL');
     setSelectedRisk('ALL');
     setCurrentPage(1);
   };
+
+  if (loading || subjectsLoading) {
+    return <LoadingState title="Loading Prediction Records..." description="Retrieving historical model assessments and feature payloads." />;
+  }
+
+  if (hasNoAssignments) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="AI Predictions Intelligence Hub"
+          subtitle="Auditable machine learning evaluation history, estimator telemetry, confidence metrics, and milestone assessments."
+          badgeText="Model Governance"
+          badgeVariant="brand"
+        />
+        <EmptyState
+          icon={<Lock size={36} className="text-amber-500" />}
+          title="No Academic Subjects Assigned"
+          description="Your instructor account does not currently have any active subject assignments. Please contact an institution administrator to assign you to academic subjects and terms in the Admin Workspace."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -111,6 +164,7 @@ export const TeacherPredictions: React.FC = () => {
         badgeVariant="brand"
         actions={
           <div className="flex items-center gap-2">
+            <TeacherSubjectSelector showLabel={false} />
             {students.length > 0 && (
               <Button
                 variant="primary"
@@ -154,16 +208,19 @@ export const TeacherPredictions: React.FC = () => {
             <div className="flex items-center gap-1.5 text-xs">
               <span className="font-semibold text-slate-400">Subject:</span>
               <select
-                value={selectedSubject}
+                value={selectedSubjectFilter}
                 onChange={(e) => {
-                  setSelectedSubject(e.target.value);
+                  setSelectedSubjectFilter(e.target.value);
                   setCurrentPage(1);
                 }}
                 className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 outline-none focus:border-brand-royal"
               >
-                <option value="ALL">All Subjects</option>
-                <option value="Mathematics">Mathematics</option>
-                <option value="Portuguese Language">Portuguese</option>
+                <option value="ALL">All Assigned Subjects</option>
+                {assignedSubjects.map((s) => (
+                  <option key={s.id} value={s.name}>
+                    {s.name}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -203,7 +260,7 @@ export const TeacherPredictions: React.FC = () => {
               </select>
             </div>
 
-            {(selectedStudentId !== 'ALL' || selectedSubject !== 'ALL' || selectedMilestone !== 'ALL' || selectedRisk !== 'ALL') && (
+            {(selectedStudentId !== 'ALL' || selectedSubjectFilter !== 'ALL' || selectedMilestone !== 'ALL' || selectedRisk !== 'ALL') && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -235,7 +292,7 @@ export const TeacherPredictions: React.FC = () => {
           icon={<BrainCircuit size={36} className="text-brand-royal" />}
           title="No Prediction Records Found"
           description="There are no machine learning assessment records matching your current filter criteria."
-          actionText={selectedStudentId !== 'ALL' || selectedSubject !== 'ALL' || selectedMilestone !== 'ALL' ? 'Reset Filters' : undefined}
+          actionText={selectedStudentId !== 'ALL' || selectedSubjectFilter !== 'ALL' || selectedMilestone !== 'ALL' ? 'Reset Filters' : undefined}
           onAction={handleResetFilters}
         />
       ) : (
@@ -375,6 +432,7 @@ export const TeacherPredictions: React.FC = () => {
       {/* Teacher Prediction Assessment Modal */}
       <TeacherPredictionModal
         student={predictingStudent}
+        students={students}
         isOpen={!!predictingStudent}
         onClose={() => setPredictingStudent(null)}
         onPredictionCreated={loadPredictions}

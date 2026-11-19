@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from bson import ObjectId
 from backend.utils.security import check_password, hash_password, normalize_email, to_object_id
 
-VALID_ROLES = {"student", "teacher", "admin"}
+VALID_ROLES = {"student", "teacher", "admin", "analyst"}
 
 
 class User:
