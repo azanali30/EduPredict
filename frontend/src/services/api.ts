@@ -149,11 +149,34 @@ export const api = {
   getStudentSubjects: () =>
     apiRequest<{ subjects: SubjectItem[]; count: number; status_code: number }>('/api/student/subjects'),
 
+  // File Upload API
+  uploadFile: async (file: File, category: 'avatar' | 'document' = 'document') => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('category', category);
+    return apiRequest<{
+      message: string;
+      file_url: string;
+      filename: string;
+      original_name: string;
+      file_type: string;
+      size: number;
+      category: string;
+      status_code: number;
+    }>('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+  },
+
   // Admin Routes
   getAdminUsers: (role?: string) => {
     const query = role ? `?role=${encodeURIComponent(role)}` : '';
     return apiRequest<{ users: User[]; count: number; status_code: number }>(`/api/admin/users${query}`);
   },
+
+  adminGetUser: (userId: string) =>
+    apiRequest<{ user: User; status_code: number }>(`/api/admin/users/${userId}`),
 
   adminCreateUser: (payload: {
     full_name: string;
@@ -165,10 +188,25 @@ export const api = {
     department?: string;
     contact_number?: string;
     is_active?: boolean;
+    avatar_url?: string;
+    must_change_password?: boolean;
+    personal_info?: any;
+    contact_info?: any;
+    guardian_info?: any;
+    academic_info?: any;
+    professional_info?: any;
+    employment_info?: any;
+    documents?: any[];
   }) =>
     apiRequest<{ message: string; user: User; status_code: number }>('/api/admin/users', {
       method: 'POST',
       body: JSON.stringify(payload),
+    }),
+
+  adminUpdateUser: (userId: string, data: Partial<User>) =>
+    apiRequest<{ message: string; user: User; status_code: number }>(`/api/admin/users/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
     }),
 
   adminUpdateUserStatus: (userId: string, isActive: boolean) =>

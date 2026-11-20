@@ -190,11 +190,10 @@ export const TeacherAnomalies: React.FC = () => {
                     </td>
                     <td>
                       <span
-                        className={`badge ${
-                          anom.severity === 'high'
-                            ? 'bg-rose-100 text-rose-800'
-                            : 'bg-amber-100 text-amber-800'
-                        } text-[10px] font-bold uppercase`}
+                        className={`badge ${anom.severity === 'high'
+                          ? 'bg-rose-100 text-rose-800'
+                          : 'bg-amber-100 text-amber-800'
+                          } text-[10px] font-bold uppercase`}
                       >
                         {anom.severity} priority
                       </span>

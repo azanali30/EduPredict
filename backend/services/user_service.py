@@ -50,9 +50,18 @@ class UserService:
         employee_id: str | None = None,
         contact_number: str | None = None,
         department: str | None = None,
+        avatar_url: str | None = None,
+        must_change_password: bool = False,
+        personal_info: dict | None = None,
+        contact_info: dict | None = None,
+        guardian_info: dict | None = None,
+        academic_info: dict | None = None,
+        professional_info: dict | None = None,
+        employment_info: dict | None = None,
+        documents: list[dict] | None = None,
     ) -> tuple[User | None, str | None]:
         """
-        Create a new user with secure password hashing.
+        Create a new user with secure password hashing and multi-section profile metadata.
         Returns: (User instance, error_message)
         """
         if db is None:
@@ -89,6 +98,17 @@ class UserService:
             if db.users.find_one({"employee_id": clean_emp_id}):
                 return None, f"A teacher with Employee ID '{clean_emp_id}' already exists."
 
+        # Propagate contact_number or department from contact_info/academic_info/professional_info if not explicitly provided
+        final_contact = contact_number.strip() if contact_number else None
+        if not final_contact and contact_info:
+            final_contact = contact_info.get("contact_number") or contact_info.get("phone")
+
+        final_dept = department.strip() if department else None
+        if not final_dept and professional_info:
+            final_dept = professional_info.get("department")
+        if not final_dept and academic_info:
+            final_dept = academic_info.get("department")
+
         pwd_hash = hash_password(plain_password)
         user = User(
             email=norm_email,
@@ -98,8 +118,17 @@ class UserService:
             is_active=is_active,
             student_id=clean_stu_id,
             employee_id=clean_emp_id,
-            contact_number=contact_number.strip() if contact_number else None,
-            department=department.strip() if department else None,
+            contact_number=final_contact,
+            department=final_dept,
+            avatar_url=avatar_url,
+            must_change_password=must_change_password,
+            personal_info=personal_info,
+            contact_info=contact_info,
+            guardian_info=guardian_info,
+            academic_info=academic_info,
+            professional_info=professional_info,
+            employment_info=employment_info,
+            documents=documents,
         )
 
         try:
@@ -125,6 +154,111 @@ class UserService:
             return None, "An account with this email address already exists."
         except Exception as e:
             return None, f"Failed to create user: {str(e)}"
+
+    @staticmethod
+    def update_user_by_admin(
+        db: Database,
+        target_user_id,
+        update_data: dict,
+        actor_admin_id=None,
+    ) -> tuple[User | None, str | None]:
+        """
+        Update user profile attributes by an administrator.
+        Prevents privilege escalation (role/email cannot be modified through this method).
+        Validates unique student_id / employee_id when modified.
+        """
+        user = UserService.get_by_id(db, target_user_id)
+        if not user:
+            return None, "User not found."
+
+        set_fields = {}
+        now = datetime.now(timezone.utc)
+        set_fields["updated_at"] = now
+
+        # 1. Full name
+        if "full_name" in update_data:
+            name = update_data["full_name"]
+            if not name or not name.strip():
+                return None, "Full name cannot be empty."
+            set_fields["full_name"] = name.strip()
+            user.full_name = name.strip()
+
+        # 2. Student ID uniqueness if changed
+        if "student_id" in update_data and user.role == "student":
+            stu_id = update_data["student_id"]
+            clean_stu = stu_id.strip() if stu_id else None
+            if clean_stu and clean_stu != user.student_id:
+                if db.users.find_one({"student_id": clean_stu, "_id": {"$ne": user.id}}):
+                    return None, f"A student with Student ID '{clean_stu}' already exists."
+            set_fields["student_id"] = clean_stu
+            user.student_id = clean_stu
+
+        # 3. Employee ID uniqueness if changed
+        if "employee_id" in update_data and user.role == "teacher":
+            emp_id = update_data["employee_id"]
+            clean_emp = emp_id.strip() if emp_id else None
+            if clean_emp and clean_emp != user.employee_id:
+                if db.users.find_one({"employee_id": clean_emp, "_id": {"$ne": user.id}}):
+                    return None, f"A teacher with Employee ID '{clean_emp}' already exists."
+            set_fields["employee_id"] = clean_emp
+            user.employee_id = clean_emp
+
+        # 4. Department
+        if "department" in update_data:
+            dept = update_data["department"]
+            clean_dept = dept.strip() if dept else None
+            set_fields["department"] = clean_dept
+            user.department = clean_dept
+
+        # 5. Contact number
+        if "contact_number" in update_data:
+            contact = update_data["contact_number"]
+            clean_contact = contact.strip() if contact else None
+            set_fields["contact_number"] = clean_contact
+            user.contact_number = clean_contact
+
+        # 6. Avatar URL
+        if "avatar_url" in update_data:
+            set_fields["avatar_url"] = update_data["avatar_url"]
+            user.avatar_url = update_data["avatar_url"]
+
+        # 7. Must change password
+        if "must_change_password" in update_data:
+            set_fields["must_change_password"] = bool(update_data["must_change_password"])
+            user.must_change_password = bool(update_data["must_change_password"])
+
+        # 8. Profile subdocuments
+        for section in ("personal_info", "contact_info", "guardian_info", "academic_info", "professional_info", "employment_info"):
+            if section in update_data and isinstance(update_data[section], dict):
+                merged = getattr(user, section, {}) or {}
+                merged.update(update_data[section])
+                set_fields[section] = merged
+                setattr(user, section, merged)
+
+        # 9. Documents
+        if "documents" in update_data and isinstance(update_data["documents"], list):
+            set_fields["documents"] = update_data["documents"]
+            user.documents = update_data["documents"]
+
+        try:
+            db.users.update_one({"_id": user.id}, {"$set": set_fields})
+            user.updated_at = now
+            log_event(
+                db,
+                "ADMIN_USER_UPDATED",
+                {"target_user_id": str(user.id), "updated_fields": list(set_fields.keys())},
+                user_id=actor_admin_id or user.id,
+            )
+            return user, None
+        except DuplicateKeyError as e:
+            err_str = str(e)
+            if "student_id" in err_str:
+                return None, "Student ID already in use."
+            if "employee_id" in err_str:
+                return None, "Employee ID already in use."
+            return None, "Duplicate field constraint violated."
+        except Exception as e:
+            return None, f"Failed to update user profile: {str(e)}"
 
     @staticmethod
     def update_profile(

@@ -9,9 +9,9 @@ import { LoadingState } from '../../components/common/LoadingState';
 import { ErrorAlert } from '../../components/common/ErrorAlert';
 import { EmptyState } from '../../components/common/EmptyState';
 import { StudentProfileDrawer } from '../../components/common/StudentProfileDrawer';
-import { Modal } from '../../components/common/Modal';
+import { StudentRegistrationModal } from '../../components/admin/StudentRegistrationModal';
+import { EditUserModal } from '../../components/admin/EditUserModal';
 import { Button } from '../../components/forms/Button';
-import { InputField } from '../../components/forms/InputField';
 import {
   GraduationCap,
   Search,
@@ -25,7 +25,18 @@ import {
   CheckCircle2,
   UserX,
   UserCheck,
+  Filter,
+  Edit,
 } from 'lucide-react';
+
+const DEPARTMENTS = [
+  'ALL',
+  'STEM & Mathematics',
+  'Humanities & Languages',
+  'Natural Sciences',
+  'Social Sciences',
+  'Computer Science & Data Analytics',
+];
 
 export const AdminStudents: React.FC = () => {
   const [students, setStudents] = useState<User[]>([]);
@@ -34,22 +45,15 @@ export const AdminStudents: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [deptFilter, setDeptFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
+
+  // Selected Student for Drawer & Editing
   const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
+  const [editingStudent, setEditingStudent] = useState<User | null>(null);
 
-  // Modal State for adding student
+  // Registration Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-
-  // Form Fields
-  const [fullName, setFullName] = useState('');
-  const [studentId, setStudentId] = useState('');
-  const [email, setEmail] = useState('');
-  const [contactNumber, setContactNumber] = useState('');
-  const [password, setPassword] = useState('');
-  const [isActive, setIsActive] = useState(true);
-
-  // Status updating state
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
 
   const fetchData = async () => {
@@ -71,61 +75,6 @@ export const AdminStudents: React.FC = () => {
     fetchData();
   }, []);
 
-  const handleCreateStudent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError(null);
-
-    if (!fullName.trim()) {
-      setFormError('Full name is required.');
-      return;
-    }
-    if (!studentId.trim()) {
-      setFormError('Student ID / Admission ID is required.');
-      return;
-    }
-    if (!email.trim()) {
-      setFormError('Institutional email address is required.');
-      return;
-    }
-    if (!password.trim()) {
-      setFormError('Initial secure password is required.');
-      return;
-    }
-    if (password.length < 8) {
-      setFormError('Password must be at least 8 characters long.');
-      return;
-    }
-
-    setCreating(true);
-    try {
-      await api.adminCreateUser({
-        full_name: fullName.trim(),
-        student_id: studentId.trim(),
-        email: email.trim(),
-        contact_number: contactNumber.trim() || undefined,
-        password: password.trim(),
-        role: 'student',
-        is_active: isActive,
-      });
-
-      setSuccessMessage(`Student account '${fullName.trim()}' successfully created.`);
-      setIsModalOpen(false);
-      // Reset form
-      setFullName('');
-      setStudentId('');
-      setEmail('');
-      setContactNumber('');
-      setPassword('');
-      setIsActive(true);
-      // Refresh list
-      await fetchData();
-    } catch (err: any) {
-      setFormError(err?.message || 'Failed to create student account.');
-    } finally {
-      setCreating(false);
-    }
-  };
-
   const handleToggleStatus = async (student: User) => {
     const newStatus = !student.is_active;
     const actionLabel = newStatus ? 'activate' : 'deactivate';
@@ -145,12 +94,22 @@ export const AdminStudents: React.FC = () => {
     }
   };
 
-  const filteredStudents = students.filter(
-    (s) =>
+  const filteredStudents = students.filter((s) => {
+    const matchesSearch =
       s.full_name.toLowerCase().includes(search.toLowerCase()) ||
       s.email.toLowerCase().includes(search.toLowerCase()) ||
-      (s.student_id && s.student_id.toLowerCase().includes(search.toLowerCase()))
-  );
+      (s.student_id && s.student_id.toLowerCase().includes(search.toLowerCase()));
+
+    const sDept = s.department || s.academic_info?.department || '';
+    const matchesDept = deptFilter === 'ALL' || sDept.toLowerCase().includes(deptFilter.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === 'ALL' ||
+      (statusFilter === 'ACTIVE' && s.is_active !== false) ||
+      (statusFilter === 'INACTIVE' && s.is_active === false);
+
+    return matchesSearch && matchesDept && matchesStatus;
+  });
 
   const activeEnrollmentsCount = enrollments.filter((e) => e.status === 'active').length;
 
@@ -162,20 +121,17 @@ export const AdminStudents: React.FC = () => {
     <div className="space-y-6">
       <PageHeader
         title="Student Management Directory"
-        subtitle="Comprehensive administrative control over enrolled students, identity verification, and course enrollment records."
+        subtitle="Comprehensive administrative control over student identity registration, multi-section profiles, and course enrollment records."
         icon={<GraduationCap size={24} className="text-brand-royal" />}
         actions={
           <Button
             variant="primary"
             size="sm"
             leftIcon={<Plus size={16} />}
-            onClick={() => {
-              setFormError(null);
-              setIsModalOpen(true);
-            }}
+            onClick={() => setIsModalOpen(true)}
             className="shadow-sm font-semibold"
           >
-            Add Student
+            + Add Student
           </Button>
         }
       />
@@ -225,17 +181,14 @@ export const AdminStudents: React.FC = () => {
             variant="primary"
             size="sm"
             leftIcon={<Plus size={14} />}
-            onClick={() => {
-              setFormError(null);
-              setIsModalOpen(true);
-            }}
+            onClick={() => setIsModalOpen(true)}
             className="text-xs"
           >
             + Add Student
           </Button>
         }
       >
-        <div className="mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        <div className="mb-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
           <div className="relative flex-1 max-w-md">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -243,18 +196,48 @@ export const AdminStudents: React.FC = () => {
               placeholder="Search by student name, ID, or email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="input pl-9 text-xs sm:text-sm"
+              className="input pl-9 text-xs sm:text-sm w-full"
             />
           </div>
-          <span className="text-xs text-slate-500 font-medium self-end sm:self-center">
-            Showing {filteredStudents.length} of {students.length} students
-          </span>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1">
+              <Filter size={13} className="text-slate-400" />
+              <select
+                value={deptFilter}
+                onChange={(e) => setDeptFilter(e.target.value)}
+                className="bg-transparent text-xs text-slate-700 font-medium focus:outline-none"
+              >
+                {DEPARTMENTS.map((dept) => (
+                  <option key={dept} value={dept}>
+                    {dept === 'ALL' ? 'All Departments' : dept}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+                className="bg-transparent text-xs text-slate-700 font-medium focus:outline-none"
+              >
+                <option value="ALL">All Statuses</option>
+                <option value="ACTIVE">Active Only</option>
+                <option value="INACTIVE">Inactive Only</option>
+              </select>
+            </div>
+
+            <span className="text-xs text-slate-500 font-medium ml-auto">
+              Showing {filteredStudents.length} of {students.length} students
+            </span>
+          </div>
         </div>
 
         {filteredStudents.length === 0 ? (
           <EmptyState
             title="No Students Found"
-            description={search ? `No student profiles match '${search}'.` : 'No student accounts exist in the directory.'}
+            description={search || deptFilter !== 'ALL' || statusFilter !== 'ALL' ? 'No student profiles match the filter criteria.' : 'No student accounts exist in the directory.'}
             icon={<GraduationCap size={32} />}
             actionText="Register Student"
             onAction={() => setIsModalOpen(true)}
@@ -266,8 +249,8 @@ export const AdminStudents: React.FC = () => {
                 <tr>
                   <th className="w-1/4">Student Name</th>
                   <th className="w-1/6">Admission ID</th>
-                  <th className="w-1/4">Institutional Email</th>
-                  <th className="w-1/6">Active Enrollments</th>
+                  <th className="w-1/5">Institutional Email</th>
+                  <th className="w-1/6">Department & Degree</th>
                   <th className="w-1/12 text-center">Status</th>
                   <th className="w-1/6 text-right">Actions</th>
                 </tr>
@@ -278,13 +261,22 @@ export const AdminStudents: React.FC = () => {
                     (e) => e.student_id === student.id && e.status === 'active'
                   );
                   const isUpdatingThis = statusUpdatingId === student.id;
+                  const dept = student.department || student.academic_info?.department || 'STEM & Mathematics';
                   return (
                     <tr key={student.id} className="hover:bg-slate-50/80 transition-colors">
                       <td>
                         <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-brand-royal via-brand-ocean to-brand-mint text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
-                            {student.full_name ? student.full_name.charAt(0).toUpperCase() : 'S'}
-                          </div>
+                          {student.avatar_url ? (
+                            <img
+                              src={student.avatar_url}
+                              alt={student.full_name}
+                              className="w-9 h-9 rounded-full object-cover border border-slate-200 shadow-2xs shrink-0"
+                            />
+                          ) : (
+                            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-brand-royal via-brand-ocean to-brand-mint text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
+                              {student.full_name ? student.full_name.charAt(0).toUpperCase() : 'S'}
+                            </div>
+                          )}
                           <div>
                             <span className="font-bold text-navy-900 block leading-tight">{student.full_name}</span>
                             {student.contact_number && (
@@ -309,9 +301,11 @@ export const AdminStudents: React.FC = () => {
                         </span>
                       </td>
                       <td>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-royal/10 text-brand-royal">
-                          <BookOpen size={12} />
-                          {studentEnrollments.length} subjects
+                        <span className="text-xs font-medium text-slate-700 block truncate max-w-[180px]">
+                          {dept}
+                        </span>
+                        <span className="text-[10px] text-brand-royal font-semibold block">
+                          {studentEnrollments.length} enrolled {studentEnrollments.length === 1 ? 'subject' : 'subjects'}
                         </span>
                       </td>
                       <td className="text-center">
@@ -330,6 +324,16 @@ export const AdminStudents: React.FC = () => {
                             className="text-xs py-1 px-2.5"
                           >
                             Inspect
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditingStudent(student)}
+                            leftIcon={<Edit size={13} />}
+                            className="text-xs py-1 px-2"
+                            title="Edit student profile"
+                          >
+                            Edit
                           </Button>
                           <Button
                             variant="outline"
@@ -367,100 +371,32 @@ export const AdminStudents: React.FC = () => {
         student={selectedStudent}
         isOpen={Boolean(selectedStudent)}
         onClose={() => setSelectedStudent(null)}
+        onEditClick={(s) => {
+          setSelectedStudent(null);
+          setEditingStudent(s);
+        }}
       />
 
-      {/* Add Student Registration Modal */}
-      <Modal
+      {/* Comprehensive Multi-Section Student Registration Modal */}
+      <StudentRegistrationModal
         isOpen={isModalOpen}
-        onClose={() => {
-          if (!creating) setIsModalOpen(false);
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={(newUser) => {
+          setSuccessMessage(`Student account '${newUser.full_name}' successfully provisioned.`);
+          fetchData();
         }}
-        title="Register New Student Account"
-      >
-        <form onSubmit={handleCreateStudent} className="space-y-4">
-          <ErrorAlert message={formError || ''} onDismiss={() => setFormError(null)} />
+      />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <InputField
-              label="Full Name *"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="e.g. Jane Doe"
-              required
-            />
-            <InputField
-              label="Student ID / Admission ID *"
-              value={studentId}
-              onChange={(e) => setStudentId(e.target.value)}
-              placeholder="e.g. STU-2026-001"
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <InputField
-              label="Institutional Email *"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g. j.doe@student.edupredict.com"
-              required
-            />
-            <InputField
-              label="Contact Number"
-              value={contactNumber}
-              onChange={(e) => setContactNumber(e.target.value)}
-              placeholder="e.g. +1 555-0199"
-            />
-          </div>
-
-          <InputField
-            label="Initial Secure Password *"
-            isPassword
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="At least 8 chars with mixed case, number, symbol"
-            helperText="The student will be prompted to update this password upon initial login."
-            required
-          />
-
-          <div className="flex items-center gap-3 pt-2">
-            <label className="text-xs font-semibold uppercase tracking-wider text-navy-900">
-              Account Status
-            </label>
-            <select
-              value={isActive ? 'active' : 'inactive'}
-              onChange={(e) => setIsActive(e.target.value === 'active')}
-              className="input text-xs py-1.5 px-3 max-w-[140px]"
-            >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
-
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              size="md"
-              disabled={creating}
-              onClick={() => setIsModalOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              size="md"
-              isLoading={creating}
-              leftIcon={<Plus size={16} />}
-              className="shadow-glow"
-            >
-              Create Student Account
-            </Button>
-          </div>
-        </form>
-      </Modal>
+      {/* Edit Student Modal */}
+      <EditUserModal
+        isOpen={Boolean(editingStudent)}
+        onClose={() => setEditingStudent(null)}
+        user={editingStudent}
+        onSuccess={(updated) => {
+          setSuccessMessage(`Profile for '${updated.full_name}' updated successfully.`);
+          fetchData();
+        }}
+      />
     </div>
   );
 };

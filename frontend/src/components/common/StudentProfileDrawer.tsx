@@ -5,7 +5,6 @@ import { Button } from '../forms/Button';
 import {
   X,
   Sparkles,
-  Calendar,
   Hash,
   Mail,
   ShieldCheck,
@@ -13,6 +12,11 @@ import {
   BrainCircuit,
   Info,
   Phone,
+  GraduationCap,
+  MapPin,
+  HeartHandshake,
+  FileText,
+  Edit,
 } from 'lucide-react';
 
 interface StudentProfileDrawerProps {
@@ -21,6 +25,7 @@ interface StudentProfileDrawerProps {
   student: User | null;
   latestPrediction?: PredictionRecord | null;
   onAssessClick?: (student: User) => void;
+  onEditClick?: (student: User) => void;
 }
 
 export const StudentProfileDrawer: React.FC<StudentProfileDrawerProps> = ({
@@ -29,6 +34,7 @@ export const StudentProfileDrawer: React.FC<StudentProfileDrawerProps> = ({
   student,
   latestPrediction,
   onAssessClick,
+  onEditClick,
 }) => {
   // Close on Escape key
   useEffect(() => {
@@ -47,6 +53,12 @@ export const StudentProfileDrawer: React.FC<StudentProfileDrawerProps> = ({
 
   if (!isOpen || !student) return null;
 
+  const personal = student.personal_info || {};
+  const contact = student.contact_info || {};
+  const guardian = student.guardian_info || {};
+  const academic = student.academic_info || {};
+  const docs = student.documents || [];
+
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Backdrop */}
@@ -57,13 +69,21 @@ export const StudentProfileDrawer: React.FC<StudentProfileDrawerProps> = ({
       />
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col border-l border-slate-200 animate-drawer-in">
+        <div className="w-screen max-w-lg bg-white shadow-2xl flex flex-col border-l border-slate-200 animate-drawer-in">
           {/* Drawer Header */}
           <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-white">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-royal via-brand-ocean to-brand-mint text-white flex items-center justify-center font-extrabold text-base shadow-glow-brand shrink-0">
-                {student.full_name.charAt(0).toUpperCase()}
-              </div>
+              {student.avatar_url ? (
+                <img
+                  src={student.avatar_url}
+                  alt={student.full_name}
+                  className="w-14 h-14 rounded-2xl object-cover border border-slate-200 shadow-sm shrink-0"
+                />
+              ) : (
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-brand-royal via-brand-ocean to-brand-mint text-white flex items-center justify-center font-extrabold text-base shadow-glow-brand shrink-0">
+                  {student.full_name.charAt(0).toUpperCase()}
+                </div>
+              )}
               <div>
                 <h3 className="text-base font-extrabold text-navy-900 leading-snug">
                   {student.full_name}
@@ -99,7 +119,7 @@ export const StudentProfileDrawer: React.FC<StudentProfileDrawerProps> = ({
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-3">
                   <Mail size={16} className="text-slate-400 shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <span className="text-[10px] font-semibold text-slate-400 uppercase block">Email</span>
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase block">Institutional Email</span>
                     <span className="text-xs font-mono font-medium text-slate-800 truncate block">
                       {student.email}
                     </span>
@@ -139,30 +159,165 @@ export const StudentProfileDrawer: React.FC<StudentProfileDrawerProps> = ({
                     </div>
                   </div>
                 )}
-
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-2.5">
-                    <Calendar size={16} className="text-slate-400 shrink-0" />
-                    <div className="min-w-0">
-                      <span className="text-[10px] font-semibold text-slate-400 uppercase block">Registered</span>
-                      <span className="text-xs font-medium text-slate-800 truncate block">
-                        {student.created_at ? new Date(student.created_at).toLocaleDateString() : 'Active'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-2.5">
-                    <Hash size={16} className="text-slate-400 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[10px] font-semibold text-slate-400 uppercase block">DB Record</span>
-                      <span className="text-[11px] font-mono text-slate-600 truncate block">
-                        {student.id.slice(-8)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
+
+            {/* Academic Profile */}
+            {(academic.program_course || academic.department || academic.class_grade) && (
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <GraduationCap size={14} className="text-brand-royal" />
+                  <span>Academic Profile</span>
+                </h4>
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2.5 text-xs">
+                  {academic.program_course && (
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Degree / Program</span>
+                      <span className="font-bold text-navy-900">{academic.program_course}</span>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-2">
+                    {academic.department && (
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Department</span>
+                        <span className="text-slate-700">{academic.department}</span>
+                      </div>
+                    )}
+                    {academic.class_grade && (
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Cohort / Grade</span>
+                        <span className="text-slate-700">{academic.class_grade}</span>
+                      </div>
+                    )}
+                  </div>
+                  {(academic.academic_year || academic.academic_term) && (
+                    <div className="grid grid-cols-2 gap-2">
+                      {academic.academic_year && (
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-slate-400 block">Academic Year</span>
+                          <span className="text-slate-700">{academic.academic_year}</span>
+                        </div>
+                      )}
+                      {academic.academic_term && (
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-slate-400 block">Academic Term</span>
+                          <span className="font-mono text-brand-royal font-bold">{academic.academic_term}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Parent / Guardian Information */}
+            {(guardian.guardian_full_name || guardian.guardian_contact_number) && (
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <HeartHandshake size={14} className="text-brand-ocean" />
+                  <span>Parent / Guardian Information</span>
+                </h4>
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2 text-xs">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Guardian Name</span>
+                    <span className="font-semibold text-navy-900">
+                      {guardian.guardian_full_name} {guardian.relationship ? `(${guardian.relationship})` : ''}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {guardian.guardian_contact_number && (
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Phone</span>
+                        <span className="text-slate-700">{guardian.guardian_contact_number}</span>
+                      </div>
+                    )}
+                    {guardian.emergency_contact_number && (
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Emergency Phone</span>
+                        <span className="text-rose-600 font-bold">{guardian.emergency_contact_number}</span>
+                      </div>
+                    )}
+                  </div>
+                  {guardian.guardian_email && (
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Email</span>
+                      <span className="text-slate-700">{guardian.guardian_email}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Personal & Address Details */}
+            {(personal.date_of_birth || personal.gender || contact.residential_address) && (
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <MapPin size={14} className="text-slate-400" />
+                  <span>Personal & Address Details</span>
+                </h4>
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2 text-xs">
+                  <div className="grid grid-cols-3 gap-2">
+                    {personal.date_of_birth && (
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">DOB</span>
+                        <span className="text-slate-700">{personal.date_of_birth}</span>
+                      </div>
+                    )}
+                    {personal.gender && (
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Gender</span>
+                        <span className="text-slate-700">{personal.gender}</span>
+                      </div>
+                    )}
+                    {personal.nationality && (
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Nationality</span>
+                        <span className="text-slate-700">{personal.nationality}</span>
+                      </div>
+                    )}
+                  </div>
+                  {(contact.residential_address || contact.city) && (
+                    <div className="pt-1">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Residential Address</span>
+                      <span className="text-slate-700">
+                        {[contact.residential_address, contact.city, contact.country].filter(Boolean).join(', ')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Documents List */}
+            {docs.length > 0 && (
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <FileText size={14} className="text-brand-royal" />
+                  <span>Attached Documents</span>
+                </h4>
+                <div className="space-y-2">
+                  {docs.map((d) => (
+                    <div
+                      key={d.id}
+                      className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-xs"
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <FileText size={15} className="text-brand-royal shrink-0" />
+                        <span className="font-medium text-navy-900 truncate">{d.name}</span>
+                      </div>
+                      <a
+                        href={d.file_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-brand-royal hover:underline font-bold text-[11px] shrink-0"
+                      >
+                        View
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* AI Performance Telemetry Card */}
             <div className="space-y-3">
@@ -239,6 +394,19 @@ export const StudentProfileDrawer: React.FC<StudentProfileDrawerProps> = ({
 
           {/* Drawer Footer Actions */}
           <div className="p-4 border-t border-slate-200 bg-slate-50/80 flex items-center justify-between gap-3 shrink-0">
+            {onEditClick && (
+              <Button
+                variant="outline"
+                size="md"
+                onClick={() => {
+                  onClose();
+                  onEditClick(student);
+                }}
+                leftIcon={<Edit size={14} />}
+              >
+                Edit Profile
+              </Button>
+            )}
             {onAssessClick && (
               <Button
                 variant="primary"

@@ -1,5 +1,67 @@
 export type UserRole = 'student' | 'teacher' | 'admin' | 'analyst';
 
+export interface PersonalInfo {
+  date_of_birth?: string;
+  gender?: string;
+  nationality?: string;
+}
+
+export interface ContactInfo {
+  personal_email?: string;
+  contact_number?: string;
+  alternate_contact_number?: string;
+  residential_address?: string;
+  city?: string;
+  country?: string;
+}
+
+export interface GuardianInfo {
+  guardian_full_name?: string;
+  relationship?: string;
+  guardian_contact_number?: string;
+  guardian_email?: string;
+  emergency_contact_number?: string;
+}
+
+export interface AcademicInfo {
+  admission_date?: string;
+  academic_year?: string;
+  academic_term?: string;
+  program_course?: string;
+  department?: string;
+  class_grade?: string;
+  previous_institution?: string;
+  previous_qualification?: string;
+}
+
+export interface ProfessionalInfo {
+  department?: string;
+  job_title?: string;
+  highest_qualification?: string;
+  specialization?: string;
+  experience_years?: string | number;
+  previous_institution?: string;
+  bio?: string;
+}
+
+export interface EmploymentInfo {
+  joining_date?: string;
+  employment_type?: string;
+  employment_status?: string;
+  academic_year?: string;
+  internal_notes?: string;
+}
+
+export interface UserDocument {
+  id: string;
+  name: string;
+  file_url: string;
+  file_type: string;
+  category: string;
+  size?: number;
+  uploaded_at: string;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -10,6 +72,15 @@ export interface User {
   employee_id?: string;
   contact_number?: string;
   department?: string;
+  avatar_url?: string;
+  must_change_password?: boolean;
+  personal_info?: PersonalInfo;
+  contact_info?: ContactInfo;
+  guardian_info?: GuardianInfo;
+  academic_info?: AcademicInfo;
+  professional_info?: ProfessionalInfo;
+  employment_info?: EmploymentInfo;
+  documents?: UserDocument[];
   enrolled_subjects_under_teacher?: string[];
   created_at: string;
   updated_at: string;

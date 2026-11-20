@@ -61,6 +61,8 @@ desktop.ini
 temp/
 tmp/
 scratch/
+backend/uploads/*
+!backend/uploads/.gitkeep
 
 
 # Node.js & Frontend Artifacts

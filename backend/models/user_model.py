@@ -30,6 +30,15 @@ class User:
         employee_id: str | None = None,
         contact_number: str | None = None,
         department: str | None = None,
+        avatar_url: str | None = None,
+        must_change_password: bool = False,
+        personal_info: dict | None = None,
+        contact_info: dict | None = None,
+        guardian_info: dict | None = None,
+        academic_info: dict | None = None,
+        professional_info: dict | None = None,
+        employment_info: dict | None = None,
+        documents: list[dict] | None = None,
     ):
         self.id = to_object_id(user_id) or ObjectId()
         self.email = normalize_email(email)
@@ -41,6 +50,15 @@ class User:
         self.employee_id = employee_id.strip() if employee_id else None
         self.contact_number = contact_number.strip() if contact_number else None
         self.department = department.strip() if department else None
+        self.avatar_url = avatar_url.strip() if avatar_url else None
+        self.must_change_password = bool(must_change_password)
+        self.personal_info = personal_info or {}
+        self.contact_info = contact_info or {}
+        self.guardian_info = guardian_info or {}
+        self.academic_info = academic_info or {}
+        self.professional_info = professional_info or {}
+        self.employment_info = employment_info or {}
+        self.documents = documents or []
         now = datetime.now(timezone.utc)
         self.created_at = created_at or now
         self.updated_at = updated_at or now
@@ -79,6 +97,14 @@ class User:
             "is_active": self.is_active,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
+            "must_change_password": self.must_change_password,
+            "personal_info": self.personal_info,
+            "contact_info": self.contact_info,
+            "guardian_info": self.guardian_info,
+            "academic_info": self.academic_info,
+            "professional_info": self.professional_info,
+            "employment_info": self.employment_info,
+            "documents": self.documents,
         }
         if self.student_id:
             doc["student_id"] = self.student_id
@@ -88,6 +114,8 @@ class User:
             doc["contact_number"] = self.contact_number
         if self.department:
             doc["department"] = self.department
+        if self.avatar_url:
+            doc["avatar_url"] = self.avatar_url
         return doc
 
     def to_dict(self, include_sensitive: bool = False) -> dict:
@@ -102,6 +130,15 @@ class User:
             "employee_id": self.employee_id,
             "contact_number": self.contact_number,
             "department": self.department,
+            "avatar_url": self.avatar_url,
+            "must_change_password": self.must_change_password,
+            "personal_info": self.personal_info,
+            "contact_info": self.contact_info,
+            "guardian_info": self.guardian_info,
+            "academic_info": self.academic_info,
+            "professional_info": self.professional_info,
+            "employment_info": self.employment_info,
+            "documents": self.documents,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
@@ -127,4 +164,13 @@ class User:
             employee_id=doc.get("employee_id"),
             contact_number=doc.get("contact_number"),
             department=doc.get("department"),
+            avatar_url=doc.get("avatar_url"),
+            must_change_password=doc.get("must_change_password", False),
+            personal_info=doc.get("personal_info") or {},
+            contact_info=doc.get("contact_info") or {},
+            guardian_info=doc.get("guardian_info") or {},
+            academic_info=doc.get("academic_info") or {},
+            professional_info=doc.get("professional_info") or {},
+            employment_info=doc.get("employment_info") or {},
+            documents=doc.get("documents") or [],
         )

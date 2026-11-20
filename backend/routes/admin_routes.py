@@ -46,18 +46,7 @@ def list_all_users():
 @admin_required
 def create_user():
     """
-    Create a student or teacher user account.
-    Expects JSON: {
-        "full_name": "...",
-        "email": "...",
-        "password": "...",
-        "role": "student" | "teacher",
-        "student_id": "..." (for students),
-        "employee_id": "..." (for teachers),
-        "department": "..." (optional for teachers),
-        "contact_number": "..." (optional),
-        "is_active": true (optional)
-    }
+    Create a student or teacher user account with comprehensive profile data.
     """
     data = request.get_json()
     if not data:
@@ -76,6 +65,16 @@ def create_user():
     employee_id = data.get("employee_id", "").strip() or None
     department = data.get("department", "").strip() or None
     contact_number = data.get("contact_number", "").strip() or None
+    avatar_url = data.get("avatar_url", "").strip() or None
+    must_change_password = bool(data.get("must_change_password", False))
+
+    personal_info = data.get("personal_info") or {}
+    contact_info = data.get("contact_info") or {}
+    guardian_info = data.get("guardian_info") or {}
+    academic_info = data.get("academic_info") or {}
+    professional_info = data.get("professional_info") or {}
+    employment_info = data.get("employment_info") or {}
+    documents = data.get("documents") or []
 
     if not full_name:
         return jsonify({
@@ -130,6 +129,15 @@ def create_user():
         employee_id=employee_id,
         contact_number=contact_number,
         department=department,
+        avatar_url=avatar_url,
+        must_change_password=must_change_password,
+        personal_info=personal_info,
+        contact_info=contact_info,
+        guardian_info=guardian_info,
+        academic_info=academic_info,
+        professional_info=professional_info,
+        employment_info=employment_info,
+        documents=documents,
     )
 
     if err or not user:
@@ -144,6 +152,78 @@ def create_user():
         "user": user.to_dict(),
         "status_code": 201,
     }), 201
+
+
+@admin_bp.route("/users/<user_id>", methods=["GET"])
+@admin_required
+def get_user_details(user_id):
+    """
+    Retrieve complete profile details for a user.
+    """
+    oid = to_object_id(user_id)
+    if not oid:
+        return jsonify({
+            "error": "Bad Request",
+            "message": "Invalid user ID format.",
+            "status_code": 400,
+        }), 400
+
+    user = UserService.get_by_id(mongo.db, oid)
+    if not user:
+        return jsonify({
+            "error": "Not Found",
+            "message": "User not found.",
+            "status_code": 404,
+        }), 404
+
+    return jsonify({
+        "user": user.to_dict(),
+        "status_code": 200,
+    }), 200
+
+
+@admin_bp.route("/users/<user_id>", methods=["PUT"])
+@admin_required
+def update_user_profile(user_id):
+    """
+    Update a student or teacher's profile attributes as an administrator.
+    """
+    oid = to_object_id(user_id)
+    if not oid:
+        return jsonify({
+            "error": "Bad Request",
+            "message": "Invalid user ID format.",
+            "status_code": 400,
+        }), 400
+
+    data = request.get_json()
+    if not data:
+        return jsonify({
+            "error": "Bad Request",
+            "message": "Request body must be valid JSON.",
+            "status_code": 400,
+        }), 400
+
+    updated_user, err = UserService.update_user_by_admin(
+        db=mongo.db,
+        target_user_id=oid,
+        update_data=data,
+        actor_admin_id=current_user.id,
+    )
+
+    if err or not updated_user:
+        status_code = 404 if "not found" in (err or "").lower() else 400
+        return jsonify({
+            "error": "Update Failed",
+            "message": err or "Failed to update user profile.",
+            "status_code": status_code,
+        }), status_code
+
+    return jsonify({
+        "message": "User profile successfully updated.",
+        "user": updated_user.to_dict(),
+        "status_code": 200,
+    }), 200
 
 
 @admin_bp.route("/users/<user_id>/status", methods=["PUT"])

@@ -41,6 +41,10 @@ class BaseConfig:
     APP_NAME = "EduPredict"
     APP_VERSION = "1.0.0"
 
+    # Upload and File Management
+    UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", str(BASE_DIR / "backend" / "uploads"))
+    MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10 MB maximum request payload limit
+
     # ML Artifact Paths
     ML_REGRESSION_MODEL_PATH = os.getenv(
         "ML_REGRESSION_MODEL_PATH", str(BASE_DIR / "ml_models" / "performance_regressor.joblib")
