@@ -8,6 +8,8 @@ import { LoadingState } from '../../components/common/LoadingState';
 import { ErrorAlert } from '../../components/common/ErrorAlert';
 import { EmptyState } from '../../components/common/EmptyState';
 import { StudentProfileDrawer } from '../../components/common/StudentProfileDrawer';
+import { StatusBadge } from '../../components/common/StatusBadge';
+import { Button } from '../../components/forms/Button';
 import { useTeacherSubject } from '../../context/TeacherSubjectContext';
 import {
   BookMarked,
@@ -124,16 +126,16 @@ export const TeacherAcademicRecords: React.FC = () => {
             icon={<BookMarked size={32} />}
           />
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-slate-200">
-            <table className="table">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+            <table className="table w-full">
               <thead>
                 <tr>
-                  <th>Student Name</th>
-                  <th>Email</th>
-                  <th>Evaluations on File</th>
-                  <th>Latest Predicted Grade</th>
-                  <th>Risk Classification</th>
-                  <th className="text-right">Action</th>
+                  <th className="w-1/4">Student</th>
+                  <th className="w-1/4">Email</th>
+                  <th className="w-1/6">Evaluations</th>
+                  <th className="w-1/6">Predicted Grade</th>
+                  <th className="w-1/6">Risk Level</th>
+                  <th className="w-1/12 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -142,43 +144,54 @@ export const TeacherAcademicRecords: React.FC = () => {
                   const latestPred = studentPreds[0];
                   return (
                     <tr key={st.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="font-bold text-navy-900">{st.full_name}</td>
-                      <td className="text-slate-500 text-xs">{st.email}</td>
                       <td>
-                        <span className="badge bg-slate-100 text-slate-700 text-xs">
-                          {studentPreds.length} recorded
-                        </span>
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-brand-royal via-brand-ocean to-brand-mint text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
+                            {st.full_name ? st.full_name.charAt(0).toUpperCase() : 'S'}
+                          </div>
+                          <div>
+                            <span className="font-bold text-navy-900 block leading-tight">{st.full_name}</span>
+                            <span className="text-[11px] text-slate-400 font-mono">
+                              ID: {st.student_id || st.id.slice(-8)}
+                            </span>
+                          </div>
+                        </div>
                       </td>
-                      <td className="font-semibold text-brand-royal text-sm">
-                        {latestPred
-                          ? `${(latestPred.predicted_final_grade ?? latestPred.predicted_marks ?? 0).toFixed(1)} / 20.0`
-                          : 'Pending'}
+                      <td className="text-slate-600 text-xs">
+                        <span className="truncate max-w-xs block">{st.email}</span>
+                      </td>
+                      <td>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200/60">
+                          {studentPreds.length} {studentPreds.length === 1 ? 'eval' : 'evals'}
+                        </span>
                       </td>
                       <td>
                         {latestPred ? (
-                          <span
-                            className={`badge ${
-                              latestPred.predicted_status === 'High Risk'
-                                ? 'bg-rose-100 text-rose-800'
-                                : latestPred.predicted_status === 'Moderate Risk'
-                                ? 'bg-amber-100 text-amber-800'
-                                : 'bg-emerald-100 text-emerald-800'
-                            } text-[10px] font-bold`}
-                          >
-                            {latestPred.predicted_status}
-                          </span>
+                          <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-navy-950">
+                            <span className="text-brand-royal text-sm">{latestPred.predicted_marks.toFixed(1)}</span>
+                            <span className="text-[10px] text-slate-400 font-normal">/ 100</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-400 italic">Pending</span>
+                        )}
+                      </td>
+                      <td>
+                        {latestPred ? (
+                          <StatusBadge status={latestPred.predicted_status} />
                         ) : (
                           <span className="text-xs text-slate-400 italic">No prediction yet</span>
                         )}
                       </td>
-                      <td className="text-right">
-                        <button
+                      <td className="text-right whitespace-nowrap">
+                        <Button
+                          variant="secondary"
+                          size="sm"
                           onClick={() => setSelectedStudent(st)}
-                          className="btn btn-secondary btn-sm text-xs py-1 px-2.5"
+                          leftIcon={<Eye size={13} className="text-brand-royal shrink-0" />}
+                          className="text-xs py-1.5 px-3 shadow-sm hover:shadow transition-all"
                         >
-                          <Eye size={14} className="mr-1" />
                           View Profile
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   );

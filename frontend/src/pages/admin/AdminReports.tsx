@@ -148,7 +148,12 @@ export const AdminReports: React.FC = () => {
                 <tr key={p.id}>
                   <td className="font-bold text-navy-900">{p.subject}</td>
                   <td className="font-mono text-xs">M{p.milestone}</td>
-                  <td className="font-semibold text-brand-royal">{(p.predicted_final_grade ?? p.predicted_marks ?? 0).toFixed(1)} / 20.0</td>
+                  <td className="font-semibold text-brand-royal">
+                    <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-navy-950">
+                      <span className="text-brand-royal text-sm">{p.predicted_marks.toFixed(1)}</span>
+                      <span className="text-[10px] text-slate-400 font-normal">/ 100</span>
+                    </div>
+                  </td>
                   <td>
                     <span className="badge bg-slate-100 text-slate-700 text-xs">
                       {p.predicted_status}

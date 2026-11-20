@@ -120,14 +120,14 @@ export const AdminAnalytics: React.FC = () => {
         />
         <StatCard
           title="Mathematics Avg"
-          value={`${mathAvg} / 20`}
-          subtitle={`Based on ${mathPreds.length} evaluations`}
+          value={`${mathAvg}%`}
+          subtitle={`Based on ${mathPreds.length} evaluations (${mathAvg}/100)`}
           icon={<Award size={20} className="text-brand-ocean" />}
         />
         <StatCard
           title="Portuguese Avg"
-          value={`${portAvg} / 20`}
-          subtitle={`Based on ${portPreds.length} evaluations`}
+          value={`${portAvg}%`}
+          subtitle={`Based on ${portPreds.length} evaluations (${portAvg}/100)`}
           icon={<Award size={20} className="text-brand-mint" />}
         />
         <StatCard
@@ -143,17 +143,17 @@ export const AdminAnalytics: React.FC = () => {
         {/* Subject Comparison */}
         <SectionCard
           title="Subject-Wise Performance Benchmarks"
-          subtitle="Average predicted grades across core disciplines (0–20 Portuguese scale)."
+          subtitle="Average predicted continuous performance percentage across core disciplines (0–100 scale)."
         >
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={subjectComparisonData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="subject" tick={{ fontSize: 12 }} />
-                <YAxis domain={[0, 20]} tick={{ fontSize: 12 }} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="averageGrade" name="Average Grade (/20)" fill="#2455C5" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="averageGrade" name="Average Grade (%)" fill="#2455C5" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

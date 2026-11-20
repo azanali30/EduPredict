@@ -67,45 +67,47 @@ export const StudentRecords: React.FC = () => {
             </h3>
             <span className="badge badge-success text-[10px]">Institutional Registrar Verified</span>
           </div>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Subject Name</th>
-                <th>Course Code</th>
-                <th>Academic Term</th>
-                <th>Grading Scale</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {enrolledSubjects.map((s) => (
-                <tr key={s.id}>
-                  <td>
-                    <div className="flex items-center gap-2">
-                      <BookOpen size={14} className="text-brand-600 shrink-0" />
-                      <span className="font-bold text-xs text-navy-900">{s.name}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold">
-                      {s.code || '—'}
-                    </span>
-                  </td>
-                  <td className="font-mono text-xs font-bold text-brand-royal">
-                    {s.academic_term || '2026-T1'}
-                  </td>
-                  <td className="text-xs text-slate-500 font-mono">
-                    {s.target_scale || '0 - 100'}
-                  </td>
-                  <td>
-                    <span className="badge badge-success text-[10px]">
-                      {s.enrollment_status || 'active'}
-                    </span>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Subject Name</th>
+                  <th>Course Code</th>
+                  <th>Academic Term</th>
+                  <th>Grading Scale</th>
+                  <th>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {enrolledSubjects.map((s) => (
+                  <tr key={s.id}>
+                    <td>
+                      <div className="flex items-center gap-2">
+                        <BookOpen size={14} className="text-brand-600 shrink-0" />
+                        <span className="font-bold text-xs text-navy-900">{s.name}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold">
+                        {s.code || '—'}
+                      </span>
+                    </td>
+                    <td className="font-mono text-xs font-bold text-brand-royal">
+                      {s.academic_term || '2026-T1'}
+                    </td>
+                    <td className="text-xs text-slate-500 font-mono">
+                      {s.target_scale || '0 - 100'}
+                    </td>
+                    <td>
+                      <span className="badge badge-success text-[10px]">
+                        {s.enrollment_status || 'active'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

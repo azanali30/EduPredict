@@ -12,6 +12,7 @@ import {
   TrendingUp,
   BrainCircuit,
   Info,
+  Phone,
 } from 'lucide-react';
 
 interface StudentProfileDrawerProps {
@@ -72,7 +73,7 @@ export const StudentProfileDrawer: React.FC<StudentProfileDrawerProps> = ({
                     Assigned Learner
                   </span>
                   <span className="text-[11px] text-slate-400 font-mono">
-                    ID: {student.id.slice(-8)}
+                    ID: {student.student_id || student.id.slice(-8)}
                   </span>
                 </div>
               </div>
@@ -107,11 +108,11 @@ export const StudentProfileDrawer: React.FC<StudentProfileDrawerProps> = ({
 
                 <div className="grid grid-cols-2 gap-2.5">
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-2.5">
-                    <Calendar size={16} className="text-slate-400 shrink-0" />
+                    <Hash size={16} className="text-slate-400 shrink-0" />
                     <div className="min-w-0">
-                      <span className="text-[10px] font-semibold text-slate-400 uppercase block">Enrolled</span>
-                      <span className="text-xs font-medium text-slate-800 truncate block">
-                        {student.created_at ? new Date(student.created_at).toLocaleDateString() : 'Active'}
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase block">Admission ID</span>
+                      <span className="text-xs font-mono font-semibold text-slate-800 truncate block">
+                        {student.student_id || student.id.slice(-8)}
                       </span>
                     </div>
                   </div>
@@ -127,13 +128,37 @@ export const StudentProfileDrawer: React.FC<StudentProfileDrawerProps> = ({
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-2.5">
-                  <Hash size={16} className="text-slate-400 shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <span className="text-[10px] font-semibold text-slate-400 uppercase block">Database Record ID</span>
-                    <span className="text-[11px] font-mono text-slate-600 truncate block">
-                      {student.id}
-                    </span>
+                {student.contact_number && (
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-2.5">
+                    <Phone size={16} className="text-slate-400 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase block">Contact Number</span>
+                      <span className="text-xs font-medium text-slate-800 truncate block">
+                        {student.contact_number}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-2.5">
+                    <Calendar size={16} className="text-slate-400 shrink-0" />
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase block">Registered</span>
+                      <span className="text-xs font-medium text-slate-800 truncate block">
+                        {student.created_at ? new Date(student.created_at).toLocaleDateString() : 'Active'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-2.5">
+                    <Hash size={16} className="text-slate-400 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase block">DB Record</span>
+                      <span className="text-[11px] font-mono text-slate-600 truncate block">
+                        {student.id.slice(-8)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

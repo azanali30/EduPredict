@@ -45,7 +45,7 @@ export const StudentRecommendations: React.FC = () => {
   const feat = latest?.features_summary || {};
   const studyHours = feat.study_hours_per_week?.value ?? 3.5;
   const absences = feat.absences?.value ?? 2;
-  const grade = latest?.predicted_final_grade ?? latest?.predicted_marks ?? 12.0;
+  const grade = latest?.predicted_marks ?? 65.0;
 
   // Generate dynamic, explainable recommendations based on actual features
   const recommendations = [
@@ -53,11 +53,11 @@ export const StudentRecommendations: React.FC = () => {
       id: '1',
       title: 'Weekly Study Time Optimization',
       category: 'Study Discipline',
-      impact: 'High Impact (+1.5 to +2.5 pts)',
+      impact: 'High Impact (+5 to +10 pts)',
       currentStatus: `${studyHours} hrs/week recorded`,
       action:
         studyHours < 5
-          ? 'Increasing your weekly focused study hours to 5–7 hours significantly increases model predicted grades in Portuguese scale benchmarks.'
+          ? 'Increasing your weekly focused study hours to 5–7 hours significantly increases model predicted performance in standard academic benchmarks.'
           : 'Your study commitment is strong. Focus on spaced repetition and practice problem sets to consolidate gains.',
       icon: <Clock size={20} className="text-brand-royal" />,
       priority: studyHours < 5 ? 'High' : 'Medium',
@@ -79,8 +79,8 @@ export const StudentRecommendations: React.FC = () => {
       id: '3',
       title: 'Milestone 1 Revision Strategy',
       category: 'Exam Preparedness',
-      impact: 'Medium Impact (+1.0 pt)',
-      currentStatus: `Target Grade: ${grade.toFixed(1)} / 20.0`,
+      impact: 'Medium Impact (+5 pts)',
+      currentStatus: `Target Grade: ${grade.toFixed(1)}% (${grade.toFixed(1)} / 100)`,
       action:
         'Prioritize fundamental coursework topics before mid-term evaluations. Utilize practice quizzes to verify mastery before G1 exams.',
       icon: <Lightbulb size={20} className="text-amber-500" />,

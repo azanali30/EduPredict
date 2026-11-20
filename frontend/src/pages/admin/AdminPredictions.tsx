@@ -201,7 +201,10 @@ export const AdminPredictions: React.FC = () => {
                       </span>
                     </td>
                     <td className="font-semibold text-brand-royal text-sm">
-                      {(pred.predicted_final_grade ?? pred.predicted_marks ?? 0).toFixed(1)} / 20.0
+                      <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-navy-950">
+                        <span className="text-brand-royal text-sm">{pred.predicted_marks.toFixed(1)}</span>
+                        <span className="text-[10px] text-slate-400 font-normal">/ 100</span>
+                      </div>
                     </td>
                     <td>
                       <span

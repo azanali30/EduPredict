@@ -71,8 +71,8 @@ export const StudentPerformance: React.FC = () => {
 
   const milestoneComparisonData = predictions.slice(0, 5).map((p) => ({
     name: `${p.subject} (M${p.milestone})`,
-    grade: parseFloat((p.predicted_final_grade ?? p.predicted_marks ?? 0).toFixed(1)),
-    benchmark: 10.0, // Passing threshold
+    grade: parseFloat(p.predicted_marks.toFixed(1)),
+    benchmark: 50.0, // Passing threshold on 0-100 scale
   }));
 
   const radarData = [
@@ -96,9 +96,9 @@ export const StudentPerformance: React.FC = () => {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <StatCard
-          title="Average Predicted Grade"
-          value={avgGrade !== 'N/A' ? `${avgGrade} / 20` : 'Pending'}
-          subtitle="Across all evaluations"
+          title="Average Predicted Mark"
+          value={avgGrade !== 'N/A' ? `${avgGrade}%` : 'Pending'}
+          subtitle={avgGrade !== 'N/A' ? `Across all evaluations (${avgGrade}/100)` : 'Across all evaluations'}
           icon={<Award size={20} className="text-brand-royal" />}
         />
         <StatCard
@@ -125,7 +125,7 @@ export const StudentPerformance: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <SectionCard
           title="Milestone Predictions vs. Passing Threshold"
-          subtitle="Your predicted final marks compared to standard passing cutoff (10/20)."
+          subtitle="Your predicted continuous marks compared to standard passing cutoff (50/100)."
         >
           {milestoneComparisonData.length === 0 ? (
             <EmptyState
@@ -139,11 +139,11 @@ export const StudentPerformance: React.FC = () => {
                 <BarChart data={milestoneComparisonData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis domain={[0, 20]} tick={{ fontSize: 12 }} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="grade" name="Predicted Grade" fill="#2455C5" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="benchmark" name="Passing Benchmark (10)" fill="#10b981" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="grade" name="Predicted Mark (%)" fill="#2455C5" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="benchmark" name="Passing Benchmark (50%)" fill="#10b981" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

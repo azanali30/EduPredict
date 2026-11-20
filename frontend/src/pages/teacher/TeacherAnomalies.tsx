@@ -67,18 +67,18 @@ export const TeacherAnomalies: React.FC = () => {
       let anomalyReason = '';
       let severity: 'low' | 'medium' | 'high' = 'low';
 
-      // Discrepancy 1: High study hours (> 7 hrs) but predicted low grade (< 10)
-      if (studyHours >= 7 && grade < 10) {
+      // Discrepancy 1: High study hours (> 7 hrs) but predicted low grade (< 55)
+      if (studyHours >= 7 && grade < 55) {
         anomalyReason = 'High study effort but low predicted performance (Learning friction discrepancy)';
         severity = 'medium';
       }
-      // Discrepancy 2: High absences (> 10) and low predicted grade (< 9)
-      else if (absences >= 10 && grade < 9) {
+      // Discrepancy 2: High absences (> 10) and low predicted grade (< 50)
+      else if (absences >= 10 && grade < 50) {
         anomalyReason = 'Elevated absenteeism correlated with severe performance drop';
         severity = 'high';
       }
       // Discrepancy 3: Predicted High Risk despite early milestone passing
-      else if (pred.predicted_status === 'High Risk' && grade < 8) {
+      else if (pred.predicted_status === 'High Risk' && grade < 45) {
         anomalyReason = 'Steep negative performance trajectory identified by predictive model';
         severity = 'high';
       }
@@ -174,7 +174,10 @@ export const TeacherAnomalies: React.FC = () => {
                     <td className="font-bold text-navy-900">{anom.studentName}</td>
                     <td className="font-mono text-xs">M{anom.milestone}</td>
                     <td className="font-semibold text-rose-600 text-sm">
-                      {anom.predictedGrade.toFixed(1)} / 20.0
+                      <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-navy-950">
+                        <span className="text-rose-600 text-sm">{anom.predictedGrade.toFixed(1)}</span>
+                        <span className="text-[10px] text-slate-400 font-normal">/ 100</span>
+                      </div>
                     </td>
                     <td className="text-xs text-slate-600 font-medium">
                       {anom.studyHours} hrs/wk

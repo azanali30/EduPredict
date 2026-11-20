@@ -200,14 +200,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Data Table Component */
-.data-table-container {
-  width: 100%;
-  overflow-x: auto;
-  border-radius: 0.75rem;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-}
-
+.table,
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -215,34 +208,129 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 0.875rem;
 }
 
+.table th,
 .data-table th {
   background: #f8fafc;
   padding: 0.85rem 1.15rem;
-  font-weight: 600;
-  font-size: 0.75rem;
+  font-weight: 700;
+  font-size: 0.725rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #64748b;
+  color: #475569;
   border-bottom: 1px solid #e2e8f0;
   white-space: nowrap;
 }
 
+.table td,
 .data-table td {
-  padding: 1rem 1.15rem;
+  padding: 0.95rem 1.15rem;
   border-bottom: 1px solid #f1f5f9;
   color: #1e293b;
+  vertical-align: middle;
 }
 
+.table tbody tr,
 .data-table tbody tr {
   transition: background-color 0.15s ease;
 }
 
+.table tbody tr:hover,
 .data-table tbody tr:hover {
   background: #f8fafc;
 }
 
+.table tr:last-child td,
 .data-table tr:last-child td {
   border-bottom: none;
+}
+
+/* Button & Form Utilities */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  user-select: none;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-sm {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  border-radius: 0.45rem;
+}
+
+.btn-primary {
+  background-color: var(--brand-royal);
+  color: #ffffff;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.93;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(36, 85, 197, 0.2);
+}
+
+.btn-secondary {
+  background-color: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #e2e8f0;
+  color: #0f172a;
+}
+
+.btn-outline {
+  background-color: #ffffff;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.btn-outline:hover:not(:disabled) {
+  background-color: #f8fafc;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.btn-danger {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.input {
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.input:focus {
+  border-color: var(--brand-royal);
+  box-shadow: 0 0 0 3px rgba(36, 85, 197, 0.15);
 }
 
 /* Print Styles for Educational Reports */

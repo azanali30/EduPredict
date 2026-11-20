@@ -490,7 +490,7 @@ export const TeacherAtRisk: React.FC = () => {
               ? 'No students match the current filters. Try resetting the search or filter options.'
               : selectedTab === 'UNSCREENED'
               ? 'All assigned students currently have at least one diagnostic prediction on file.'
-              : 'All evaluated students in your cohort currently project passing marks (14+/20) or have not yet been evaluated.'
+              : 'All evaluated students in your cohort currently project passing marks (50+/100) or have not yet been evaluated.'
           }
           actionText={
             searchTerm || subjectFilter !== 'ALL' || milestoneFilter !== 'ALL'

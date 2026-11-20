@@ -113,7 +113,7 @@ export const StudentSubjects: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400">Target Scale:</span>
-                  <span className="font-medium text-navy-900">{subj.target_scale || '0–20 (Portuguese Standard)'}</span>
+                  <span className="font-medium text-navy-900">{subj.target_scale || '0 – 100 (Standard Academic Scale)'}</span>
                 </div>
               </div>
 

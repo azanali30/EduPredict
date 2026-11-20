@@ -54,9 +54,9 @@ export const StudentProgress: React.FC = () => {
     .reverse()
     .map((p, idx) => ({
       run: `Eval ${idx + 1} (${p.subject.slice(0, 4)} M${p.milestone})`,
-      predictedGrade: parseFloat((p.predicted_final_grade ?? p.predicted_marks ?? 0).toFixed(1)),
-      targetGoal: 14.0,
-      passingCutoff: 10.0,
+      predictedGrade: parseFloat(p.predicted_marks.toFixed(1)),
+      targetGoal: 70.0,
+      passingCutoff: 50.0,
     }));
 
   return (
@@ -114,13 +114,13 @@ export const StudentProgress: React.FC = () => {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="run" tick={{ fontSize: 11 }} />
-                <YAxis domain={[0, 20]} tick={{ fontSize: 12 }} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
                 <Tooltip />
                 <Legend />
                 <Area
                   type="monotone"
                   dataKey="predictedGrade"
-                  name="Predicted Grade (/20)"
+                  name="Predicted Mark (%)"
                   stroke="#2455C5"
                   strokeWidth={3}
                   fillOpacity={1}
@@ -129,7 +129,7 @@ export const StudentProgress: React.FC = () => {
                 <Line
                   type="monotone"
                   dataKey="targetGoal"
-                  name="Target Goal (14)"
+                  name="Target Goal (70%)"
                   stroke="#10b981"
                   strokeDasharray="4 4"
                   strokeWidth={2}
@@ -137,7 +137,7 @@ export const StudentProgress: React.FC = () => {
                 <Line
                   type="monotone"
                   dataKey="passingCutoff"
-                  name="Passing Cutoff (10)"
+                  name="Passing Cutoff (50%)"
                   stroke="#f59e0b"
                   strokeDasharray="2 2"
                   strokeWidth={2}
