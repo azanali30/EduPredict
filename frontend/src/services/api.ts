@@ -155,6 +155,28 @@ export const api = {
     return apiRequest<{ users: User[]; count: number; status_code: number }>(`/api/admin/users${query}`);
   },
 
+  adminCreateUser: (payload: {
+    full_name: string;
+    email: string;
+    password: string;
+    role: 'student' | 'teacher';
+    student_id?: string;
+    employee_id?: string;
+    department?: string;
+    contact_number?: string;
+    is_active?: boolean;
+  }) =>
+    apiRequest<{ message: string; user: User; status_code: number }>('/api/admin/users', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  adminUpdateUserStatus: (userId: string, isActive: boolean) =>
+    apiRequest<{ message: string; user: User; status_code: number }>(`/api/admin/users/${userId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ is_active: isActive }),
+    }),
+
   updateUserRole: (userId: string, role: UserRole) =>
     apiRequest<{ message: string; user: User; status_code: number }>(`/api/admin/users/${userId}/role`, {
       method: 'PUT',

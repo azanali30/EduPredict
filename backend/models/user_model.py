@@ -26,6 +26,10 @@ class User:
         user_id: ObjectId | str | None = None,
         created_at: datetime | None = None,
         updated_at: datetime | None = None,
+        student_id: str | None = None,
+        employee_id: str | None = None,
+        contact_number: str | None = None,
+        department: str | None = None,
     ):
         self.id = to_object_id(user_id) or ObjectId()
         self.email = normalize_email(email)
@@ -33,6 +37,10 @@ class User:
         self.full_name = full_name.strip() if full_name else ""
         self.role = role if role in VALID_ROLES else "student"
         self.is_active = is_active
+        self.student_id = student_id.strip() if student_id else None
+        self.employee_id = employee_id.strip() if employee_id else None
+        self.contact_number = contact_number.strip() if contact_number else None
+        self.department = department.strip() if department else None
         now = datetime.now(timezone.utc)
         self.created_at = created_at or now
         self.updated_at = updated_at or now
@@ -62,7 +70,7 @@ class User:
     # Serialization
     def to_doc(self) -> dict:
         """Convert to MongoDB document dictionary."""
-        return {
+        doc = {
             "_id": self.id,
             "email": self.email,
             "password_hash": self.password_hash,
@@ -72,6 +80,15 @@ class User:
             "created_at": self.created_at,
             "updated_at": self.updated_at,
         }
+        if self.student_id:
+            doc["student_id"] = self.student_id
+        if self.employee_id:
+            doc["employee_id"] = self.employee_id
+        if self.contact_number:
+            doc["contact_number"] = self.contact_number
+        if self.department:
+            doc["department"] = self.department
+        return doc
 
     def to_dict(self, include_sensitive: bool = False) -> dict:
         """Convert to JSON-safe dictionary (excludes password_hash by default)."""
@@ -81,6 +98,10 @@ class User:
             "full_name": self.full_name,
             "role": self.role,
             "is_active": self.is_active,
+            "student_id": self.student_id,
+            "employee_id": self.employee_id,
+            "contact_number": self.contact_number,
+            "department": self.department,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
@@ -102,4 +123,8 @@ class User:
             is_active=doc.get("is_active", True),
             created_at=doc.get("created_at"),
             updated_at=doc.get("updated_at"),
+            student_id=doc.get("student_id"),
+            employee_id=doc.get("employee_id"),
+            contact_number=doc.get("contact_number"),
+            department=doc.get("department"),
         )

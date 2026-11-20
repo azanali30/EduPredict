@@ -27,6 +27,8 @@ def init_db_indexes(db: Database) -> dict[str, list[str]]:
             db.users.create_index([("email", ASCENDING)], unique=True, name="idx_users_email_unique"),
             db.users.create_index([("role", ASCENDING)], name="idx_users_role"),
             db.users.create_index([("created_at", DESCENDING)], name="idx_users_created_at"),
+            db.users.create_index([("student_id", ASCENDING)], unique=True, sparse=True, name="idx_users_student_id_unique"),
+            db.users.create_index([("employee_id", ASCENDING)], unique=True, sparse=True, name="idx_users_employee_id_unique"),
         ]
         created_indexes["users"] = users_idx
 

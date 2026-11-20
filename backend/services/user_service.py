@@ -45,6 +45,11 @@ class UserService:
         plain_password: str,
         full_name: str,
         role: str = "student",
+        is_active: bool = True,
+        student_id: str | None = None,
+        employee_id: str | None = None,
+        contact_number: str | None = None,
+        department: str | None = None,
     ) -> tuple[User | None, str | None]:
         """
         Create a new user with secure password hashing.
@@ -67,10 +72,22 @@ class UserService:
         if role not in VALID_ROLES:
             return None, f"Invalid role '{role}'. Allowed roles: {', '.join(VALID_ROLES)}"
 
-        # Check for existing account
+        # Check for existing account email
         existing = db.users.find_one({"email": norm_email})
         if existing:
             return None, "An account with this email address already exists."
+
+        # Check unique student_id if provided
+        clean_stu_id = student_id.strip() if student_id else None
+        if clean_stu_id:
+            if db.users.find_one({"student_id": clean_stu_id}):
+                return None, f"A student with Student ID '{clean_stu_id}' already exists."
+
+        # Check unique employee_id if provided
+        clean_emp_id = employee_id.strip() if employee_id else None
+        if clean_emp_id:
+            if db.users.find_one({"employee_id": clean_emp_id}):
+                return None, f"A teacher with Employee ID '{clean_emp_id}' already exists."
 
         pwd_hash = hash_password(plain_password)
         user = User(
@@ -78,6 +95,11 @@ class UserService:
             password_hash=pwd_hash,
             full_name=full_name.strip(),
             role=role,
+            is_active=is_active,
+            student_id=clean_stu_id,
+            employee_id=clean_emp_id,
+            contact_number=contact_number.strip() if contact_number else None,
+            department=department.strip() if department else None,
         )
 
         try:
@@ -85,11 +107,21 @@ class UserService:
             log_event(
                 db,
                 "USER_CREATED",
-                {"email": norm_email, "role": role},
+                {
+                    "email": norm_email,
+                    "role": role,
+                    "student_id": clean_stu_id,
+                    "employee_id": clean_emp_id,
+                },
                 user_id=user.id,
             )
             return user, None
-        except DuplicateKeyError:
+        except DuplicateKeyError as e:
+            err_str = str(e)
+            if "student_id" in err_str:
+                return None, f"A student with Student ID '{clean_stu_id}' already exists."
+            if "employee_id" in err_str:
+                return None, f"A teacher with Employee ID '{clean_emp_id}' already exists."
             return None, "An account with this email address already exists."
         except Exception as e:
             return None, f"Failed to create user: {str(e)}"
@@ -214,3 +246,46 @@ class UserService:
             return target_user, None
         except Exception as e:
             return None, f"Failed to update role: {str(e)}"
+
+    @staticmethod
+    def update_status(
+        db: Database,
+        target_user_id,
+        is_active: bool,
+        actor_admin_id,
+    ) -> tuple[User | None, str | None]:
+        """Activate or deactivate a user account (restricted to administrators)."""
+        target_oid = to_object_id(target_user_id)
+        actor_oid = to_object_id(actor_admin_id)
+        if not target_oid or db is None:
+            return None, "Invalid user ID or database unavailable."
+
+        # Safety check: Cannot deactivate own account
+        if target_oid == actor_oid and not is_active:
+            return None, "Administrators cannot deactivate their own account."
+
+        target_user = UserService.get_by_id(db, target_oid)
+        if not target_user:
+            return None, "User not found."
+
+        now = datetime.now(timezone.utc)
+        try:
+            db.users.update_one(
+                {"_id": target_oid},
+                {"$set": {"is_active": is_active, "updated_at": now}},
+            )
+            target_user.is_active = is_active
+            target_user.updated_at = now
+            log_event(
+                db,
+                "USER_STATUS_UPDATED",
+                {
+                    "target_user_id": str(target_oid),
+                    "is_active": is_active,
+                    "admin_id": str(actor_oid),
+                },
+                user_id=actor_oid,
+            )
+            return target_user, None
+        except Exception as e:
+            return None, f"Failed to update status: {str(e)}"

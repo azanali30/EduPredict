@@ -6,6 +6,10 @@ export interface User {
   full_name: string;
   role: UserRole;
   is_active: boolean;
+  student_id?: string;
+  employee_id?: string;
+  contact_number?: string;
+  department?: string;
   enrolled_subjects_under_teacher?: string[];
   created_at: string;
   updated_at: string;

@@ -42,6 +42,148 @@ def list_all_users():
     }), 200
 
 
+@admin_bp.route("/users", methods=["POST"])
+@admin_required
+def create_user():
+    """
+    Create a student or teacher user account.
+    Expects JSON: {
+        "full_name": "...",
+        "email": "...",
+        "password": "...",
+        "role": "student" | "teacher",
+        "student_id": "..." (for students),
+        "employee_id": "..." (for teachers),
+        "department": "..." (optional for teachers),
+        "contact_number": "..." (optional),
+        "is_active": true (optional)
+    }
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({
+            "error": "Bad Request",
+            "message": "Request body must be valid JSON.",
+            "status_code": 400,
+        }), 400
+
+    full_name = data.get("full_name", "").strip()
+    email = data.get("email", "").strip()
+    password = data.get("password", "")
+    role = data.get("role", "").strip().lower()
+    is_active = data.get("is_active", True)
+    student_id = data.get("student_id", "").strip() or None
+    employee_id = data.get("employee_id", "").strip() or None
+    department = data.get("department", "").strip() or None
+    contact_number = data.get("contact_number", "").strip() or None
+
+    if not full_name:
+        return jsonify({
+            "error": "Bad Request",
+            "message": "Full name is required.",
+            "status_code": 400,
+        }), 400
+
+    if not email:
+        return jsonify({
+            "error": "Bad Request",
+            "message": "Email address is required.",
+            "status_code": 400,
+        }), 400
+
+    if not password:
+        return jsonify({
+            "error": "Bad Request",
+            "message": "Initial password is required.",
+            "status_code": 400,
+        }), 400
+
+    if role not in ("student", "teacher"):
+        return jsonify({
+            "error": "Bad Request",
+            "message": "Administrator account creation only permits 'student' or 'teacher' roles.",
+            "status_code": 400,
+        }), 400
+
+    if role == "student" and not student_id:
+        return jsonify({
+            "error": "Bad Request",
+            "message": "Student ID / Admission ID is required for student accounts.",
+            "status_code": 400,
+        }), 400
+
+    if role == "teacher" and not employee_id:
+        return jsonify({
+            "error": "Bad Request",
+            "message": "Teacher / Employee ID is required for teacher accounts.",
+            "status_code": 400,
+        }), 400
+
+    user, err = UserService.create_user(
+        db=mongo.db,
+        email=email,
+        plain_password=password,
+        full_name=full_name,
+        role=role,
+        is_active=bool(is_active),
+        student_id=student_id,
+        employee_id=employee_id,
+        contact_number=contact_number,
+        department=department,
+    )
+
+    if err or not user:
+        return jsonify({
+            "error": "User Creation Failed",
+            "message": err or "Failed to create user account.",
+            "status_code": 400,
+        }), 400
+
+    return jsonify({
+        "message": f"{role.capitalize()} account created successfully.",
+        "user": user.to_dict(),
+        "status_code": 201,
+    }), 201
+
+
+@admin_bp.route("/users/<user_id>/status", methods=["PUT"])
+@admin_required
+def update_user_status(user_id):
+    """
+    Toggle a user's active status.
+    Expects JSON: { "is_active": true | false }
+    """
+    data = request.get_json()
+    if not data or "is_active" not in data:
+        return jsonify({
+            "error": "Bad Request",
+            "message": "An 'is_active' boolean field is required.",
+            "status_code": 400,
+        }), 400
+
+    is_active = bool(data.get("is_active"))
+    updated_user, err = UserService.update_status(
+        db=mongo.db,
+        target_user_id=user_id,
+        is_active=is_active,
+        actor_admin_id=current_user.id,
+    )
+
+    if err or not updated_user:
+        status_code = 404 if "not found" in (err or "").lower() else 400
+        return jsonify({
+            "error": "Status Update Failed",
+            "message": err or "Failed to update user status.",
+            "status_code": status_code,
+        }), status_code
+
+    return jsonify({
+        "message": f"User status updated to {'active' if is_active else 'inactive'}.",
+        "user": updated_user.to_dict(),
+        "status_code": 200,
+    }), 200
+
+
 @admin_bp.route("/users/<user_id>/role", methods=["PUT"])
 @admin_required
 def update_user_role(user_id):
