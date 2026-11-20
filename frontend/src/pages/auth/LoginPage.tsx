@@ -37,6 +37,7 @@ export const LoginPage: React.FC = () => {
         // Role-based landing redirect
         if (user.role === 'admin') navigate('/admin', { replace: true });
         else if (user.role === 'teacher') navigate('/teacher', { replace: true });
+        else if (user.role === 'analyst') navigate('/analyst', { replace: true });
         else navigate('/student', { replace: true });
       }
     } catch (err: any) {
@@ -44,6 +45,12 @@ export const LoginPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const fillDemo = (demoEmail: string, demoPass: string) => {
+    setEmail(demoEmail);
+    setPassword(demoPass);
+    setError(null);
   };
 
   return (
@@ -114,7 +121,48 @@ export const LoginPage: React.FC = () => {
           Sign In to Dashboard
         </Button>
 
-        <div className="pt-4 border-t border-slate-100 text-center">
+        {/* Demo Credentials Quick-Fill Helper */}
+        <div className="pt-4 border-t border-slate-100">
+          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider text-center mb-2">
+            Demo Portal Credentials
+          </p>
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+            <button
+              type="button"
+              onClick={() => fillDemo('admin@edupredict.com', 'Admin123!')}
+              className="px-2 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-brand-50 hover:border-brand-300 transition-all text-center text-left"
+            >
+              <div className="text-[11px] font-bold text-navy-800">Admin</div>
+              <div className="text-[10px] text-slate-500 truncate">admin@edupredict.com</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => fillDemo('dr.foster@edupredict.com', 'Teacher123!')}
+              className="px-2 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-brand-50 hover:border-brand-300 transition-all text-center text-left"
+            >
+              <div className="text-[11px] font-bold text-navy-800">Teacher</div>
+              <div className="text-[10px] text-slate-500 truncate">dr.foster@edupredict.com</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => fillDemo('john.doe@gmail.com', 'Student123!')}
+              className="px-2 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-brand-50 hover:border-brand-300 transition-all text-center text-left"
+            >
+              <div className="text-[11px] font-bold text-navy-800">Student</div>
+              <div className="text-[10px] text-slate-500 truncate">john.doe@gmail.com</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => fillDemo('analyst@edupredict.com', 'Analyst123!')}
+              className="px-2 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-brand-50 hover:border-brand-300 transition-all text-center text-left"
+            >
+              <div className="text-[11px] font-bold text-navy-800">Analyst</div>
+              <div className="text-[10px] text-slate-500 truncate">analyst@edupredict.com</div>
+            </button>
+          </div>
+        </div>
+
+        <div className="pt-2 text-center">
           <p className="text-xs text-slate-500">
             Enrolling for the first time?{' '}
             <Link

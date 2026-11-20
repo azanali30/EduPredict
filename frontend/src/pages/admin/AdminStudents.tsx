@@ -347,11 +347,10 @@ export const AdminStudents: React.FC = () => {
                                 <UserCheck size={13} className="text-emerald-500" />
                               )
                             }
-                            className={`text-xs py-1 px-2.5 ${
-                              student.is_active !== false
-                                ? 'hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300'
-                                : 'hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300'
-                            }`}
+                            className={`text-xs py-1 px-2.5 ${student.is_active !== false
+                              ? 'hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300'
+                              : 'hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300'
+                              }`}
                           >
                             {student.is_active !== false ? 'Deactivate' : 'Activate'}
                           </Button>

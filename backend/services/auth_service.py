@@ -54,41 +54,44 @@ class AuthService:
         if not norm_email or not password:
             return None, "Email and password are required."
 
-        user = UserService.get_by_email(db, norm_email)
-        if not user:
-            log_event(
-                db,
-                "AUTH_LOGIN_FAILED",
-                {"email": norm_email, "reason": "User not found"},
-                ip_address=ip_address,
-            )
-            return None, "Invalid email or password."
+        try:
+            user = UserService.get_by_email(db, norm_email)
+            if not user:
+                log_event(
+                    db,
+                    "AUTH_LOGIN_FAILED",
+                    {"email": norm_email, "reason": "User not found"},
+                    ip_address=ip_address,
+                )
+                return None, "Invalid email or password."
 
-        if not user.is_active:
+            if not user.is_active:
+                log_event(
+                    db,
+                    "AUTH_LOGIN_FAILED",
+                    {"email": norm_email, "reason": "Account inactive"},
+                    user_id=user.id,
+                    ip_address=ip_address,
+                )
+                return None, "Account is disabled. Please contact the administrator."
+
+            if not user.verify_password(password):
+                log_event(
+                    db,
+                    "AUTH_LOGIN_FAILED",
+                    {"email": norm_email, "reason": "Invalid password"},
+                    user_id=user.id,
+                    ip_address=ip_address,
+                )
+                return None, "Invalid email or password."
+
             log_event(
                 db,
-                "AUTH_LOGIN_FAILED",
-                {"email": norm_email, "reason": "Account inactive"},
+                "AUTH_LOGIN_SUCCESS",
+                {"email": norm_email, "role": user.role},
                 user_id=user.id,
                 ip_address=ip_address,
             )
-            return None, "Account is disabled. Please contact the administrator."
-
-        if not user.verify_password(password):
-            log_event(
-                db,
-                "AUTH_LOGIN_FAILED",
-                {"email": norm_email, "reason": "Invalid password"},
-                user_id=user.id,
-                ip_address=ip_address,
-            )
-            return None, "Invalid email or password."
-
-        log_event(
-            db,
-            "AUTH_LOGIN_SUCCESS",
-            {"email": norm_email, "role": user.role},
-            user_id=user.id,
-            ip_address=ip_address,
-        )
-        return user, None
+            return user, None
+        except Exception as exc:
+            return None, "Authentication service encountered an unexpected error."

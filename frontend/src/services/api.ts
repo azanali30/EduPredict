@@ -57,7 +57,16 @@ export async function apiRequest<T = any>(
     credentials: 'include',
   };
 
-  let response = await fetch(endpoint, config);
+  let response: Response;
+  try {
+    response = await fetch(endpoint, config);
+  } catch (netErr: any) {
+    const errorObj = new Error(
+      'Unable to connect to EduPredict server. Please verify your network connection and ensure the backend is running.'
+    ) as any;
+    errorObj.status = 503;
+    throw errorObj;
+  }
 
   // If CSRF error occurred, refresh token and retry once
   if (response.status === 400 && ['POST', 'PUT', 'DELETE'].includes(method)) {
@@ -81,10 +90,16 @@ export async function apiRequest<T = any>(
   const responseData = await response.json().catch(() => null);
 
   if (!response.ok) {
-    const errorMessage =
-      responseData?.message ||
-      responseData?.error ||
-      `HTTP Error ${response.status}: ${response.statusText}`;
+    let errorMessage = responseData?.message || responseData?.error;
+    if (!errorMessage) {
+      if (response.status === 500) {
+        errorMessage = 'Internal Server Error: Backend service encountered an unexpected error. Please check server logs.';
+      } else if (response.status === 502 || response.status === 503 || response.status === 504) {
+        errorMessage = 'EduPredict backend server is offline or unreachable. Please verify the Flask server is running on port 5000.';
+      } else {
+        errorMessage = `HTTP Error ${response.status}: ${response.statusText}`;
+      }
+    }
     const errorObj = new Error(errorMessage) as any;
     errorObj.status = response.status;
     errorObj.data = responseData;
