@@ -382,3 +382,14 @@ export interface AnalystAnomalyStats {
 }
 
 
+
+
+// Phase 7D: cohort-only Academic Attrition Vulnerability Indicator
+export interface AttritionAdvisoryMetric { value: number | null; display: string; suppressed: boolean; }
+export interface AttritionAdvisorySubject { subject: string; eligible_records: AttritionAdvisoryMetric; vulnerability_flags: AttritionAdvisoryMetric; flag_rate_pct: number | null; suppressed: boolean; }
+export interface AttritionAdvisorySummary {
+  status_code: number; status: string; scope: 'cohort_aggregate_only';
+  indicator: { name: string; type: string; high_absence_threshold: number; absence_unit: string; period_mark_threshold_pct: number; rule: string; warning: string; };
+  subjects: AttritionAdvisorySubject[];
+  privacy_policy: { cell_suppression_threshold: number; small_cohorts_suppressed: boolean; };
+}
