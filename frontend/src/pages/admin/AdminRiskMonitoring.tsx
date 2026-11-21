@@ -11,6 +11,7 @@ import { StatusBadge } from '../../components/common/StatusBadge';
 import { PredictionDetailModal } from '../../components/predictions/PredictionDetailModal';
 import { AnomalyReviewModal } from '../../components/anomalies/AnomalyReviewModal';
 import { Button } from '../../components/forms/Button';
+import { AttritionAdvisoryPanel } from '../../components/analytics/AttritionAdvisoryPanel';
 import {
   AlertTriangle,
   AlertCircle,
@@ -155,6 +156,8 @@ export const AdminRiskMonitoring: React.FC = () => {
         subtitle="Unsupervised anomaly detection, multi-dimensional feature divergence triage, and early warning risk signals."
         icon={<AlertTriangle size={24} className="text-rose-500" />}
       />
+
+      <AttritionAdvisoryPanel />
 
       {/* Tabs */}
       <div className="flex border-b border-slate-200 gap-4 text-sm font-semibold">
