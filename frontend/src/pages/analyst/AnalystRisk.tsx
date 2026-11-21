@@ -5,6 +5,7 @@ import { StatCard } from '../../components/common/StatCard';
 import { SectionCard } from '../../components/common/SectionCard';
 import { LoadingState } from '../../components/common/LoadingState';
 import { ErrorAlert } from '../../components/common/ErrorAlert';
+import { AttritionAdvisoryPanel } from '../../components/analytics/AttritionAdvisoryPanel';
 import {
   AlertTriangle,
   ShieldAlert,
@@ -57,6 +58,7 @@ export const AnalystRisk: React.FC = () => {
       />
 
       <ErrorAlert message={error || ''} onDismiss={() => setError(null)} />
+      <AttritionAdvisoryPanel />
 
       {/* Mandatory Methodology Notice */}
       <div className="p-4 rounded-xl bg-amber-50/80 border border-amber-200 text-amber-950 text-xs flex items-start gap-3">
