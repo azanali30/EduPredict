@@ -14,6 +14,7 @@ import {
   AnomalyListResponse,
   AnomalyReviewStatus,
   AnalystAnomalyStats,
+  AttritionAdvisorySummary,
 } from '../types';
 
 let cachedCsrfToken: string | null = null;
@@ -463,4 +464,6 @@ export const api = {
 
   getAnalystAnomalyStats: () =>
     apiRequest<AnalystAnomalyStats>('/api/analyst/anomalies/stats'),
+  getAttritionAdvisorySummary: (absenceThreshold: number = 15) =>
+    apiRequest<AttritionAdvisorySummary>(`/api/attrition/advisory-summary?absence_threshold=${absenceThreshold}`),
 };
