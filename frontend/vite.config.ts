@@ -1,10 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// https://vitejs.dev/config/
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-
 const proxyErrorHandler = (proxy: any) => {
   proxy.on('error', (_err: any, _req: any, res: any) => {
     if (res && !res.headersSent && typeof res.writeHead === 'function') {

@@ -307,3 +307,78 @@ export interface AnalystCurriculumStatsResponse {
   status_code: number;
 }
 
+// ==========================================
+// Phase 7C: Anomaly Detection & Monitoring
+// ==========================================
+
+export type AnomalyReviewStatus = 'Pending Review' | 'Confirmed Anomaly' | 'Dismissed (Benign)';
+export type AnomalySeverity = 'Low' | 'Medium' | 'High' | 'Critical';
+
+export interface SupportingDeviation {
+  feature: string;
+  observed_value: any;
+  cohort_mean_or_mode: any;
+  z_score?: number | null;
+  rarity_percentage?: number | null;
+  deviation_type: 'z_score' | 'rare_category';
+  description: string;
+}
+
+export interface AnomalyRecord {
+  id: string;
+  source_record_id: string;
+  student_id_ref?: string | null;
+  subject: string;
+  model_version: string;
+  milestone: string;
+  anomaly_score: number;
+  cohort_percentile: number;
+  is_anomaly: boolean;
+  anomaly_severity: AnomalySeverity;
+  supporting_deviations: SupportingDeviation[];
+  review_status: AnomalyReviewStatus;
+  reviewed_by?: string | null;
+  reviewed_by_name?: string | null;
+  reviewed_at?: string | null;
+  review_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AnomalyListResponse {
+  anomalies: AnomalyRecord[];
+  total_count: number;
+  page: number;
+  limit: number;
+  total_pages: number;
+  status_code?: number;
+}
+
+export interface AnalystAnomalyStats {
+  status_code: number;
+  total_evaluated_records: number;
+  total_anomalies: {
+    count: number | null;
+    display: string;
+    suppressed: boolean;
+  };
+  subject_breakdown: Record<
+    string,
+    {
+      total_records: { count: number | null; display: string; suppressed: boolean };
+      anomalies_count: { count: number | null; display: string; suppressed: boolean };
+    }
+  >;
+  severity_breakdown: Record<
+    string,
+    { count: number | null; display: string; suppressed: boolean }
+  >;
+  status_breakdown: Record<
+    string,
+    { count: number | null; display: string; suppressed: boolean }
+  >;
+  privacy_notice: string;
+  generated_at: string;
+}
+
+

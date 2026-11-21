@@ -199,3 +199,27 @@ def get_analyst_diagnostics():
         "message": "Analyst-specific diagnostic channel active.",
         "status_code": 200,
     }), 200
+
+
+@analyst_bp.route("/anomalies/stats", methods=["GET"])
+@role_required("analyst", "admin")
+def get_analyst_anomaly_stats():
+    """
+    Retrieve aggregate anomaly detection statistics with N < 5 cell suppression.
+    Provides subject-level trends and severity distributions without disclosing student identities.
+    """
+    from backend.services.anomaly_service import AnomalyService
+    db = mongo.db
+    if db is None:
+        return jsonify({
+            "error": "Database Unavailable",
+            "message": "Database service is offline.",
+            "status_code": 503,
+        }), 503
+
+    stats = AnomalyService.get_analyst_aggregate_stats(db)
+    return jsonify({
+        "status_code": 200,
+        **stats,
+    }), 200
+

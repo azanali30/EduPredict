@@ -10,6 +10,10 @@ import {
   StudentSubjectEnrollmentItem,
   AnalystOverviewResponse,
   AnalystCurriculumStatsResponse,
+  AnomalyRecord,
+  AnomalyListResponse,
+  AnomalyReviewStatus,
+  AnalystAnomalyStats,
 } from '../types';
 
 let cachedCsrfToken: string | null = null;
@@ -406,4 +410,57 @@ export const api = {
     apiRequest<{ status: string; role: string; message: string; status_code: number }>(
       '/api/analyst/diagnostics'
     ),
+
+  // Phase 7C: Academic Anomaly Detection & Human Monitoring
+  listAnomalies: (params?: {
+    page?: number;
+    limit?: number;
+    subject?: string;
+    status?: string;
+    severity?: string;
+  }) => {
+    const query = new URLSearchParams();
+    if (params?.page) query.set('page', params.page.toString());
+    if (params?.limit) query.set('limit', params.limit.toString());
+    if (params?.subject) query.set('subject', params.subject);
+    if (params?.status) query.set('status', params.status);
+    if (params?.severity) query.set('severity', params.severity);
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest<AnomalyListResponse>(`/api/anomalies${qs}`);
+  },
+
+  getAnomalyDetail: (anomalyId: string) =>
+    apiRequest<{ anomaly: AnomalyRecord; status_code: number }>(
+      `/api/anomalies/${anomalyId}`
+    ),
+
+  updateAnomalyStatus: (
+    anomalyId: string,
+    payload: { status: AnomalyReviewStatus; review_notes?: string }
+  ) =>
+    apiRequest<{ message: string; anomaly: AnomalyRecord; status_code: number }>(
+      `/api/anomalies/${anomalyId}/status`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      }
+    ),
+
+  batchEvaluateAnomalies: (subject?: string) => {
+    const query = new URLSearchParams();
+    if (subject) query.set('subject', subject);
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest<{
+      message: string;
+      subject: string;
+      records_evaluated: number;
+      anomalies_detected: number;
+      status_code: number;
+    }>(`/api/anomalies/batch-evaluate${qs}`, {
+      method: 'POST',
+    });
+  },
+
+  getAnalystAnomalyStats: () =>
+    apiRequest<AnalystAnomalyStats>('/api/analyst/anomalies/stats'),
 };

@@ -157,6 +157,23 @@ def init_db_indexes(db: Database) -> dict[str, list[str]]:
         ]
         created_indexes["student_subject_enrollments"] = student_subj_idx
 
+        # 10. Anomaly Records collection indexes (Phase 7C)
+        anomaly_idx = [
+            db.anomaly_records.create_index(
+                [("source_record_id", ASCENDING), ("subject", ASCENDING), ("model_version", ASCENDING)],
+                unique=True,
+                name="idx_anomaly_source_subj_version_unique",
+            ),
+            db.anomaly_records.create_index(
+                [("subject", ASCENDING), ("anomaly_severity", ASCENDING), ("review_status", ASCENDING)],
+                name="idx_anomaly_subject_severity_status",
+            ),
+            db.anomaly_records.create_index([("student_id", ASCENDING)], name="idx_anomaly_student_id", sparse=True),
+            db.anomaly_records.create_index([("detected_at", DESCENDING)], name="idx_anomaly_detected_at"),
+            db.anomaly_records.create_index([("review_status", ASCENDING)], name="idx_anomaly_review_status"),
+        ]
+        created_indexes["anomaly_records"] = anomaly_idx
+
         logger.info("MongoDB 6.x indexes successfully initialized.")
         return created_indexes
 

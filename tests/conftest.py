@@ -38,6 +38,7 @@ def clean_db(app):
             mongo.db.subjects.delete_many({})
             mongo.db.teacher_subject_assignments.delete_many({})
             mongo.db.student_subject_enrollments.delete_many({})
+            mongo.db.anomaly_records.delete_many({})
     yield mongo.db
 
 
