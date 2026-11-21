@@ -27,7 +27,7 @@ export const TeacherNotifications: React.FC = () => {
       id: '2',
       title: 'At-Risk Early Warning Active',
       category: 'AI Pipeline',
-      message: 'Students scoring below 10/20 in milestone evaluations have been placed in your At-Risk triage queue.',
+      message: 'Students scoring below 50.0% (< 10.0 / 20.0) in milestone evaluations have been placed in your At-Risk triage queue.',
       time: '1 day ago',
       type: 'warning',
     },

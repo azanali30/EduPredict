@@ -25,41 +25,64 @@ def get_current_user_profile():
     }), 200
 
 
-@user_bp.route("/api/me", methods=["PUT"])
+@user_bp.route("/api/me", methods=["PUT", "PATCH"])
 @login_required
 def update_current_user_profile():
     """
-    Update personal profile attributes (e.g. full_name).
-    Cannot modify email, role, or ID.
+    Update personal profile attributes.
+    Supports both PUT and PATCH.
+    Non-admin users can update allowed personal/contact/guardian/professional fields.
+    Rejects forbidden/privileged institutional fields with 403 Forbidden.
     """
     data = request.get_json()
-    if not data:
+    if not data or not isinstance(data, dict):
         return jsonify({
             "error": "Bad Request",
-            "message": "Request body must be valid JSON.",
+            "message": "Request body must be a valid JSON object.",
             "status_code": 400,
         }), 400
 
-    full_name = data.get("full_name")
-    if not full_name:
+    # Backward compatibility: legacy call sending only full_name
+    if len(data) == 1 and "full_name" in data:
+        full_name = data.get("full_name")
+        if not full_name or not isinstance(full_name, str) or not full_name.strip():
+            return jsonify({
+                "error": "Bad Request",
+                "message": "full_name is required.",
+                "status_code": 400,
+            }), 400
+        updated_user, err = UserService.update_profile(
+            db=mongo.db,
+            user_id=current_user.id,
+            full_name=full_name,
+        )
+        if err or not updated_user:
+            return jsonify({
+                "error": "Update Failed",
+                "message": err or "Failed to update profile.",
+                "status_code": 400,
+            }), 400
         return jsonify({
-            "error": "Bad Request",
-            "message": "full_name is required.",
-            "status_code": 400,
-        }), 400
+            "message": "Profile updated successfully.",
+            "user": updated_user.to_dict(),
+            "status_code": 200,
+        }), 200
 
-    updated_user, err = UserService.update_profile(
+    # Comprehensive self-service profile update
+    updated_user, err, status_code = UserService.update_self_service_profile(
         db=mongo.db,
         user_id=current_user.id,
-        full_name=full_name,
+        update_data=data,
+        role=current_user.role,
     )
 
     if err or not updated_user:
+        error_title = "Forbidden Field" if status_code == 403 else "Validation Error"
         return jsonify({
-            "error": "Update Failed",
-            "message": err or "Failed to update profile.",
-            "status_code": 400,
-        }), 400
+            "error": error_title,
+            "message": err,
+            "status_code": status_code,
+        }), status_code
 
     return jsonify({
         "message": "Profile updated successfully.",

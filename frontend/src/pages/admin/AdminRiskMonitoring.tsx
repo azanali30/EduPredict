@@ -98,7 +98,7 @@ export const AdminRiskMonitoring: React.FC = () => {
       {/* Risk Triage Table */}
       <SectionCard
         title="Vulnerability Triage Queue"
-        subtitle="Students exhibiting performance trajectories below curriculum passing benchmarks (< 10 / 20)."
+        subtitle="Students exhibiting performance trajectories below curriculum passing benchmarks (< 50.0% / < 10.0 / 20.0)."
       >
         <div className="flex flex-wrap items-center gap-3 mb-4">
           <div className="relative flex-1 max-w-xs">

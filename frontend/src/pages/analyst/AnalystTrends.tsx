@@ -11,6 +11,7 @@ import {
   Award,
   Calendar,
 } from 'lucide-react';
+import { formatRaw20Grade } from '../../utils/gradeUtils';
 import {
   ResponsiveContainer,
   LineChart,
@@ -66,8 +67,8 @@ export const AnalystTrends: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
           title="Institutional Average"
-          value="12.7 / 20.0"
-          subtitle="Portuguese Scale benchmark"
+          value={formatRaw20Grade(12.7)}
+          subtitle="Standardized 0–100% (Portuguese 0–20 benchmark)"
           icon={<Award size={20} className="text-brand-royal" />}
         />
         <StatCard

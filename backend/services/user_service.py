@@ -290,6 +290,131 @@ class UserService:
             return None, f"Failed to update profile: {str(e)}"
 
     @staticmethod
+    def update_self_service_profile(
+        db: Database,
+        user_id,
+        update_data: dict,
+        role: str,
+    ) -> tuple[User | None, str | None, int]:
+        """
+        Secure self-service user profile update.
+        Allows users to update their own personal, contact, and role-appropriate details.
+        Strictly rejects forbidden/privileged institutional fields.
+        Returns: (updated_user, error_message, http_status_code)
+        """
+        user = UserService.get_by_id(db, user_id)
+        if not user:
+            return None, "User not found.", 404
+
+        # 1. Reject forbidden / privileged institutional fields
+        FORBIDDEN_FIELDS = {
+            "role", "student_id", "employee_id", "is_active", "academic_info",
+            "password_hash", "password", "email", "_id", "id", "created_at",
+            "updated_at", "must_change_password"
+        }
+        for field in FORBIDDEN_FIELDS:
+            if field in update_data:
+                return None, f"Modifying '{field}' is not permitted through self-service profile updates.", 403
+
+        # 2. Allowlist by role
+        ALLOWED_TOP_KEYS = {"full_name", "contact_number", "avatar_url", "personal_info", "contact_info"}
+        if role == "student":
+            ALLOWED_TOP_KEYS.add("guardian_info")
+        elif role == "teacher":
+            ALLOWED_TOP_KEYS.add("professional_info")
+            ALLOWED_TOP_KEYS.add("employment_info")
+        elif role == "admin":
+            ALLOWED_TOP_KEYS.update({"guardian_info", "professional_info", "employment_info"})
+
+        for key in update_data:
+            if key not in ALLOWED_TOP_KEYS:
+                return None, f"Field '{key}' is not an authorized editable profile attribute.", 400
+
+        set_fields = {}
+        now = datetime.now(timezone.utc)
+        set_fields["updated_at"] = now
+
+        # Validate full_name
+        if "full_name" in update_data:
+            name = update_data["full_name"]
+            if not isinstance(name, str) or not name.strip():
+                return None, "Full name cannot be empty.", 400
+            if len(name.strip()) > 100:
+                return None, "Full name cannot exceed 100 characters.", 400
+            set_fields["full_name"] = name.strip()
+            user.full_name = name.strip()
+
+        # Validate contact_number
+        if "contact_number" in update_data:
+            cnum = update_data["contact_number"]
+            clean_cnum = cnum.strip() if isinstance(cnum, str) and cnum.strip() else None
+            if clean_cnum and len(clean_cnum) > 30:
+                return None, "Contact number cannot exceed 30 characters.", 400
+            set_fields["contact_number"] = clean_cnum
+            user.contact_number = clean_cnum
+
+        # Validate avatar_url
+        if "avatar_url" in update_data:
+            avatar = update_data["avatar_url"]
+            clean_avatar = avatar.strip() if isinstance(avatar, str) and avatar.strip() else None
+            if clean_avatar and len(clean_avatar) > 500:
+                return None, "Avatar URL is too long.", 400
+            set_fields["avatar_url"] = clean_avatar
+            user.avatar_url = clean_avatar
+
+        # Sub-document allowlists
+        ALLOWED_SUBKEYS = {
+            "personal_info": {"date_of_birth", "gender", "nationality", "blood_group"},
+            "contact_info": {
+                "primary_phone", "emergency_phone", "contact_number", "alternate_contact_number",
+                "personal_email", "residential_address", "city", "state", "postal_code", "country"
+            },
+            "guardian_info": {
+                "guardian_name", "guardian_full_name", "relationship", "guardian_email",
+                "guardian_phone", "guardian_contact_number", "emergency_contact_number",
+                "occupation", "address"
+            },
+            "professional_info": {
+                "highest_qualification", "institution_graduated", "previous_institution",
+                "graduation_year", "specialization", "total_experience_years", "experience_years",
+                "research_interests", "bio", "job_title", "department"
+            },
+            "employment_info": {"office_room", "internal_notes"},
+        }
+
+        for subdoc, allowed_keys in ALLOWED_SUBKEYS.items():
+            if subdoc in update_data:
+                sub_val = update_data[subdoc]
+                if not isinstance(sub_val, dict):
+                    return None, f"'{subdoc}' must be an object.", 400
+                for k in sub_val:
+                    if k not in allowed_keys:
+                        return None, f"Sub-field '{k}' in '{subdoc}' is not permitted.", 400
+                merged = getattr(user, subdoc, {}) or {}
+                clean_sub = {}
+                for k, v in sub_val.items():
+                    if isinstance(v, str):
+                        clean_sub[k] = v.strip()
+                    else:
+                        clean_sub[k] = v
+                merged.update(clean_sub)
+                set_fields[subdoc] = merged
+                setattr(user, subdoc, merged)
+
+        try:
+            db.users.update_one({"_id": user.id}, {"$set": set_fields})
+            user.updated_at = now
+            log_event(
+                db,
+                "PROFILE_UPDATED",
+                {"user_id": str(user.id), "updated_fields": list(set_fields.keys())},
+                user_id=user.id,
+            )
+            return user, None, 200
+        except Exception as e:
+            return None, f"Failed to update profile: {str(e)}", 500
+
+    @staticmethod
     def change_password(
         db: Database,
         user_id,

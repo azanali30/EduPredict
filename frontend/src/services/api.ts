@@ -132,9 +132,9 @@ export const api = {
   // Current User Profile
   getMe: () => apiRequest<{ user: User; status_code: number }>('/api/me'),
 
-  updateProfile: (payload: { full_name: string }) =>
+  updateProfile: (payload: Record<string, any>) =>
     apiRequest<{ message: string; user: User; status_code: number }>('/api/me', {
-      method: 'PUT',
+      method: 'PATCH',
       body: JSON.stringify(payload),
     }),
 

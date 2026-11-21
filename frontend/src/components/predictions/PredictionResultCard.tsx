@@ -224,9 +224,11 @@ export const PredictionResultCard: React.FC<PredictionResultCardProps> = ({
 
             <div className="flex items-baseline gap-2 mb-3">
               <span className="text-4xl sm:text-5xl font-black text-navy-950 font-mono tracking-tight">
-                {predicted_marks.toFixed(1)}
+                {predicted_marks.toFixed(1)}%
               </span>
-              <span className="text-lg text-slate-400 font-semibold">/ 100</span>
+              <span className="text-xs sm:text-sm text-slate-500 font-semibold font-mono">
+                ({(predicted_marks / 5).toFixed(1)} / 20.0)
+              </span>
             </div>
 
             {/* Score progress bar */}
@@ -243,10 +245,10 @@ export const PredictionResultCard: React.FC<PredictionResultCardProps> = ({
               />
             </div>
 
-            <div className="flex justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
-              <span>Failing Threshold: &lt;50</span>
-              <span>Satisfactory: 50–69</span>
-              <span>Excellence: 70+</span>
+            <div className="flex justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-100">
+              <span>Failing: &lt;50.0% (&lt;10/20)</span>
+              <span>Passing: 50.0–69.9%</span>
+              <span>Good: ≥70.0%</span>
             </div>
 
             <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-400 flex items-center justify-between">

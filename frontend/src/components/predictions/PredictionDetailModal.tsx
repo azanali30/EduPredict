@@ -60,8 +60,8 @@ export const PredictionDetailModal: React.FC<PredictionDetailModalProps> = ({
           </div>
           <div>
             <span className="text-[11px] text-slate-400 block mb-0.5">Projected Mark</span>
-            <span className="font-black font-mono text-brand-600 text-sm">
-              {predicted_marks.toFixed(1)}/100
+            <span className="font-black font-mono text-brand-600 text-xs sm:text-sm">
+              {predicted_marks.toFixed(1)}% ({(predicted_marks / 5).toFixed(1)} / 20.0)
             </span>
           </div>
           <div>

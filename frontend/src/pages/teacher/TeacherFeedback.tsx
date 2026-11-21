@@ -124,7 +124,7 @@ export const TeacherFeedback: React.FC = () => {
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
                 <div className="font-bold text-navy-900 mb-1">Early-Warning Triage Protocol</div>
                 <p>
-                  If a student receives a High Risk prediction (predicted grade &lt; 10/20), log an intervention note and notify departmental academic counseling.
+                  If a student receives a High Risk prediction (predicted mark &lt; 50.0% / &lt; 10.0/20.0), log an intervention note and notify departmental academic counseling.
                 </p>
               </div>
 

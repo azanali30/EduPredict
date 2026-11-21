@@ -434,7 +434,7 @@ export const AdminOverview: React.FC = () => {
                     <th>Student ID</th>
                     <th>Subject</th>
                     <th>Milestone</th>
-                    <th>Projected Mark</th>
+                    <th>Projected Mark (%)</th>
                     <th>Risk Category</th>
                     <th>Confidence</th>
                     <th>Action</th>
@@ -461,7 +461,7 @@ export const AdminOverview: React.FC = () => {
                         </span>
                       </td>
                       <td className="font-mono text-xs font-bold text-navy-950">
-                        {record.predicted_marks.toFixed(1)}/100
+                        {record.predicted_marks.toFixed(1)}% <span className="text-[10px] text-slate-400 font-normal">({(record.predicted_marks / 5).toFixed(1)}/20)</span>
                       </td>
                       <td>{getRiskBadge(record.predicted_status)}</td>
                       <td className="font-mono text-xs text-slate-600">

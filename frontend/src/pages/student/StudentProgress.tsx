@@ -13,6 +13,7 @@ import {
   ArrowUpRight,
   Clock,
 } from 'lucide-react';
+import { formatRaw20Grade } from '../../utils/gradeUtils';
 import {
   ResponsiveContainer,
   XAxis,
@@ -79,8 +80,8 @@ export const StudentProgress: React.FC = () => {
         />
         <StatCard
           title="Target Academic Goal"
-          value="14.0 / 20.0"
-          subtitle="Good Standing (Bom/Muito Bom)"
+          value={formatRaw20Grade(14.0)}
+          subtitle="Standardized 0–100% (Portuguese 14/20 Benchmark)"
           icon={<Award size={20} className="text-brand-ocean" />}
         />
         <StatCard

@@ -64,7 +64,7 @@ export const AnalystRisk: React.FC = () => {
         <div>
           <div className="font-bold text-amber-900">Academic Attrition Modeling & Advisory Indicator Notice</div>
           <p className="mt-0.5 leading-relaxed text-amber-800">
-            In accordance with project architecture guidelines, the <span className="font-bold">Academic Attrition Vulnerability Indicator</span> represents a transparent rule-based advisory heuristic (evaluating absence velocity and milestone score deficits below 10/20). It is <span className="font-bold">not</span> an empirical institutional dropout classifier, and distinguishes academic failure risk from administrative university withdrawal.
+            In accordance with project architecture guidelines, the <span className="font-bold">Academic Attrition Vulnerability Indicator</span> represents a transparent rule-based advisory heuristic (evaluating absence velocity and milestone score deficits below 50.0% / &lt; 10.0/20.0). It is <span className="font-bold">not</span> an empirical institutional dropout classifier, and distinguishes academic failure risk from administrative university withdrawal.
           </p>
         </div>
       </div>
@@ -74,19 +74,19 @@ export const AnalystRisk: React.FC = () => {
         <StatCard
           title="On-Track Ratio"
           value="68%"
-          subtitle="Students meeting passing standards"
+          subtitle="Students meeting passing standards (≥ 50.0%)"
           icon={<CheckCircle2 size={20} className="text-emerald-500" />}
         />
         <StatCard
           title="Moderate Risk Advisory"
           value="20%"
-          subtitle="Score range 10–12 / 20"
+          subtitle="Score range 50.0% – 69.9% (10.0 – 13.9 / 20.0)"
           icon={<AlertTriangle size={20} className="text-amber-500" />}
         />
         <StatCard
           title="High Risk Vulnerability"
           value="12%"
-          subtitle="Predicted final mark < 10 / 20"
+          subtitle="Predicted final mark < 50.0% (< 10.0 / 20.0)"
           icon={<ShieldAlert size={20} className="text-rose-500" />}
         />
       </div>
