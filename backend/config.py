@@ -252,6 +252,12 @@ class BaseConfig:
     UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", str(BASE_DIR / "backend" / "uploads"))
     MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10 MB maximum request payload limit
 
+    # Lakehouse Parquet Export Configuration (Phase 7E.1)
+    LAKEHOUSE_PARQUET_DIR = os.getenv(
+        "LAKEHOUSE_PARQUET_DIR", str(BASE_DIR / "data" / "lakehouse" / "student_academic_records")
+    )
+    LAKEHOUSE_EXPORT_BATCH_SIZE = int(os.getenv("LAKEHOUSE_EXPORT_BATCH_SIZE", 500))
+
     # ML Artifact Paths
     ML_REGRESSION_MODEL_PATH = os.getenv(
         "ML_REGRESSION_MODEL_PATH", str(BASE_DIR / "ml_models" / "performance_regressor.joblib")

@@ -26,6 +26,7 @@ pandas==3.1.1
 pillow==13.0.0
 pluggy==1.7.0
 Pygments==2.21.0
+pyarrow==26.0.1
 pymongo==4.20.0
 pypdf==7.1.1
 pyparsing==3.3.3

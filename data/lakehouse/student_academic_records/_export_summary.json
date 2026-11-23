@@ -1,0 +1,26 @@
+{
+  "source_collection": "analytical_academic_records",
+  "total_records_read": 1044,
+  "valid_records_exported": 1044,
+  "rejected_records": 0,
+  "partition_count": 2,
+  "partitions": [
+    {
+      "subject": "Mathematics",
+      "academic_year": "2025-2026",
+      "record_count": 395,
+      "files": 1
+    },
+    {
+      "subject": "Portuguese%20Language",
+      "academic_year": "2025-2026",
+      "record_count": 649,
+      "files": 1
+    }
+  ],
+  "output_location": "C:\\Users\\Azan's PC\\Documents\\EduPredict\\data\\lakehouse\\student_academic_records",
+  "export_timestamp": "2026-11-23T12:29:24.439806+00:00",
+  "compression": "SNAPPY",
+  "file_format": "PARQUET",
+  "status": "COMPLETED_SUCCESSFULLY"
+}
