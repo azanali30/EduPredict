@@ -27,7 +27,7 @@ EduPredict is a standalone AI/ML-powered Educational Performance Prediction and 
 - **Big Data & OLAP**: HDFS WebHDFS REST API client, Apache Impala MPP SQL query catalog, Apache Parquet
 - **Statistical Computing**: Native R 4.6.2 (ANOVA, Welch t-test, Kruskal-Wallis, Pearson correlation)
 - **Machine Learning & EDA**: Scikit-learn 1.9.1, NumPy 2.5.5, Pandas 3.1.1, Joblib 1.6.0, Matplotlib, Seaborn, Jupyter Notebook
-- **Testing**: Pytest (236 automated tests, 100% passing across auth, RBAC, ML predictions, SDC anomaly detection, strict CORS enforcement, PDF structure verification & attachment serving, and production hardening), pytest-flask, Vitest (25 frontend tests passing), TypeScript compiler (`tsc -b`), Vite production bundler
+- **Testing**: Pytest (243 automated tests, 100% passing across auth, RBAC, ML predictions, SDC anomaly detection, strict CORS enforcement, pypdf in-memory PDF parsing & attachment serving, and production hardening), pytest-flask, Vitest (25 frontend tests passing), TypeScript compiler (`tsc -b`), Vite production bundler
 
 ---
 

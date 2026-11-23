@@ -4,6 +4,8 @@ Defines configuration environments: Development, Testing, Production.
 """
 
 import os
+import re
+import ipaddress
 from pathlib import Path
 from urllib.parse import urlparse
 from typing import List, Union
@@ -58,13 +60,31 @@ def validate_secret_key(secret_key: str | None, is_production: bool = False) -> 
             )
 
 
+def is_valid_domain_name(hostname: str) -> bool:
+    """Validate RFC 1123 domain name."""
+    if not hostname or len(hostname) > 253:
+        return False
+    if hostname.lower() == "localhost":
+        return True
+    if hostname.endswith("."):
+        hostname = hostname[:-1]
+    labels = hostname.split(".")
+    if len(labels) < 2:
+        return False
+    label_pattern = re.compile(r"^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$")
+    return all(bool(label_pattern.match(label)) for label in labels)
+
+
 def validate_cors_origins(origins_input: Union[List[str], str, None], is_production: bool = False) -> List[str]:
     """
     Strictly validate configured CORS origins.
     - Rejects wildcard '*' (strictly prohibited when credentials/cookies are enabled).
     - Rejects wildcards even when mixed with valid origins (e.g. 'https://trusted.example,*').
     - Requires explicit HTTP or HTTPS scheme.
-    - Requires non-empty host/netloc and forbids paths (beyond empty or '/'), queries, fragments, or credentials.
+    - Strictly validates hostnames (RFC 1123 domain names, IPv4, IPv6, localhost).
+    - Rejects internal whitespace and malformed hostnames.
+    - Validates port numbers (1 to 65535) and rejects invalid/out-of-range ports.
+    - Forbids paths (beyond empty or '/'), queries, fragments, and credentials.
     - In production, fails safely with RuntimeError on any invalid origin or empty origin list.
     - In non-production, raises ValueError on wildcard or malformed origin.
     """
@@ -90,8 +110,15 @@ def validate_cors_origins(origins_input: Union[List[str], str, None], is_product
 
     validated_origins: List[str] = []
 
-    # 2. Validate URL structure for each origin
+    # 2. Validate URL structure, host, and port for each origin
     for item in raw_items:
+        # Check for internal whitespace
+        if any(c.isspace() for c in item):
+            err_msg = f"Malformed CORS origin '{item}': Origins must not contain internal whitespace."
+            if is_production:
+                raise RuntimeError(f"Production configuration error: {err_msg}")
+            raise ValueError(err_msg)
+
         try:
             parsed = urlparse(item)
         except Exception as e:
@@ -112,7 +139,7 @@ def validate_cors_origins(origins_input: Union[List[str], str, None], is_product
                 raise RuntimeError(f"Production configuration error: {err_msg}")
             raise ValueError(err_msg)
 
-        if parsed.username or parsed.password:
+        if parsed.username or parsed.password or "@" in parsed.netloc:
             err_msg = f"Invalid CORS origin '{item}': Origins must not contain user credentials."
             if is_production:
                 raise RuntimeError(f"Production configuration error: {err_msg}")
@@ -130,8 +157,49 @@ def validate_cors_origins(origins_input: Union[List[str], str, None], is_product
                 raise RuntimeError(f"Production configuration error: {err_msg}")
             raise ValueError(err_msg)
 
-        # Canonical origin form: scheme://netloc (without trailing slash)
-        canonical = f"{parsed.scheme}://{parsed.netloc}"
+        # Validate hostname (IPv4, IPv6, localhost, or RFC 1123 domain)
+        hostname = parsed.hostname
+        if not hostname:
+            err_msg = f"Invalid CORS origin '{item}': Unable to extract valid hostname."
+            if is_production:
+                raise RuntimeError(f"Production configuration error: {err_msg}")
+            raise ValueError(err_msg)
+
+        is_valid_ip = False
+        is_ipv6 = False
+        try:
+            ip_obj = ipaddress.ip_address(hostname)
+            is_valid_ip = True
+            is_ipv6 = isinstance(ip_obj, ipaddress.IPv6Address)
+        except ValueError:
+            pass
+
+        if not is_valid_ip and not is_valid_domain_name(hostname):
+            err_msg = f"Malformed hostname '{hostname}' in CORS origin '{item}'. Must be a valid domain, IPv4, or IPv6 address."
+            if is_production:
+                raise RuntimeError(f"Production configuration error: {err_msg}")
+            raise ValueError(err_msg)
+
+        # Validate port if present
+        try:
+            port = parsed.port
+        except ValueError as e:
+            err_msg = f"Invalid port in CORS origin '{item}': {str(e)}"
+            if is_production:
+                raise RuntimeError(f"Production configuration error: {err_msg}")
+            raise ValueError(err_msg)
+
+        if port is not None and not (1 <= port <= 65535):
+            err_msg = f"Invalid port number {port} in CORS origin '{item}'. Port must be between 1 and 65535."
+            if is_production:
+                raise RuntimeError(f"Production configuration error: {err_msg}")
+            raise ValueError(err_msg)
+
+        # Canonical origin form
+        host_repr = f"[{hostname}]" if is_ipv6 else hostname
+        port_repr = f":{port}" if port is not None else ""
+        canonical = f"{parsed.scheme}://{host_repr}{port_repr}"
+
         if canonical not in validated_origins:
             validated_origins.append(canonical)
 

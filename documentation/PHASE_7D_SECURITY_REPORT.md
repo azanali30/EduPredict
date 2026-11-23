@@ -46,13 +46,14 @@ Phase 7D completes the security and production hardening of EduPredict across si
 
 | File | Type | Changes Summary |
 |---|---|---|
-| `backend/config.py` | Config | Added `KNOWN_INSECURE_SECRETS`, `validate_secret_key()`, `validate_cors_origins()`, `PERMANENT_SESSION_LIFETIME`, and production secret & CORS fail-safe enforcement. |
+| `requirements.txt` | Dependencies | Declared `pypdf==7.1.1` as a maintained, pure-Python dependency for PDF structural validation in Python 3.12. |
+| `backend/config.py` | Config | Added `KNOWN_INSECURE_SECRETS`, `validate_secret_key()`, `validate_cors_origins()`, `is_valid_domain_name()`, `PERMANENT_SESSION_LIFETIME`, RFC 1123 domain name parsing, IPv4/IPv6 verification via `ipaddress`, port range enforcement (1–65535), whitespace rejection, and fail-closed production startup enforcement. |
 | `backend/app.py` | Application Factory | Enforced `validate_secret_key()` and `validate_cors_origins()` in production; locked `DEBUG=False` in production; added CORS preflight OPTIONS and response headers (never returning wildcard `*` with credentials); added baseline security headers (`nosniff`, `DENY`, `mode=block`); added structured JSON error handlers for `CSRFError`, 400, 403, 404, 405, 413, 415, 500; cleaned duplicate 403 handler. |
-| `backend/routes/upload_routes.py` | Routes | Implemented magic byte validation (`validate_magic_bytes`), MIME type checking (`validate_mimetype`), PDF structural integrity verification (`validate_pdf_structure`), Pillow image decoding and re-encoding (`process_and_sanitize_image`), 4096px dimension cap, 5 MB file size limit, pure UUID filename generation, strict directory path traversal checks, and safe document serving with `Content-Disposition: attachment` and `nosniff`. Rejected SVGs, scripts, and forged PDFs. |
-| `backend/services/system_log_service.py` | Service | Implemented pure non-mutating recursive sanitizer `sanitize_and_redact()` for automatic credential scrubbing (`[REDACTED]`) and `sanitize_log_string()` for CRLF log-injection prevention across arbitrary dict/list nesting and unexpected data types. |
+| `backend/routes/upload_routes.py` | Routes | Implemented in-memory PDF parsing and structural validation via `pypdf.PdfReader`, verifying page tree traversal, xref/trailer integrity, and rejecting truncated/malformed documents without unhandled exceptions; retained MIME type checking, magic byte inspection, 4096px image dimension cap, 5 MB file size limit, pure UUID filename generation, strict path traversal checks, and safe document serving with `Content-Disposition: attachment` and `nosniff`. Rejected SVGs, scripts, and forged PDFs. |
+| `backend/services/system_log_service.py` | Service | Implemented pure non-mutating recursive sanitizer `sanitize_and_redact()` protecting generic session keys (`session`, `session_id`, `session_token`, `user_session`, `flask_session`), tokens, and credentials; implemented `sanitize_exception_message()` to sanitize MongoDB URIs, passwords, and tokens from exception logs; enforced CRLF log-injection prevention across arbitrary dict/list nesting and unexpected data types. |
 | `backend/services/anomaly_service.py` | Service | Refined `privacy_notice` string to accurately describe tested SDC small-cohort cell suppression without claiming universal differential privacy. |
-| `tests/test_registration_workflows.py` | Test Suite | Updated avatar upload test to supply authentic 1x1 PNG bytes accepted by Pillow. |
-| `tests/test_phase_7d_security_hardening.py` | Test Suite | Created 36 comprehensive security tests covering production secret validation, cookie attributes, upload security (PNG/JPEG/WebP/PDF), forged PDF rejection, script action rejection, attachment serving headers, IDOR, self-service profile protections, CSRF, strict CORS origin parsing and wildcard rejection, and deep recursive log redaction. |
+| `tests/test_registration_workflows.py` | Test Suite | Updated avatar upload test to supply authentic 1x1 PNG bytes accepted by Pillow; updated document upload test to supply authentic minimal PDF bytes parsed by `pypdf`. |
+| `tests/test_phase_7d_security_hardening.py` | Test Suite | Created 43 comprehensive security tests covering production secret validation, cookie attributes, upload security (PNG/JPEG/WebP/PDF), pypdf parser rejection of forged, truncated, or corrupted PDFs, script action rejection, attachment serving headers, IDOR, self-service profile protections, CSRF, strict CORS origin parsing (IPv4, IPv6, RFC 1123 domains, invalid ports, malformed hosts, wildcard rejection), deep recursive log redaction, generic session keys, and DB exception sanitization. |
 | `README.md` | Documentation | Added Phase 7D security configuration documentation, production environment variables by name, and test results. |
 | `documentation/TEST_REPORT.md` | Documentation | Appended Phase 7D test execution results and verification matrix. |
 
@@ -89,14 +90,14 @@ When a file is submitted to `POST /api/upload`:
    - Dimensions checked against $4096 \times 4096$ px limit to protect against decompression bombs.
    - Clean raster canvas is generated, stripping all EXIF tags, metadata, and polyglot attachments.
    - Re-encoded cleanly to target destination.
-5. **PDF Structural Integrity & Active Content Verification**:
-   - Verified via `validate_pdf_structure()`.
+5. **PDF In-Memory Parser Validation (pypdf)**:
+   - Validated via `validate_pdf_structure()` utilizing `pypdf.PdfReader` with `strict=True`.
    - Requires valid `%PDF-` header and version format (`%PDF-1.x`).
-   - Requires standard `%%EOF` marker in the trailing 1024 bytes.
-   - Validates existence of objects (`obj`), cross-reference structure (`xref` or `startxref` or `/XRef`), and trailer.
-   - Forged files (e.g. prepending `%PDF-` to arbitrary binary payloads) are detected and rejected with `400 Bad Request`.
+   - Parses the complete PDF structure in memory and verifies page tree traversal (`len(reader.pages) > 0` and page 0 object access).
+   - Rejects forged payloads (e.g. `%PDF-` prepended to arbitrary scripts or binary executables) with `400 Bad Request`.
+   - Rejects truncated or corrupted PDFs safely catching `PdfReadError` and `PdfStreamError` without unhandled exceptions.
    - Active executable script triggers (`/(?:JavaScript|JS|Launch)`) are detected and rejected.
-   - **Boundary Note**: EduPredict does not claim universal semantic PDF sanitization or rendering sandboxing; instead, active script triggers are blocked and documents are safely served with attachment headers.
+   - **Boundary Note**: EduPredict does not claim universal semantic PDF sanitization or rendering sandboxing; instead, active script triggers are blocked, real structural parsing is enforced, and documents are safely served with attachment headers.
 6. **Safe Document Serving**:
    - Private documents are served with explicit headers:
      - `Content-Disposition: attachment; filename="{safe_download_name}"` (prevents browser inline rendering or script execution)
@@ -115,7 +116,9 @@ When a file is submitted to `POST /api/upload`:
   - Prohibits wildcard `*` anywhere in configuration when credentials are enabled (raises `RuntimeError` in production, `ValueError` in dev/test).
   - Prohibits wildcards even when mixed with valid origins (e.g. `https://trusted.example,*`).
   - Enforces explicit URL parsing: scheme must be `http` or `https`, host/netloc must be present, no path components (beyond empty or `/`), no query parameters, no fragments, and no user credentials.
-  - Normalizes origins into canonical form `scheme://netloc`.
+  - Validates hostnames against RFC 1123 domain syntax, IPv4, IPv6 (`ipaddress`), and `localhost`, strictly rejecting internal whitespace and malformed labels.
+  - Validates port numbers ($1 \le \text{port} \le 65535$), rejecting port 0, negative ports, and non-numeric ports.
+  - Normalizes origins into canonical form `scheme://netloc` (including bracketed IPv6 `[::1]`).
   - In production (`FLASK_ENV=production`), startup fails with `RuntimeError` if `CORS_ORIGINS` is missing, empty, or invalid.
   - Preflight `OPTIONS` and standard responses reflect only explicitly matched origins and never return `Access-Control-Allow-Origin: *` together with `Access-Control-Allow-Credentials: true`.
 - **Hardening Headers**:
@@ -133,8 +136,9 @@ When a file is submitted to `POST /api/upload`:
 ### 4.4 Fully Recursive Logging & Audit Safety
 - `log_event()` applies `sanitize_and_redact()` across the entire log details payload.
 - Traverses dictionaries, lists, tuples, and sets to arbitrary depth without mutating the input object.
-- Replaces sensitive credential keys matching `password`, `token`, `secret`, `cookie`, `session`, `authorization`, `csrf_token`, `mongo_uri` with `[REDACTED]` at all depths.
+- Replaces sensitive credential keys matching `password`, `token`, `secret`, `cookie`, `session` (`session`, `session_id`, `session_token`, `user_session`, `flask_session`), `authorization`, `csrf_token`, `mongo_uri` with `[REDACTED]` at all depths.
 - All strings at every depth are sanitized with `sanitize_log_string()` to strip carriage returns (`\r`) and line feeds (`\n`), preventing multiline CRLF log injection.
+- Database and audit error handling uses `sanitize_exception_message()` to scrub MongoDB connection URIs, userinfo passwords, and tokens, preventing sensitive details from leaking into error logs.
 - Unexpected or custom types are handled safely without crashing.
 
 ---
@@ -160,7 +164,7 @@ When a file is submitted to `POST /api/upload`:
 - **Phase 7D Security Suite (`tests/test_phase_7d_security_hardening.py`)**:
   ```
   .venv\Scripts\pytest tests/test_phase_7d_security_hardening.py -v
-  ============================= 36 passed in 18.63s =============================
+  ============================= 43 passed in 19.21s =============================
   ```
 - **Registration & Upload Workflows (`tests/test_registration_workflows.py`)**:
   ```
@@ -175,9 +179,9 @@ When a file is submitted to `POST /api/upload`:
 - **Full Backend Regression Suite (`tests/`)**:
   ```
   .venv\Scripts\pytest -q
-  236 passed
+  243 passed
   ```
-  **100% Pass Rate across all 236 backend tests with 0 failures.**
+  **100% Pass Rate across all 243 backend tests with 0 failures.**
 
 ### 6.2 Frontend Vitest Execution
 ```

@@ -14,6 +14,7 @@ Covers:
 import io
 import os
 import pytest
+import pypdf
 from PIL import Image
 from flask import Flask
 from bson import ObjectId
@@ -34,6 +35,7 @@ from backend.services.system_log_service import (
     redact_sensitive_dict,
     sanitize_log_string,
     sanitize_and_redact,
+    sanitize_exception_message,
 )
 from backend.services.user_service import UserService
 from backend.services.subject_service import SubjectService
@@ -54,30 +56,12 @@ def create_valid_image_bytes(fmt: str = "PNG", size: tuple = (10, 10), color: st
 
 
 def create_valid_pdf_bytes() -> bytes:
-    """Generate in-memory binary bytes of a minimal valid PDF-1.4 document."""
-    return (
-        b"%PDF-1.4\n"
-        b"1 0 obj\n"
-        b"<< /Type /Catalog /Pages 2 0 R >>\n"
-        b"endobj\n"
-        b"2 0 obj\n"
-        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>\n"
-        b"endobj\n"
-        b"3 0 obj\n"
-        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>\n"
-        b"endobj\n"
-        b"xref\n"
-        b"0 4\n"
-        b"0000000000 65535 f \n"
-        b"0000000010 00000 n \n"
-        b"0000000060 00000 n \n"
-        b"0000000117 00000 n \n"
-        b"trailer\n"
-        b"<< /Size 4 /Root 1 0 R >>\n"
-        b"startxref\n"
-        b"190\n"
-        b"%%EOF\n"
-    )
+    """Generate in-memory binary bytes of a compliant minimal valid PDF document."""
+    writer = pypdf.PdfWriter()
+    writer.add_blank_page(width=100, height=100)
+    buf = io.BytesIO()
+    writer.write(buf)
+    return buf.getvalue()
 
 
 # ==============================================================================
@@ -542,6 +526,60 @@ def test_validate_cors_origins_rejects_malformed_and_unexpected_components():
             validate_cors_origins(bad, is_production=False)
 
 
+def test_validate_cors_origins_rejects_malformed_hosts():
+    """Hostnames with internal whitespace, bad labels, double dots, or invalid symbols must be rejected."""
+    malformed_hosts = [
+        "http://host name.com",
+        "http://bad..domain.com",
+        "http://-leadinghyphen.com",
+        "http://trailinghyphen-.com",
+        "http://bad_underscore_host.com",
+        "http://",
+        "http://:8080",
+    ]
+    for bad in malformed_hosts:
+        with pytest.raises((ValueError, RuntimeError)):
+            validate_cors_origins(bad, is_production=False)
+
+
+def test_validate_cors_origins_rejects_invalid_ports():
+    """Port numbers outside 1-65535, port 0, negative ports, or non-numeric ports must be rejected."""
+    invalid_ports = [
+        "http://edupredict.edu:0",
+        "http://edupredict.edu:65536",
+        "http://edupredict.edu:99999",
+        "http://edupredict.edu:-80",
+        "http://edupredict.edu:abc",
+    ]
+    for bad in invalid_ports:
+        with pytest.raises((ValueError, RuntimeError)):
+            validate_cors_origins(bad, is_production=False)
+
+
+def test_validate_cors_origins_accepts_valid_ipv4_ipv6_and_domains():
+    """Reliable URL parsing must accept valid IPv4, IPv6, localhost, and standard multi-label domains."""
+    valid_entries = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://192.168.1.100:8000",
+        "http://[::1]:5173",
+        "https://[2001:db8::1]:8443",
+        "http://[::1]",
+        "https://edupredict.edu",
+        "https://app.edupredict.edu:443",
+        "https://sub.domain.co.uk:8443",
+    ]
+    normalized = validate_cors_origins(valid_entries, is_production=False)
+    assert "http://localhost:5173" in normalized
+    assert "http://127.0.0.1:5173" in normalized
+    assert "http://192.168.1.100:8000" in normalized
+    assert "http://[::1]:5173" in normalized
+    assert "https://[2001:db8::1]:8443" in normalized
+    assert "http://[::1]" in normalized
+    assert "https://edupredict.edu" in normalized
+    assert "https://sub.domain.co.uk:8443" in normalized
+
+
 def test_validate_cors_origins_normalizes_valid_entries():
     """Valid HTTP/HTTPS origins must be parsed, stripped of trailing slash, and returned cleanly."""
     valid_input = "http://localhost:5173, https://app.edupredict.edu/, http://127.0.0.1:5000"
@@ -596,7 +634,7 @@ def test_upload_valid_pdf_document(client, test_admin):
 
 
 def test_upload_forged_pdf_rejected(client, test_admin):
-    """Files that start with %PDF- but lack valid EOF/xref/trailer structure must be rejected (400)."""
+    """Files that start with %PDF- but lack valid structural parsing must be rejected (400)."""
     client.post("/auth/login", json={"email": test_admin.email, "password": "AdminPassword123!"})
 
     forged_pdf = b"%PDF-1.4\nMalicious executable content pretending to be a PDF without EOF or xref tables!"
@@ -605,7 +643,39 @@ def test_upload_forged_pdf_rejected(client, test_admin):
 
     assert res.status_code == 400
     msg = res.get_json()["message"].lower()
-    assert "malformed" in msg or "invalid" in msg or "missing" in msg
+    assert "malformed" in msg or "corrupted" in msg or "invalid" in msg or "missing" in msg or "failed" in msg
+
+
+def test_upload_truncated_pdf_rejected(client, test_admin):
+    """Truncated PDF documents must fail pypdf parsing and be rejected with 400 Bad Request."""
+    client.post("/auth/login", json={"email": test_admin.email, "password": "AdminPassword123!"})
+
+    valid_bytes = create_valid_pdf_bytes()
+    truncated_pdf = valid_bytes[: len(valid_bytes) // 2]
+    data = {"file": (io.BytesIO(truncated_pdf), "truncated.pdf"), "category": "document"}
+    res = client.post("/api/upload", data=data, content_type="multipart/form-data")
+
+    assert res.status_code == 400
+    msg = res.get_json()["message"].lower()
+    assert "malformed" in msg or "corrupted" in msg or "failed" in msg or "eof" in msg
+
+
+def test_upload_corrupt_pdf_rejected_without_unhandled_exception(client, test_admin):
+    """Malformed PDF documents with invalid object streams must be rejected safely without crashing."""
+    client.post("/auth/login", json={"email": test_admin.email, "password": "AdminPassword123!"})
+
+    corrupt_pdf = (
+        b"%PDF-1.4\n"
+        b"1 0 obj\n<< /Type /Catalog >>\nendobj\n"
+        b"trailer\n<< /Root 1 0 R >>\n"
+        b"startxref\n99999\n%%EOF\n"
+    )
+    data = {"file": (io.BytesIO(corrupt_pdf), "corrupt.pdf"), "category": "document"}
+    res = client.post("/api/upload", data=data, content_type="multipart/form-data")
+
+    assert res.status_code == 400
+    assert res.is_json
+    assert res.get_json()["error"] == "Bad Request"
 
 
 def test_upload_pdf_with_script_action_rejected(client, test_admin):
@@ -713,3 +783,53 @@ def test_system_log_deeply_recursive_redaction_and_crlf_sanitization():
     # 4. Verify non-string primitives are preserved as-is
     assert sanitized["count"] == 42
     assert sanitized["is_active"] is True
+
+
+def test_system_log_redacts_generic_session_keys():
+    """Generic session-related keys must be scrubbed across dictionaries and nested structures."""
+    payload = {
+        "session": "sess_raw_value_12345",
+        "session_id": "sid_987654321",
+        "session_token": "stok_abcdef123456",
+        "user_session": {"active": True, "token": "user_tok_99"},
+        "nested_sessions": [
+            {"flask_session": "flask_secret_cookie_data"},
+            {"safe_action": "login_view"},
+        ],
+    }
+
+    sanitized = sanitize_and_redact(payload)
+
+    assert sanitized["session"] == "[REDACTED]"
+    assert sanitized["session_id"] == "[REDACTED]"
+    assert sanitized["session_token"] == "[REDACTED]"
+    assert sanitized["user_session"] == "[REDACTED]"
+    assert sanitized["nested_sessions"][0]["flask_session"] == "[REDACTED]"
+    assert sanitized["nested_sessions"][1]["safe_action"] == "login_view"
+
+
+def test_system_log_sanitizes_db_error_with_sensitive_uri(monkeypatch, clean_db):
+    """
+    Simulated database insertion errors must sanitize MongoDB URIs, passwords,
+    and credentials so that sensitive connection strings are never leaked to logs.
+    """
+    sensitive_err_text = (
+        "ServerSelectionTimeoutError: connection failed to "
+        "mongodb://admin_user:SuperSecretClusterPassword2026!@cluster0.mongodb.net:27017/edupredict?authSource=admin"
+    )
+
+    # 1. Verify exception message sanitizer directly
+    fake_exc = RuntimeError(sensitive_err_text)
+    clean_msg = sanitize_exception_message(fake_exc)
+    assert "SuperSecretClusterPassword2026!" not in clean_msg
+    assert "mongodb://[REDACTED]@cluster0.mongodb.net:27017/edupredict?authSource=admin" in clean_msg
+
+    # 2. Verify simulated database insertion failure in log_event
+    class MockFailingCollection:
+        def insert_one(self, doc):
+            raise RuntimeError(sensitive_err_text)
+
+    monkeypatch.setattr(clean_db, "system_logs", MockFailingCollection())
+
+    success = log_event(clean_db, "AUTH_FAILURE_TEST", details={"username": "victim"})
+    assert success is False

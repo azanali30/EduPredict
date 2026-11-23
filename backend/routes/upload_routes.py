@@ -10,6 +10,8 @@ import io
 import re
 import uuid
 from typing import Tuple, Optional
+import pypdf
+from pypdf.errors import PdfReadError, PdfStreamError
 from flask import Blueprint, request, jsonify, send_from_directory, current_app
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
@@ -61,10 +63,12 @@ def validate_magic_bytes(data: bytes, ext: str) -> bool:
 
 def validate_pdf_structure(data: bytes) -> Tuple[bool, Optional[str]]:
     """
-    Validate PDF structural integrity.
-    Rejects malformed or forged files that prepend '%PDF-' to arbitrary binary payloads
-    without valid PDF structural components (version, EOF marker, xref/startxref, objects).
-    Rejects active script triggers (e.g. /JavaScript, /JS, /Launch).
+    Validate PDF structural integrity using in-memory pypdf parsing.
+    - Requires minimum size and valid '%PDF-' header with version format.
+    - Rejects active script triggers (/JavaScript, /JS, /Launch).
+    - Fully parses the PDF stream in memory with pypdf.PdfReader.
+    - Traverses page tree to verify xref/trailer/object stream resolution.
+    - Rejects truncated, malformed, or parser-failing PDF structures without unhandled exceptions.
     """
     if len(data) < 32:
         return False, "File is too small to be a valid PDF document."
@@ -77,21 +81,21 @@ def validate_pdf_structure(data: bytes) -> Tuple[bool, Optional[str]]:
     if not re.match(rb"^%PDF-[0-9]+\.[0-9]+", first_line):
         return False, "Invalid PDF header version format."
 
-    # Validate standard %%EOF marker within the final 1024 bytes
-    tail = data[-1024:] if len(data) >= 1024 else data
-    if b"%%EOF" not in tail:
-        return False, "Malformed PDF: Missing standard '%%EOF' marker."
-
-    # Check for structural components (xref table, startxref, trailer dictionary, or /XRef stream)
-    has_structure = (b"xref" in data) or (b"startxref" in data) or (b"/XRef" in data) or (b"trailer" in data)
-    has_obj = bool(re.search(rb"\d+\s+\d+\s+obj\b", data))
-
-    if not (has_structure and has_obj):
-        return False, "Malformed or forged PDF: Missing required xref, object, or trailer structures."
-
     # Reject active script actions
     if re.search(rb"/(?:JavaScript|JS|Launch)\b", data):
         return False, "PDF contains potentially unsafe embedded script actions."
+
+    # In-memory structural parsing via pypdf
+    try:
+        reader = pypdf.PdfReader(io.BytesIO(data), strict=True)
+        if len(reader.pages) == 0:
+            return False, "Malformed PDF: Document contains 0 pages or invalid page tree."
+        # Access first page object to trigger xref and object stream resolution
+        _ = reader.pages[0]
+    except (PdfReadError, PdfStreamError) as e:
+        return False, f"Malformed or corrupted PDF structure: {str(e)}"
+    except Exception as e:
+        return False, f"PDF structural validation failed: {str(e)}"
 
     return True, None
 

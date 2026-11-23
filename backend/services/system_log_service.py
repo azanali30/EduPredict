@@ -13,9 +13,12 @@ from backend.models.system_log_model import SystemLog
 logger = logging.getLogger(__name__)
 
 SENSITIVE_FIELD_NAMES = {
-    "password", "current_password", "new_password", "plain_password",
-    "token", "csrf_token", "secret", "secret_key", "cookie",
-    "session_id", "authorization", "mongo_uri", "database_password",
+    "session", "session_id", "session_token", "user_session", "flask_session",
+    "client_session", "session_key",
+    "password", "current_password", "new_password", "plain_password", "passwd",
+    "token", "access_token", "refresh_token", "csrf_token", "bearer_token", "jwt_token", "auth_token",
+    "secret", "secret_key", "cookie", "cookies", "authorization",
+    "mongo_uri", "api_key", "apikey", "private_key", "database_password",
 }
 
 
@@ -28,9 +31,33 @@ def sanitize_log_string(val: str) -> str:
 
 
 def is_sensitive_key(key_str: str) -> bool:
-    """Check if key contains any sensitive credential or secret term."""
-    clean = key_str.lower()
-    return any(sens in clean for sens in SENSITIVE_FIELD_NAMES)
+    """Check if key matches or contains any sensitive credential or secret term."""
+    clean = key_str.lower().replace("-", "_")
+    if clean in SENSITIVE_FIELD_NAMES:
+        return True
+    for kw in ("password", "passwd", "secret", "token", "authorization", "mongo_uri", "api_key", "apikey", "private_key"):
+        if kw in clean:
+            return True
+    parts = clean.split("_")
+    if "session" in parts:
+        return True
+    return False
+
+
+def sanitize_exception_message(err: Exception) -> str:
+    """
+    Sanitize exception message to prevent logging credentials, URIs, or tokens.
+    Returns safe generic exception type and scrubbed diagnostic.
+    """
+    err_type = type(err).__name__
+    raw_msg = str(err)
+    # 1. Scrub URI credentials (e.g. mongodb://user:pass@host or http://user:pass@host)
+    scrubbed = re.sub(r"://([^/\s]+)@([a-zA-Z0-9_.-]+)", r"://[REDACTED]@\2", raw_msg)
+    # 2. Scrub sensitive key-value patterns (e.g. password=..., token=..., session=...)
+    scrubbed = re.sub(r"(?i)(password|secret|token|session|key)[=:\s]+[^\s,;&]+", r"\1=[REDACTED]", scrubbed)
+    # 3. Strip CRLF to prevent log injection
+    clean_diag = re.sub(r"[\r\n]+", " ", scrubbed).strip()
+    return f"{err_type}: {clean_diag}"
 
 
 def sanitize_and_redact(val: Any) -> Any:
@@ -105,5 +132,6 @@ def log_event(
         db.system_logs.insert_one(log_entry.to_doc())
         return True
     except Exception as e:
-        logger.error("Failed to insert audit log: %s", str(e))
+        safe_diag = sanitize_exception_message(e)
+        logger.error("Failed to insert audit log for event '%s': %s", clean_event, safe_diag)
         return False

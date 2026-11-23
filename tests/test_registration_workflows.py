@@ -5,6 +5,7 @@ file type & size validations, and asset access control.
 """
 
 import io
+import pypdf
 from bson import ObjectId
 
 
@@ -191,8 +192,12 @@ def test_upload_document_and_validation(client, test_admin):
         "password": "AdminPassword123!",
     })
 
-    # 1. Valid PDF upload
-    pdf_data = b"%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF"
+    # 1. Valid PDF upload (authentic minimal PDF parsed by pypdf)
+    pdf_writer = pypdf.PdfWriter()
+    pdf_writer.add_blank_page(width=100, height=100)
+    pdf_buf = io.BytesIO()
+    pdf_writer.write(pdf_buf)
+    pdf_data = pdf_buf.getvalue()
     data = {
         "file": (io.BytesIO(pdf_data), "certificate.pdf"),
         "category": "document",
