@@ -129,6 +129,7 @@ def can_access_student_subject_data(
     subject: ObjectId | str,
     db,
     academic_term: Optional[str] = None,
+    require_term: bool = False,
 ) -> bool:
     """
     Subject-Specific Academic Authorization Rule (Phase 6B):
@@ -222,14 +223,20 @@ def can_access_student_subject_data(
         if not teacher_oid:
             return False
 
+        # Fail closed for missing/empty academic term when require_term=True
+        if require_term and (not academic_term or not isinstance(academic_term, str) or not academic_term.strip()):
+            return False
+
+        clean_term = academic_term.strip() if academic_term and isinstance(academic_term, str) and academic_term.strip() else None
+
         # Condition 1: Teacher has active assignment for this subject
         t_query = {
             "teacher_id": teacher_oid,
             "subject_id": canonical_subject_oid,
             "status": "active",
         }
-        if academic_term:
-            t_query["academic_term"] = academic_term.strip()
+        if clean_term:
+            t_query["academic_term"] = clean_term
 
         t_assignments = list(db.teacher_subject_assignments.find(t_query))
         if not t_assignments:
@@ -242,8 +249,8 @@ def can_access_student_subject_data(
             "subject_id": canonical_subject_oid,
             "status": "active",
         }
-        if academic_term:
-            s_query["academic_term"] = academic_term.strip()
+        if clean_term:
+            s_query["academic_term"] = clean_term
 
         s_enrollments = list(db.student_subject_enrollments.find(s_query))
         if not s_enrollments:
@@ -251,9 +258,12 @@ def can_access_student_subject_data(
             return False
 
         # Condition 3: Academic Term Alignment
-        if academic_term:
+        if clean_term:
             # Both queries already matched the exact specified term
             return True
+
+        if require_term:
+            return False
 
         # Term not specified: verify teacher and student share at least one active term
         t_terms = {a.get("academic_term") for a in t_assignments if a.get("academic_term")}

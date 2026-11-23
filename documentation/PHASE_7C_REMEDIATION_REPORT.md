@@ -244,4 +244,46 @@ A comprehensive final verification audit was executed covering:
 - **TypeScript (`tsc -b`)**: 0 errors.
 - **Vite Build**: Production bundle cleanly compiled in 25.91s.
 
-**STRICT SCOPE NOTICE**: Phase 7C final verification is complete. Phase 7D has **NOT** been started. Awaiting user instructions.
+---
+
+## 12. Final Remediation: Multi-Cell SDC Privacy & Fail-Closed Legacy-Term Authorization
+
+**Target Commit Follow-up**: Post-`23c19cb` final hardening.
+
+### 12.1 Multi-Cell Statistical Disclosure Control (SDC) Remediation
+1. **Identified Issue**:
+   - In partitions with $\ge 3$ categories (such as Severity Breakdown with High, Moderate, Low or Review Status Breakdown with Pending, Confirmed, Dismissed), when two or more cells contained primary-suppressed values ($1 \le N < 5$), exposing remaining visible cells and marginal totals could reveal their combined sum:
+     $$\text{Suppressed}_1 + \text{Suppressed}_2 = \text{Total} - \text{Visible}$$
+   - This allowed narrow interval deduction or exact bounding if one cell was near 1 or if small totals were present.
+2. **Conservative Suppression Architecture**:
+   - In `backend/services/anomaly_service.py`, `apply_complementary_partition_suppression()` was updated with conservative suppression:
+     - Whenever **any** cell is primary-suppressed ($1 \le N < \text{threshold}$) or the partition total is below threshold, **all non-zero cells and the partition total** are conservatively suppressed (`display = "<5"`, `count = None`).
+     - True zero counts (`0`) remain unsuppressed only when safe.
+     - In `get_analyst_aggregate_stats()`, when `total_anomalies` is suppressed, all non-zero cells in severity and review-status breakdowns are suppressed (`suppression_type = "cross_dimension"`), preventing cross-table differencing or summation attacks.
+
+### 12.2 Fail-Closed Legacy Academic Term Authorization Policy
+1. **Identified Issue**:
+   - In educational institutional governance, a teacher's authorization over student records is strictly term-bound.
+   - Historical or legacy anomaly records that lacked an academic term (`academic_term` was `None`, empty string `""`, or omitted) could not establish authentic term alignment for teachers. Allowing teachers to view or review records without verified term assignment broke the principle of least privilege.
+2. **Fail-Closed Remediation**:
+   - `backend/utils/decorators.py`: Enhanced `can_access_student_subject_data()` with `require_term: bool = False`. When `require_term=True` and `actor_role == "teacher"`, if `academic_term` is null, empty string, or missing, it fails closed immediately (`return False`).
+   - `backend/services/anomaly_service.py`:
+     - `list_anomalies()`: Scoped strictly to `academic_term = clean_term` where `clean_term` is the teacher's active assigned term. Teacher assignments lacking a term are rejected. Legacy records without terms are completely excluded from `count_documents` and cursor results.
+     - `get_anomaly_by_id()`: For teachers, if `record.academic_term` is empty or missing, it fails closed with `403 Forbidden` (`"Legacy anomaly records without an academic term cannot be accessed by teachers. Please contact an administrator."`).
+     - `update_review_status()`: For teachers, if `record.academic_term` is empty or missing, it fails closed with `403 Forbidden` (`"Legacy anomaly records without an academic term cannot be reviewed by teachers. Please contact an administrator."`).
+     - **Administrator Historical Access**: Administrators retain full access (`200 OK`) to view, manage, and review historical legacy anomaly records.
+
+### 12.3 Verification & Regression Results
+- **Unit & Integration Suite (`tests/test_anomaly_detection.py`)**:
+  - `test_apply_complementary_partition_suppression_unit`: Tested 2 primary-suppressed cells in 3-category partition, 3 primary-suppressed cells, 1 primary-suppressed cell with zero-valued companions, safe partitions ($\ge 5$), and 0-count partitions.
+  - `test_analyst_multicell_sdc_suppression_endpoint`: Verified multi-cell suppression on live API endpoints.
+  - `test_legacy_academic_term_fail_closed_authorization`: Verified `None`, `""`, and missing `academic_term` records fail closed (403) for teachers in list, detail, and status endpoints, while admins retain full access (200), and pagination counts remain 100% accurate.
+  - **Results**: 30 / 30 passed in 31.07s.
+- **Full Backend Regression Suite**:
+  - **Results**: 200 / 200 passed in 212.71s (0 failures).
+- **Frontend Test Suite (`npx vitest run`)**:
+  - **Results**: 25 / 25 passed in 11.42s (0 failures).
+- **TypeScript & Production Bundle (`npx tsc -b && npm run build`)**:
+  - **Results**: 0 TypeScript errors; production build generated in 29.30s.
+
+**STRICT SCOPE NOTICE**: Phase 7C final remediation is complete and verified. Phase 7D has **NOT** been started. Awaiting user instructions.

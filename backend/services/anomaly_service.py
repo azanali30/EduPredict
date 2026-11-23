@@ -30,15 +30,23 @@ def apply_complementary_partition_suppression(
     threshold: int = 5,
 ) -> Tuple[Dict[str, Dict[str, Any]], Dict[str, Any]]:
     """
-    Applies primary (N < 5) and complementary (secondary) cell suppression
+    Applies conservative Statistical Disclosure Control (SDC) cell suppression
     to a categorical partition that sums to total_count.
-    Guarantees no single cell can be derived by subtracting remaining cells
-    from marginal totals (differencing attack immunity).
+
+    Guarantees:
+    - Primary suppression for any cell with 1 <= count < threshold (default 5).
+    - Conservative multi-cell protection: if ANY cell in a partition is suppressed
+      or if total_count < threshold, all non-zero cells and the partition total
+      are suppressed (<5) to guarantee that remaining visible cells and marginal
+      totals can never reconstruct protected small counts or their combined values.
+    - Zero counts (0) are preserved only when safe.
+    - If total_count is 0, unsuppressed 0 is returned.
     """
     result: Dict[str, Dict[str, Any]] = {}
-    primary_suppressed_keys = []
-    unsuppressed_nonzero_keys = []
+    primary_suppressed_keys = [k for k, v in category_counts.items() if 1 <= v < threshold]
+    nonzero_keys = [k for k, v in category_counts.items() if v > 0]
 
+    # Initialize basic counts
     for key, val in category_counts.items():
         if val == 0:
             result[key] = {"count": 0, "display": "0", "suppressed": False}
@@ -49,10 +57,8 @@ def apply_complementary_partition_suppression(
                 "suppressed": True,
                 "suppression_type": "primary",
             }
-            primary_suppressed_keys.append(key)
         else:
             result[key] = {"count": val, "display": str(val), "suppressed": False}
-            unsuppressed_nonzero_keys.append(key)
 
     total_suppressed = False
     total_display = str(total_count)
@@ -64,41 +70,23 @@ def apply_complementary_partition_suppression(
         total_display = f"<{threshold}"
         total_val = None
 
-    # 1. Two-element partition rule (e.g. Mathematics + Portuguese Language):
-    # In a 2-element partition (A + B = Total), if ANY cell is suppressed or Total < threshold,
-    # the companion cell AND the partition total MUST both be suppressed.
-    # Otherwise, exposing Total allows deriving the suppressed cell within an interval <= 3,
-    # or exactly if the companion cell is 0.
-    if len(category_counts) == 2 and (len(primary_suppressed_keys) > 0 or total_suppressed):
-        total_suppressed = True
-        total_display = f"<{threshold}"
-        total_val = None
-        for k in category_counts:
-            if category_counts[k] > 0:
-                result[k] = {
-                    "count": None,
-                    "display": f"<{threshold}",
-                    "suppressed": True,
-                    "suppression_type": "complementary" if k not in primary_suppressed_keys else "primary",
-                }
+    # If any cell is suppressed, or if the total itself is below threshold:
+    has_suppression = len(primary_suppressed_keys) > 0 or total_suppressed
 
-    # 2. Multi-element partition rule (>= 3 categories, e.g. Severity, Review Status):
-    elif len(primary_suppressed_keys) == 1:
-        if unsuppressed_nonzero_keys:
-            # Suppress the smallest non-zero unsuppressed companion cell
-            smallest_key = min(unsuppressed_nonzero_keys, key=lambda k: category_counts[k])
-            result[smallest_key] = {
+    if has_suppression:
+        # Conservative suppression rule:
+        # Suppress all non-zero cells in this partition to ensure no remaining visible cell
+        # can be combined with the marginal total to reveal the hidden small cells or their sum.
+        for k in nonzero_keys:
+            result[k] = {
                 "count": None,
                 "display": f"<{threshold}",
                 "suppressed": True,
-                "suppression_type": "complementary",
+                "suppression_type": "primary" if k in primary_suppressed_keys else "complementary",
             }
-        else:
-            # All other cells in the partition are 0, so the total equals the single suppressed cell!
-            # Must suppress the total to prevent direct identification through Total
-            total_suppressed = True
-            total_display = f"<{threshold}"
-            total_val = None
+        total_suppressed = True
+        total_display = f"<{threshold}"
+        total_val = None
 
     # If total itself is 0, nothing is suppressed
     if total_count == 0:
@@ -304,10 +292,13 @@ class AnomalyService:
                     continue
                 assigned_subject_names.add(subj_name)
 
+                if not a_term or not str(a_term).strip():
+                    # If assignment has no term, teacher cannot establish term-aligned authority over anomaly records
+                    continue
+                clean_term = str(a_term).strip()
+
                 # Query active enrollments for this subject and term
-                enroll_q: Dict[str, Any] = {"subject_id": s_id, "status": "active"}
-                if a_term:
-                    enroll_q["academic_term"] = a_term
+                enroll_q: Dict[str, Any] = {"subject_id": s_id, "status": "active", "academic_term": clean_term}
                 enrolled_students = [
                     e["student_id"] for e in db.student_subject_enrollments.find(enroll_q)
                     if e.get("student_id")
@@ -318,14 +309,8 @@ class AnomalyService:
                 clause: Dict[str, Any] = {
                     "subject": subj_name,
                     "student_id": {"$in": enrolled_students},
+                    "academic_term": clean_term,
                 }
-                if a_term:
-                    clause["$or"] = [
-                        {"academic_term": a_term},
-                        {"academic_term": None},
-                        {"academic_term": {"$exists": False}},
-                        {"academic_term": ""},
-                    ]
                 authorized_clauses.append(clause)
 
             if not authorized_clauses:
@@ -348,8 +333,7 @@ class AnomalyService:
                 single_clause = authorized_clauses[0]
                 query["subject"] = single_clause["subject"]
                 query["student_id"] = single_clause["student_id"]
-                if "$or" in single_clause:
-                    query["$or"] = single_clause["$or"]
+                query["academic_term"] = single_clause["academic_term"]
             else:
                 query["$or"] = authorized_clauses
 
@@ -386,9 +370,9 @@ class AnomalyService:
                     continue
                 # Defense-in-depth: For teachers, verify can_access_student_subject_data
                 if actor_user.role == "teacher":
-                    if rec.is_benchmark or not rec.student_id:
+                    if rec.is_benchmark or not rec.student_id or not rec.academic_term or not rec.academic_term.strip():
                         continue
-                    if not can_access_student_subject_data(actor_user, rec.student_id, rec.subject, db, academic_term=rec.academic_term):
+                    if not can_access_student_subject_data(actor_user, rec.student_id, rec.subject, db, academic_term=rec.academic_term, require_term=True):
                         continue
                 anomalies.append(rec.to_dict())
 
@@ -436,7 +420,10 @@ class AnomalyService:
             if record.is_benchmark or not record.student_id:
                 return None, "Teachers cannot access benchmark evaluation records.", 403
 
-            if not can_access_student_subject_data(actor_user, record.student_id, record.subject, db, academic_term=record.academic_term):
+            if not record.academic_term or not record.academic_term.strip():
+                return None, "Legacy anomaly records without an academic term cannot be accessed by teachers. Please contact an administrator.", 403
+
+            if not can_access_student_subject_data(actor_user, record.student_id, record.subject, db, academic_term=record.academic_term, require_term=True):
                 return None, "You do not have authorization to view this student's anomaly record.", 403
 
         return record.to_dict(), None, 200
@@ -479,7 +466,10 @@ class AnomalyService:
             if record.is_benchmark or not record.student_id:
                 return None, "Teachers cannot review benchmark evaluation records.", 403
 
-            if not can_access_student_subject_data(actor_user, record.student_id, record.subject, db, academic_term=record.academic_term):
+            if not record.academic_term or not record.academic_term.strip():
+                return None, "Legacy anomaly records without an academic term cannot be reviewed by teachers. Please contact an administrator.", 403
+
+            if not can_access_student_subject_data(actor_user, record.student_id, record.subject, db, academic_term=record.academic_term, require_term=True):
                 return None, "You do not have authorization to review this student's anomaly record.", 403
 
         now = datetime.now(timezone.utc)
@@ -649,30 +639,16 @@ class AnomalyService:
                 if status_counts[k] > 0:
                     supp_status[k] = {"count": None, "display": "<5", "suppressed": True, "suppression_type": "cross_dimension"}
 
-        # B. If total_anomalies is suppressed, then anomaly-bearing categories in severity
-        # (High Anomaly and Moderate Anomaly) must also be suppressed to prevent reconstructing
-        # total_anomalies through severity summation.
+        # B. If total_anomalies is suppressed, all non-zero categories in severity
+        # and status breakdowns must be conservatively suppressed to prevent reconstructing
+        # total anomalies through summation or differencing against total_records.
         if supp_total_anomalies["suppressed"]:
-            if supp_severity["High Anomaly"]["count"] is not None and severity_counts["High Anomaly"] > 0:
-                supp_severity["High Anomaly"] = {"count": None, "display": "<5", "suppressed": True, "suppression_type": "cross_dimension"}
-            if supp_severity["Moderate Anomaly"]["count"] is not None and severity_counts["Moderate Anomaly"] > 0:
-                supp_severity["Moderate Anomaly"] = {"count": None, "display": "<5", "suppressed": True, "suppression_type": "cross_dimension"}
-            # Ensure severity partition still satisfies complementary suppression (>=2 suppressed non-zero cells)
-            unsupp_in_sev = [k for k in supp_severity if not supp_severity[k]["suppressed"] and severity_counts[k] > 0]
-            if len(unsupp_in_sev) == 1:
-                only_k = unsupp_in_sev[0]
-                supp_severity[only_k] = {"count": None, "display": "<5", "suppressed": True, "suppression_type": "cross_dimension"}
-
-        # C. If non-pending statuses (Confirmed, Dismissed) are active and total_anomalies is suppressed,
-        # suppress them to prevent cross-dimension leaking
-        if supp_total_anomalies["suppressed"]:
-            for st_k in ("Confirmed Anomaly", "Dismissed (Benign)"):
-                if status_counts[st_k] > 0 and supp_status[st_k]["count"] is not None:
-                    supp_status[st_k] = {"count": None, "display": "<5", "suppressed": True, "suppression_type": "cross_dimension"}
-            unsupp_in_stat = [k for k in supp_status if not supp_status[k]["suppressed"] and status_counts[k] > 0]
-            if len(unsupp_in_stat) == 1:
-                only_k = unsupp_in_stat[0]
-                supp_status[only_k] = {"count": None, "display": "<5", "suppressed": True, "suppression_type": "cross_dimension"}
+            for k in supp_severity:
+                if severity_counts[k] > 0:
+                    supp_severity[k] = {"count": None, "display": "<5", "suppressed": True, "suppression_type": "cross_dimension"}
+            for k in supp_status:
+                if status_counts[k] > 0:
+                    supp_status[k] = {"count": None, "display": "<5", "suppressed": True, "suppression_type": "cross_dimension"}
 
         return {
             "total_evaluated_records": supp_overall_total,

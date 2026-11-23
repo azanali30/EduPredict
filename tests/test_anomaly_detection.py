@@ -28,7 +28,7 @@ from backend.ml.anomaly_detector import (
 )
 from backend.ml.anomaly_loader import get_anomaly_model, score_student_features
 from backend.models.anomaly_record_model import AnomalyRecord, VALID_REVIEW_STATUSES
-from backend.services.anomaly_service import AnomalyService
+from backend.services.anomaly_service import AnomalyService, apply_complementary_partition_suppression
 from backend.services.user_service import UserService
 from backend.services.subject_service import SubjectService
 from backend.services.assignment_service import AssignmentService
@@ -680,3 +680,215 @@ def test_inference_latency_budget(sample_valid_features):
     avg_latency_ms = ((time.perf_counter() - t0) / iterations) * 1000.0
 
     assert avg_latency_ms < 100.0, f"Average inference latency {avg_latency_ms:.2f} ms exceeded 100 ms limit."
+
+
+# ==============================================================================
+# 5. Multi-Cell SDC Suppression & Legacy Term Authorization Tests (Remediation)
+# ==============================================================================
+
+def test_apply_complementary_partition_suppression_unit():
+    """
+    Unit test for conservative Statistical Disclosure Control (SDC) cell suppression:
+    - Partition with two primary-suppressed cells (1 <= N < 5)
+    - Partition with three primary-suppressed cells
+    - Partition with one primary-suppressed cell and zero-valued companion cells
+    - Safe partition with all cells >= 5
+    - Empty partition with total 0
+    """
+    # 1. Two primary-suppressed cells in a 3-category partition
+    counts_two_small = {"High": 2, "Moderate": 3, "Low": 15}
+    res_two, tot_two = apply_complementary_partition_suppression(counts_two_small, 20, threshold=5)
+    for k in ("High", "Moderate", "Low"):
+        assert res_two[k]["suppressed"] is True
+        assert res_two[k]["count"] is None
+        assert res_two[k]["display"] == "<5"
+    assert tot_two["suppressed"] is True
+    assert tot_two["count"] is None
+    assert tot_two["display"] == "<5"
+
+    # 2. Three primary-suppressed cells
+    counts_three_small = {"A": 1, "B": 2, "C": 3}
+    res_three, tot_three = apply_complementary_partition_suppression(counts_three_small, 6, threshold=5)
+    for k in ("A", "B", "C"):
+        assert res_three[k]["suppressed"] is True
+        assert res_three[k]["count"] is None
+    assert tot_three["suppressed"] is True
+    assert tot_three["count"] is None
+
+    # 3. One primary-suppressed cell and zero-valued companion cells
+    counts_one_with_zeros = {"A": 2, "B": 0, "C": 0}
+    res_zeros, tot_zeros = apply_complementary_partition_suppression(counts_one_with_zeros, 2, threshold=5)
+    assert res_zeros["A"]["suppressed"] is True
+    assert res_zeros["A"]["count"] is None
+    assert res_zeros["B"]["suppressed"] is False
+    assert res_zeros["B"]["count"] == 0
+    assert res_zeros["B"]["display"] == "0"
+    assert res_zeros["C"]["suppressed"] is False
+    assert res_zeros["C"]["count"] == 0
+    assert tot_zeros["suppressed"] is True
+    assert tot_zeros["count"] is None
+
+    # 4. Safe partition (all cells >= 5)
+    counts_safe = {"High": 10, "Moderate": 20, "Low": 30}
+    res_safe, tot_safe = apply_complementary_partition_suppression(counts_safe, 60, threshold=5)
+    for k in ("High", "Moderate", "Low"):
+        assert res_safe[k]["suppressed"] is False
+        assert res_safe[k]["count"] == counts_safe[k]
+    assert tot_safe["suppressed"] is False
+    assert tot_safe["count"] == 60
+    assert tot_safe["display"] == "60"
+
+    # 5. Zero total
+    counts_empty = {"A": 0, "B": 0}
+    res_empty, tot_empty = apply_complementary_partition_suppression(counts_empty, 0, threshold=5)
+    assert res_empty["A"]["suppressed"] is False
+    assert res_empty["A"]["count"] == 0
+    assert tot_empty["suppressed"] is False
+    assert tot_empty["count"] == 0
+
+
+def test_analyst_multicell_sdc_suppression_endpoint(client, test_analyst, test_admin, clean_db, sample_valid_features):
+    """
+    Integration test verifying that partitions with multiple primary-suppressed cells
+    conservatively suppress all non-zero cells and partition totals in the Analyst stats API.
+    """
+    clean_db.anomaly_records.delete_many({})
+
+    # 2 High Anomaly, 3 Moderate Anomaly, 20 Low / Typical -> Total = 25, Total Anomalies = 5
+    for i in range(2):
+        rec, _ = AnomalyService.evaluate_and_store_record(
+            clean_db, sample_valid_features, "Mathematics", test_admin, f"REC-HI-{i}"
+        )
+        clean_db.anomaly_records.update_one({"_id": rec.id}, {"$set": {"is_anomaly": True, "anomaly_severity": "High Anomaly"}})
+
+    for i in range(3):
+        rec, _ = AnomalyService.evaluate_and_store_record(
+            clean_db, sample_valid_features, "Portuguese Language", test_admin, f"REC-MOD-{i}"
+        )
+        clean_db.anomaly_records.update_one({"_id": rec.id}, {"$set": {"is_anomaly": True, "anomaly_severity": "Moderate Anomaly"}})
+
+    for i in range(20):
+        rec, _ = AnomalyService.evaluate_and_store_record(
+            clean_db, sample_valid_features, "Mathematics", test_admin, f"REC-LOW-{i}"
+        )
+        clean_db.anomaly_records.update_one({"_id": rec.id}, {"$set": {"is_anomaly": False, "anomaly_severity": "Low / Typical"}})
+
+    client.post("/auth/login", json={"email": test_analyst.email, "password": "AnalystPassword123!"})
+    res = client.get("/api/analyst/anomalies/stats")
+    assert res.status_code == 200
+    data = res.get_json()
+
+    # Severity has two primary-suppressed cells (High=2, Moderate=3).
+    # All non-zero severity categories must be conservatively suppressed!
+    sev_breakdown = data["severity_breakdown"]
+    for sev_name in ("High Anomaly", "Moderate Anomaly", "Low / Typical"):
+        assert sev_breakdown[sev_name]["suppressed"] is True, f"{sev_name} should be suppressed"
+        assert sev_breakdown[sev_name]["count"] is None
+        assert sev_breakdown[sev_name]["display"] == "<5"
+
+    # Total evaluated records partition total for severity was suppressed by conservative rule
+    # Subject anomalies breakdown has Math=2, Por=3 -> both primary suppressed, total anomalies (5) suppressed
+    assert data["subject_breakdown"]["Mathematics"]["anomalies_count"]["suppressed"] is True
+    assert data["subject_breakdown"]["Portuguese Language"]["anomalies_count"]["suppressed"] is True
+    assert data["total_anomalies"]["suppressed"] is True
+
+
+def test_legacy_academic_term_fail_closed_authorization(client, test_teacher, test_student, test_admin, clean_db, sample_valid_features):
+    """
+    Verify Teacher Fail-Closed Authorization for Legacy Academic Terms:
+    - Anomaly records without an academic term (None, empty string "", or missing field)
+      must NEVER be accessible to teachers in list queries, detail GETs, or review updates.
+    - Administrators retain full system-wide access to historical anomaly records.
+    - Pagination counts and offsets for teachers must exclude legacy records with 100% precision.
+    """
+    clean_db.anomaly_records.delete_many({})
+    SubjectService.ensure_canonical_subjects(clean_db)
+    math_subj = SubjectService.get_subject_by_canonical_key(clean_db, "mathematics")
+
+    # Teacher assigned to Math in 2025-2026-T1
+    AssignmentService.assign_teacher_to_subject(clean_db, test_teacher.id, math_subj.id, "2025-2026-T1", test_admin.id)
+    # Student enrolled in Math in 2025-2026-T1
+    EnrollmentService.enroll_student(clean_db, test_student.id, math_subj.id, "2025-2026-T1", test_admin.id)
+
+    # 1. Create a legacy record with academic_term = None
+    rec_none, _ = AnomalyService.evaluate_and_store_record(
+        clean_db, sample_valid_features, "Mathematics", test_admin, "LEGACY-NONE-1",
+        student_id=test_student.id, academic_term=None
+    )
+
+    # 2. Create a legacy record with academic_term = "" (empty string)
+    rec_empty, _ = AnomalyService.evaluate_and_store_record(
+        clean_db, sample_valid_features, "Mathematics", test_admin, "LEGACY-EMPTY-1",
+        student_id=test_student.id, academic_term=""
+    )
+
+    # 3. Create a legacy record with missing academic_term field
+    rec_missing, _ = AnomalyService.evaluate_and_store_record(
+        clean_db, sample_valid_features, "Mathematics", test_admin, "LEGACY-MISSING-1",
+        student_id=test_student.id, academic_term=None
+    )
+    clean_db.anomaly_records.update_one({"_id": rec_missing.id}, {"$unset": {"academic_term": ""}})
+
+    # --- TEACHER ACCESS VERIFICATION ---
+    client.post("/auth/login", json={"email": test_teacher.email, "password": "TeacherPassword123!"})
+
+    # Teacher list endpoint: None of the legacy records appear, total_count is 0
+    res_list = client.get("/api/anomalies?subject=Mathematics")
+    assert res_list.status_code == 200
+    assert res_list.get_json()["total_count"] == 0
+    assert len(res_list.get_json()["anomalies"]) == 0
+
+    # Teacher detail endpoint: Fails closed with 403 Forbidden for each legacy record
+    for rec_id in (rec_none.id, rec_empty.id, rec_missing.id):
+        res_det = client.get(f"/api/anomalies/{rec_id}")
+        assert res_det.status_code == 403
+        assert "academic term" in res_det.get_json().get("message", "").lower()
+
+        res_patch = client.patch(
+            f"/api/anomalies/{rec_id}/status",
+            json={"review_status": "Confirmed Anomaly", "review_notes": "Attempted teacher review"}
+        )
+        assert res_patch.status_code == 403
+        assert "academic term" in res_patch.get_json().get("message", "").lower()
+
+    # --- ADMIN ACCESS VERIFICATION ---
+    client.post("/auth/login", json={"email": test_admin.email, "password": "AdminPassword123!"})
+
+    # Admin retains full historical access to records without academic term
+    for rec_id in (rec_none.id, rec_empty.id, rec_missing.id):
+        res_admin_det = client.get(f"/api/anomalies/{rec_id}")
+        assert res_admin_det.status_code == 200
+        assert res_admin_det.get_json()["anomaly"]["id"] == str(rec_id)
+
+        res_admin_patch = client.patch(
+            f"/api/anomalies/{rec_id}/status",
+            json={"review_status": "Confirmed Anomaly", "review_notes": "Admin verified historical anomaly"}
+        )
+        assert res_admin_patch.status_code == 200
+        assert res_admin_patch.get_json()["anomaly"]["review_status"] == "Confirmed Anomaly"
+
+    # --- PAGINATION INTEGRITY VERIFICATION ---
+    # Insert 10 valid records for 2025-2026-T1
+    for i in range(10):
+        AnomalyService.evaluate_and_store_record(
+            clean_db, sample_valid_features, "Mathematics", test_admin, f"VALID-TERM-{i}",
+            student_id=test_student.id, academic_term="2025-2026-T1"
+        )
+
+    # Now verify Teacher view: Total count must be EXACTLY 10 (the 3 legacy records are completely excluded)
+    client.post("/auth/login", json={"email": test_teacher.email, "password": "TeacherPassword123!"})
+    res_pag_p1 = client.get("/api/anomalies?subject=Mathematics&page=1&limit=5")
+    assert res_pag_p1.status_code == 200
+    data_pag_p1 = res_pag_p1.get_json()
+    assert data_pag_p1["total_count"] == 10
+    assert data_pag_p1["total_pages"] == 2
+    assert len(data_pag_p1["anomalies"]) == 5
+    for a in data_pag_p1["anomalies"]:
+        assert a["academic_term"] == "2025-2026-T1"
+
+    res_pag_p2 = client.get("/api/anomalies?subject=Mathematics&page=2&limit=5")
+    assert res_pag_p2.status_code == 200
+    data_pag_p2 = res_pag_p2.get_json()
+    assert len(data_pag_p2["anomalies"]) == 5
+    for a in data_pag_p2["anomalies"]:
+        assert a["academic_term"] == "2025-2026-T1"
