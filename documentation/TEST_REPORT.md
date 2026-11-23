@@ -697,30 +697,30 @@ Status: **100% Passing, 0 Regressions, Full Multi-Subject Compliance.**
 
 ## Phase 7D: Security & Production Hardening Verification
 - **Date**: 2026-11-23
-- **Target**: Secret Management, Production Startup Lock, Secure Session Cookies, File Upload Validation, Magic Byte Inspection, Pillow Image Sanitization, IDOR & Privilege Escalation Prevention, CSRF Protection, CORS Origin Enforcement, Log Redaction & CRLF Protection
-- **Result**: **All 227 Backend Tests & 25 Frontend Tests PASSED (100% Pass Rate)**
+- **Target**: Secret Management, Production Startup Lock, Secure Session Cookies, File Upload Validation, Magic Byte Inspection, PDF Structural Integrity & Script Rejection, Safe Attachment Document Serving, Pillow Image Sanitization, IDOR & Privilege Escalation Prevention, CSRF Protection, Strict CORS Origin Enforcement & Wildcard Prohibition, Fully Recursive Log Redaction & CRLF Protection
+- **Result**: **All 236 Backend Tests & 25 Frontend Tests PASSED (100% Pass Rate)**
 
 ### Comprehensive Phase 7D Verification Matrix
 | Test Category | Test File / Command | Key Scenarios Verified | Result | Status |
 |---|---|---|---|---|
 | **Secret Management** | `test_phase_7d_security_hardening.py` | Missing, weak (<32 chars), and known default secrets raise RuntimeError; strong secrets succeed; debug mode locked off in production | 7 passed | **PASS** |
-| **Upload Security** | `test_phase_7d_security_hardening.py` | PNG, JPEG, WebP decoding & re-encoding via Pillow; disguised executables rejected; corrupted images rejected; SVGs/scripts rejected (415); >5MB rejected (413); empty files rejected (400); UUID random names prevent path traversal; directory traversal blocked | 10 passed | **PASS** |
+| **Upload Security** | `test_phase_7d_security_hardening.py` | PNG, JPEG, WebP decoding & re-encoding via Pillow; valid PDF structural upload; disguised executables rejected; forged PDFs lacking EOF/xref rejected; PDFs with /JavaScript script actions rejected; SVGs/scripts rejected (415); >5MB rejected (413); empty files rejected (400); UUID random names prevent path traversal; directory traversal blocked; document serving forces attachment download and nosniff | 14 passed | **PASS** |
 | **API & IDOR** | `test_phase_7d_security_hardening.py` | Student cannot view or predict for peers; self-service PATCH cannot mutate `role`, `password_hash`, `email`, `_id`, or `academic_info`; global error handlers return JSON | 4 passed | **PASS** |
-| **CORS & CSRF** | `test_phase_7d_security_hardening.py` | Preflight OPTIONS; explicit origin allowlist; no wildcard with credentials; CSRF tokens required on state-changing requests; invalid tokens return 400 JSON | 4 passed | **PASS** |
-| **Audit Logging** | `test_phase_7d_security_hardening.py` | Credential scrubbing (`[REDACTED]`); CRLF log injection sanitized | 2 passed | **PASS** |
+| **CORS & CSRF** | `test_phase_7d_security_hardening.py` | Preflight OPTIONS; explicit origin allowlist; wildcard '*' strictly rejected in isolation and mixed; URL parsing verifies scheme/host without paths/queries/fragments; invalid CORS fails production startup; no wildcard with credentials; CSRF tokens required on state-changing requests; invalid tokens return 400 JSON | 8 passed | **PASS** |
+| **Audit Logging** | `test_phase_7d_security_hardening.py` | Fully recursive credential scrubbing (`[REDACTED]`) across arbitrary dict/list nesting and unexpected types; input object non-mutation; CRLF log injection sanitized | 3 passed | **PASS** |
 | **Registration Workflows** | `test_registration_workflows.py` | End-to-end multi-section registration, avatar upload with authentic 1x1 PNG bytes, document upload | 5 passed | **PASS** |
-| **Full Backend Regression** | `.venv\Scripts\pytest -q` | All 227 backend tests across Phases 0–7D | **227 passed in 196.75s** | **PASS** |
+| **Full Backend Regression** | `.venv\Scripts\pytest -q` | All 236 backend tests across Phases 0–7D | **236 passed** | **PASS** |
 | **Frontend Tests** | `cd frontend && npx vitest run` | Grade utils, anomaly review modal, subject workspaces | **25 passed in 9.84s** | **PASS** |
 | **TypeScript Check** | `cd frontend && npx tsc -b` | Zero TypeScript compiler errors | **0 errors** | **PASS** |
 | **Production Build** | `cd frontend && npm run build` | Full production bundle generated | **Built in 25.68s** | **PASS** |
 
-### Complete Backend Pytest Execution Summary (227 Tests)
+### Complete Backend Pytest Execution Summary (236 Tests)
 ```text
 ============================= test session starts =============================
 platform win32 -- Python 3.12.16, pytest-9.2.0, pluggy-1.7.0
 rootdir: C:\Users\Azan's PC\Documents\EduPredict
 plugins: flask-1.3.0
-collected 227 items
+collected 236 items
 
 tests/test_admin.py (7 tests) ........................................ PASSED
 tests/test_anomaly_detection.py (30 tests) ............................ PASSED
@@ -733,7 +733,7 @@ tests/test_health_routes.py (4 tests) ................................ PASSED
 tests/test_ml_models.py (8 tests) .................................... PASSED
 tests/test_models.py (4 tests) ....................................... PASSED
 tests/test_mongo_connectivity.py (3 tests) ........................... PASSED
-tests/test_phase_7d_security_hardening.py (27 tests) ................. PASSED
+tests/test_phase_7d_security_hardening.py (36 tests) ................. PASSED
 tests/test_prediction_api.py (18 tests) .............................. PASSED
 tests/test_profile_and_security.py (18 tests) ......................... PASSED
 tests/test_rbac.py (8 tests) ......................................... PASSED
@@ -741,6 +741,6 @@ tests/test_registration_workflows.py (5 tests) ....................... PASSED
 tests/test_subject_models_and_services.py (16 tests) ................. PASSED
 tests/test_subject_rbac.py (15 tests) ................................. PASSED
 
-====================== 227 passed in 196.75s (0:03:16) ======================
+====================== 236 passed in 218.42s (0:03:38) ======================
 ```
-Status: **100% Passing, 0 Failures, Production Hardening Complete.**
+Status: **100% Passing, 0 Failures, Production Hardening & Remediation Complete.**

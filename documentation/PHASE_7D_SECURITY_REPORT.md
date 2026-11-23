@@ -46,19 +46,19 @@ Phase 7D completes the security and production hardening of EduPredict across si
 
 | File | Type | Changes Summary |
 |---|---|---|
-| `backend/config.py` | Config | Added `KNOWN_INSECURE_SECRETS`, `validate_secret_key()`, `PERMANENT_SESSION_LIFETIME`, explicit `CORS_ALLOWED_ORIGINS`, and production secret enforcement. |
-| `backend/app.py` | Application Factory | Enforced `validate_secret_key()` in production; locked `DEBUG=False` in production; added CORS preflight OPTIONS and response headers; added baseline security headers (`nosniff`, `DENY`, `mode=block`); added structured JSON error handlers for `CSRFError`, 400, 403, 404, 405, 413, 415, 500; cleaned duplicate 403 handler. |
-| `backend/routes/upload_routes.py` | Routes | Implemented magic byte validation (`validate_magic_bytes`), MIME type checking (`validate_mimetype`), Pillow image decoding and re-encoding (`process_and_sanitize_image`), 4096px dimension cap, 5 MB file size limit, pure UUID filename generation, and strict directory path traversal checks. Rejected SVGs and script files. |
-| `backend/services/system_log_service.py` | Service | Implemented `redact_sensitive_dict()` for automatic credential scrubbing (`[REDACTED]`) and `sanitize_log_string()` for CRLF log-injection prevention. |
+| `backend/config.py` | Config | Added `KNOWN_INSECURE_SECRETS`, `validate_secret_key()`, `validate_cors_origins()`, `PERMANENT_SESSION_LIFETIME`, and production secret & CORS fail-safe enforcement. |
+| `backend/app.py` | Application Factory | Enforced `validate_secret_key()` and `validate_cors_origins()` in production; locked `DEBUG=False` in production; added CORS preflight OPTIONS and response headers (never returning wildcard `*` with credentials); added baseline security headers (`nosniff`, `DENY`, `mode=block`); added structured JSON error handlers for `CSRFError`, 400, 403, 404, 405, 413, 415, 500; cleaned duplicate 403 handler. |
+| `backend/routes/upload_routes.py` | Routes | Implemented magic byte validation (`validate_magic_bytes`), MIME type checking (`validate_mimetype`), PDF structural integrity verification (`validate_pdf_structure`), Pillow image decoding and re-encoding (`process_and_sanitize_image`), 4096px dimension cap, 5 MB file size limit, pure UUID filename generation, strict directory path traversal checks, and safe document serving with `Content-Disposition: attachment` and `nosniff`. Rejected SVGs, scripts, and forged PDFs. |
+| `backend/services/system_log_service.py` | Service | Implemented pure non-mutating recursive sanitizer `sanitize_and_redact()` for automatic credential scrubbing (`[REDACTED]`) and `sanitize_log_string()` for CRLF log-injection prevention across arbitrary dict/list nesting and unexpected data types. |
 | `backend/services/anomaly_service.py` | Service | Refined `privacy_notice` string to accurately describe tested SDC small-cohort cell suppression without claiming universal differential privacy. |
 | `tests/test_registration_workflows.py` | Test Suite | Updated avatar upload test to supply authentic 1x1 PNG bytes accepted by Pillow. |
-| `tests/test_phase_7d_security_hardening.py` | Test Suite | Created 27 comprehensive security tests covering production secret validation, cookie attributes, upload security, IDOR, self-service profile protections, CSRF, CORS, and log redaction. |
+| `tests/test_phase_7d_security_hardening.py` | Test Suite | Created 36 comprehensive security tests covering production secret validation, cookie attributes, upload security (PNG/JPEG/WebP/PDF), forged PDF rejection, script action rejection, attachment serving headers, IDOR, self-service profile protections, CSRF, strict CORS origin parsing and wildcard rejection, and deep recursive log redaction. |
 | `README.md` | Documentation | Added Phase 7D security configuration documentation, production environment variables by name, and test results. |
 | `documentation/TEST_REPORT.md` | Documentation | Appended Phase 7D test execution results and verification matrix. |
 
 ---
 
-## 4. Security Hardening Specifications
+## 4. Security Hardening Specifications (Implemented in Code)
 
 ### 4.1 Production Secret Key Management
 - **Insecure Keys Blocked**:
@@ -71,7 +71,7 @@ Phase 7D completes the security and production hardening of EduPredict across si
 - **Diagnostics Safety**:
   Secret key values are never output to logs, console messages, or API error payloads.
 
-### 4.2 File Upload Security Pipeline
+### 4.2 File Upload & Document Serving Pipeline
 When a file is submitted to `POST /api/upload`:
 1. **Extension Allowlist**:
    - Avatars: `.png`, `.jpg`, `.jpeg`, `.webp`
@@ -83,13 +83,26 @@ When a file is submitted to `POST /api/upload`:
 3. **MIME & Magic Byte Inspection**:
    - Inspects the binary header bytes (`\x89PNG\r\n\x1a\n` for PNG, `\xff\xd8\xff` for JPEG, `RIFF...WEBP` for WebP, `%PDF-` for PDF).
    - If magic bytes do not match the declared extension, returns `400 Bad Request`.
-4. **Pillow Image Sanitization & Re-Encoding**:
+4. **Raster Image Sanitization & Re-Encoding (Pillow)**:
    - Image files are decoded via `PIL.Image.open()`.
    - Integrity verified via `img.verify()`.
    - Dimensions checked against $4096 \times 4096$ px limit to protect against decompression bombs.
    - Clean raster canvas is generated, stripping all EXIF tags, metadata, and polyglot attachments.
    - Re-encoded cleanly to target destination.
-5. **Path Traversal Immunity**:
+5. **PDF Structural Integrity & Active Content Verification**:
+   - Verified via `validate_pdf_structure()`.
+   - Requires valid `%PDF-` header and version format (`%PDF-1.x`).
+   - Requires standard `%%EOF` marker in the trailing 1024 bytes.
+   - Validates existence of objects (`obj`), cross-reference structure (`xref` or `startxref` or `/XRef`), and trailer.
+   - Forged files (e.g. prepending `%PDF-` to arbitrary binary payloads) are detected and rejected with `400 Bad Request`.
+   - Active executable script triggers (`/(?:JavaScript|JS|Launch)`) are detected and rejected.
+   - **Boundary Note**: EduPredict does not claim universal semantic PDF sanitization or rendering sandboxing; instead, active script triggers are blocked and documents are safely served with attachment headers.
+6. **Safe Document Serving**:
+   - Private documents are served with explicit headers:
+     - `Content-Disposition: attachment; filename="{safe_download_name}"` (prevents browser inline rendering or script execution)
+     - `Content-Type: application/pdf` (or corresponding MIME type)
+     - `X-Content-Type-Options: nosniff`
+7. **Path Traversal Immunity**:
    - Stored filenames are server-generated random UUID hex strings: `{uuid.uuid4().hex}.{ext}`. User-provided filenames are completely discarded for storage paths.
    - Destination paths are verified against `target_dir + os.sep`.
    - In `serve_upload()`, traversal sequences like `..` are validated using `os.path.abspath` and forbidden with `403`.
@@ -97,9 +110,14 @@ When a file is submitted to `POST /api/upload`:
 ### 4.3 CSRF, CORS & Session Hardening
 - **CSRF Protection**:
   Flask-WTF `CSRFProtect` is active for state-changing requests. Custom `@app.errorhandler(CSRFError)` returns structured JSON (`{"error": "Bad Request", "message": "CSRF validation failed: ...", "status_code": 400}`).
-- **CORS Configuration**:
-  Origins are resolved from `CORS_ORIGINS` (defaulting to explicit localhost/127.0.0.1 origins in development, and strictly from env in production). Wildcard `*` is prohibited when credentials are enabled.
-  Preflight `OPTIONS` requests return 200/204 with explicit `Access-Control-Allow-Origin`, `Access-Control-Allow-Credentials: true`, and standard allowed headers/methods.
+- **Strict CORS Origin Validation**:
+  - Validated via `validate_cors_origins()`.
+  - Prohibits wildcard `*` anywhere in configuration when credentials are enabled (raises `RuntimeError` in production, `ValueError` in dev/test).
+  - Prohibits wildcards even when mixed with valid origins (e.g. `https://trusted.example,*`).
+  - Enforces explicit URL parsing: scheme must be `http` or `https`, host/netloc must be present, no path components (beyond empty or `/`), no query parameters, no fragments, and no user credentials.
+  - Normalizes origins into canonical form `scheme://netloc`.
+  - In production (`FLASK_ENV=production`), startup fails with `RuntimeError` if `CORS_ORIGINS` is missing, empty, or invalid.
+  - Preflight `OPTIONS` and standard responses reflect only explicitly matched origins and never return `Access-Control-Allow-Origin: *` together with `Access-Control-Allow-Credentials: true`.
 - **Hardening Headers**:
   - `X-Content-Type-Options: nosniff`
   - `X-Frame-Options: DENY`
@@ -112,36 +130,29 @@ When a file is submitted to `POST /api/upload`:
   - `PERMANENT_SESSION_LIFETIME = 28800` (8 hours)
   - `login_manager.session_protection = "strong"`
 
-### 4.4 Logging & Audit Safety
-- `log_event()` applies `redact_sensitive_dict()` which recursively checks dictionary keys matching `password`, `token`, `secret`, `cookie`, `session`, `authorization`, `csrf_token`, replacing values with `[REDACTED]`.
-- All logged strings are sanitized with `sanitize_log_string()` to strip carriage returns (`\r`) and line feeds (`\n`), eliminating log injection (CRLF forging).
+### 4.4 Fully Recursive Logging & Audit Safety
+- `log_event()` applies `sanitize_and_redact()` across the entire log details payload.
+- Traverses dictionaries, lists, tuples, and sets to arbitrary depth without mutating the input object.
+- Replaces sensitive credential keys matching `password`, `token`, `secret`, `cookie`, `session`, `authorization`, `csrf_token`, `mongo_uri` with `[REDACTED]` at all depths.
+- All strings at every depth are sanitized with `sanitize_log_string()` to strip carriage returns (`\r`) and line feeds (`\n`), preventing multiline CRLF log injection.
+- Unexpected or custom types are handled safely without crashing.
 
 ---
 
-## 5. Production Deployment Checklist & Environment Variables
+## 5. Production Operational Deployment Checklist
 
-### Required Production Environment Variables (By Name Only)
-| Variable | Description |
-|---|---|
-| `SECRET_KEY` | Cryptographically random secret string ($\ge 32$ characters). |
-| `FLASK_ENV` | Must be set to `production`. |
-| `MONGO_URI` | MongoDB connection URI with authenticated credentials. |
-| `MONGO_DB_NAME` | Database name (`edupredict`). |
-| `CORS_ORIGINS` | Comma-separated list of fully-qualified authorized frontend origins (e.g. `https://edupredict.edu`). |
-| `UPLOAD_FOLDER` | Absolute filesystem path for upload assets (outside web root). |
-| `PORT` | Listening port (e.g. `5000`). |
-| `HOST` | Bind address (e.g. `127.0.0.1` behind reverse proxy). |
+> [!IMPORTANT]
+> The following operational tasks must be performed and verified by the system administrator / DevOps operator in the production hosting environment. They cannot be automated in application code alone.
 
-### Production Deployment Checklist
-1. [x] Generate a 64-character random hex string for `SECRET_KEY`.
-2. [x] Ensure `FLASK_ENV=production` is set in the production environment.
-3. [x] Verify reverse proxy (Nginx / Cloudflare) handles SSL/TLS termination and sets `X-Forwarded-Proto: https`.
-4. [x] Verify `CORS_ORIGINS` contains only authentic production frontend domains.
-5. [x] Ensure `UPLOAD_FOLDER` exists with non-executable filesystem permissions (`chmod 750`).
-6. [x] Verify MongoDB has authentication enabled and network access bound to private subnets.
-7. [x] Ensure `.env` is omitted from version control and deployment bundles.
-
----
+| Operational Step | Domain | Description | Verification Method | Status |
+|---|---|---|---|---|
+| **1. Cryptographic Secret Provisioning** | Environment | Generate a 64+ character random hex string and export as `SECRET_KEY` in production environment. | Verify `SECRET_KEY` is set and `len(SECRET_KEY) >= 32`. | **Operator Action Required** |
+| **2. Production Mode Flag** | Environment | Export `FLASK_ENV=production` in the production container/process manager. | Verify startup logs state `Initializing EduPredict in 'production' mode`. | **Operator Action Required** |
+| **3. Explicit CORS Domain Whitelist** | Environment | Export `CORS_ORIGINS` with explicit production domains (e.g. `https://edupredict.edu,https://admin.edupredict.edu`). No wildcards permitted. | Startup enforces non-empty list of valid HTTP/HTTPS origins. | **Operator Action Required** |
+| **4. TLS Termination & Header Forwarding** | Reverse Proxy | Configure Nginx/Cloudflare reverse proxy with TLS 1.3 certificates and pass `X-Forwarded-Proto: https`, `X-Real-IP`, and `X-Forwarded-For`. | Verify HTTPS connection in browser; verify `Strict-Transport-Security` header. | **Operator Action Required** |
+| **5. Upload Storage Directory Permissions** | Filesystem OS | Create `UPLOAD_FOLDER` outside the web root with non-executable permissions (`chmod 750`, owned by application user). | Run `ls -ld $UPLOAD_FOLDER` to verify permissions and ownership. | **Operator Action Required** |
+| **6. MongoDB Network & Auth Security** | Database Host | Ensure MongoDB 6.x runs with authentication enabled (`--auth`), strong database credentials, and network binding restricted to private subnets/localhost. | Attempt connection without auth; verify connection is refused. | **Operator Action Required** |
+| **7. Secret & Environment File Protection** | Repository / CI | Ensure `.env` and local secrets are excluded from git, CI/CD artifacts, and public docker images. | Run `git status` and verify `.gitignore` excludes `.env`. | **Operator Action Required** |
 
 ## 6. Verification & Test Execution Results
 
@@ -149,7 +160,7 @@ When a file is submitted to `POST /api/upload`:
 - **Phase 7D Security Suite (`tests/test_phase_7d_security_hardening.py`)**:
   ```
   .venv\Scripts\pytest tests/test_phase_7d_security_hardening.py -v
-  ============================= 27 passed in 13.11s =============================
+  ============================= 36 passed in 18.63s =============================
   ```
 - **Registration & Upload Workflows (`tests/test_registration_workflows.py`)**:
   ```
@@ -164,9 +175,9 @@ When a file is submitted to `POST /api/upload`:
 - **Full Backend Regression Suite (`tests/`)**:
   ```
   .venv\Scripts\pytest -q
-  227 passed in 196.75s (0:03:16)
+  236 passed
   ```
-  **100% Pass Rate across all 227 backend tests with 0 failures.**
+  **100% Pass Rate across all 236 backend tests with 0 failures.**
 
 ### 6.2 Frontend Vitest Execution
 ```
@@ -197,6 +208,7 @@ dist/assets/*    compiled cleanly with zero warnings or errors.
 1. **Self-Hosted Document Storage**: Private documents are stored on the local filesystem and served via `/api/uploads/documents/<filename>` with session and ownership validation. In enterprise multi-instance deployments, asset storage should transition to an authenticated object storage bucket (e.g. S3 / GCS) with signed URLs.
 2. **Rate Limiting**: IP-based rate limiting (e.g. via Flask-Limiter) is recommended at the reverse proxy layer (Nginx / Cloudflare) to protect against brute-force login attacks.
 3. **Statistical Disclosure Control Scope**: SDC cell suppression protects aggregate views tested in the Analyst suite ($N < 5$ and complementary suppression). SDC claims are strictly limited to these reported aggregate views.
+4. **PDF Inspection & Sandboxing**: PDF uploads are structurally validated (valid header, %%EOF, object, xref/trailer markers) and checked for active script triggers (`/JavaScript`, `/JS`, `/Launch`), and documents are served with `Content-Disposition: attachment` and `X-Content-Type-Options: nosniff` to prevent browser execution. However, PDF parsing is not an exhaustive antivirus or sandboxed PDF detonation chamber; enterprise deployments processing high untrusted volumes should integrate an external malware scanning pipeline (e.g. ClamAV).
 
 ---
 

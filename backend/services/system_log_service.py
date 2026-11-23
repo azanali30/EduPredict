@@ -6,6 +6,7 @@ Includes automatic redaction of credentials and secrets, and CRLF log-injection 
 
 import re
 import logging
+from typing import Any
 from pymongo.database import Database
 from backend.models.system_log_model import SystemLog
 
@@ -26,31 +27,52 @@ def sanitize_log_string(val: str) -> str:
     return re.sub(r"[\r\n]+", " ", val).strip()
 
 
-def redact_sensitive_dict(d: dict) -> dict:
+def is_sensitive_key(key_str: str) -> bool:
+    """Check if key contains any sensitive credential or secret term."""
+    clean = key_str.lower()
+    return any(sens in clean for sens in SENSITIVE_FIELD_NAMES)
+
+
+def sanitize_and_redact(val: Any) -> Any:
     """
-    Recursively redact sensitive credential keys from log details.
-    Sanitizes string inputs to eliminate multiline log injection vulnerabilities.
+    Recursively redact sensitive credential keys and sanitize CRLF characters
+    across dictionaries, lists, tuples, sets, strings, and mixed nested structures.
+    Guarantees non-mutation of input objects; returns clean, safe new structures.
+    Safely handles unexpected types.
     """
-    if not isinstance(d, dict):
-        return d
-    redacted = {}
-    for k, v in d.items():
-        clean_k = sanitize_log_string(str(k))
-        if any(sens in clean_k.lower() for sens in SENSITIVE_FIELD_NAMES):
-            redacted[clean_k] = "[REDACTED]"
-        elif isinstance(v, dict):
-            redacted[clean_k] = redact_sensitive_dict(v)
-        elif isinstance(v, list):
-            redacted[clean_k] = [
-                redact_sensitive_dict(item) if isinstance(item, dict)
-                else (sanitize_log_string(item) if isinstance(item, str) else item)
-                for item in v
-            ]
-        elif isinstance(v, str):
-            redacted[clean_k] = sanitize_log_string(v)
-        else:
-            redacted[clean_k] = v
-    return redacted
+    if isinstance(val, dict):
+        result = {}
+        for k, v in val.items():
+            clean_k = sanitize_log_string(str(k))
+            if is_sensitive_key(clean_k):
+                result[clean_k] = "[REDACTED]"
+            else:
+                result[clean_k] = sanitize_and_redact(v)
+        return result
+    elif isinstance(val, (list, tuple)):
+        sanitized_items = [sanitize_and_redact(item) for item in val]
+        return sanitized_items if isinstance(val, list) else tuple(sanitized_items)
+    elif isinstance(val, (set, frozenset)):
+        sanitized_items = [sanitize_and_redact(item) for item in val]
+        return set(sanitized_items) if isinstance(val, set) else frozenset(sanitized_items)
+    elif isinstance(val, str):
+        return sanitize_log_string(val)
+    elif isinstance(val, (int, float, bool)) or val is None:
+        return val
+    else:
+        # Fallback for unexpected or custom types (e.g. ObjectId, custom class)
+        try:
+            return sanitize_log_string(str(val))
+        except Exception:
+            return "[UNREPRESENTABLE]"
+
+
+def redact_sensitive_dict(d: Any) -> Any:
+    """
+    Backward-compatible entry point for recursive credential redaction and CRLF sanitization.
+    Accepts arbitrary structures (dicts, lists, primitives).
+    """
+    return sanitize_and_redact(d)
 
 
 def log_event(

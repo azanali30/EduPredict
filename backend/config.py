@@ -5,6 +5,8 @@ Defines configuration environments: Development, Testing, Production.
 
 import os
 from pathlib import Path
+from urllib.parse import urlparse
+from typing import List, Union
 from dotenv import load_dotenv
 
 # Base directory of the project
@@ -56,6 +58,91 @@ def validate_secret_key(secret_key: str | None, is_production: bool = False) -> 
             )
 
 
+def validate_cors_origins(origins_input: Union[List[str], str, None], is_production: bool = False) -> List[str]:
+    """
+    Strictly validate configured CORS origins.
+    - Rejects wildcard '*' (strictly prohibited when credentials/cookies are enabled).
+    - Rejects wildcards even when mixed with valid origins (e.g. 'https://trusted.example,*').
+    - Requires explicit HTTP or HTTPS scheme.
+    - Requires non-empty host/netloc and forbids paths (beyond empty or '/'), queries, fragments, or credentials.
+    - In production, fails safely with RuntimeError on any invalid origin or empty origin list.
+    - In non-production, raises ValueError on wildcard or malformed origin.
+    """
+    if origins_input is None:
+        raw_items = []
+    elif isinstance(origins_input, str):
+        raw_items = [o.strip() for o in origins_input.split(",") if o.strip()]
+    elif isinstance(origins_input, (list, tuple, set)):
+        raw_items = [str(o).strip() for o in origins_input if str(o).strip()]
+    else:
+        raw_items = []
+
+    # 1. Prohibit wildcards anywhere in the configuration
+    for item in raw_items:
+        if item == "*" or "*" in item:
+            err_msg = (
+                f"Insecure CORS configuration: Wildcard origin '{item}' is strictly prohibited "
+                "when credentials (cookies/sessions) are enabled."
+            )
+            if is_production:
+                raise RuntimeError(f"Production configuration error: {err_msg}")
+            raise ValueError(err_msg)
+
+    validated_origins: List[str] = []
+
+    # 2. Validate URL structure for each origin
+    for item in raw_items:
+        try:
+            parsed = urlparse(item)
+        except Exception as e:
+            err_msg = f"Malformed CORS origin URL '{item}': {str(e)}"
+            if is_production:
+                raise RuntimeError(f"Production configuration error: {err_msg}")
+            raise ValueError(err_msg)
+
+        if parsed.scheme not in ("http", "https"):
+            err_msg = f"Invalid CORS origin scheme '{parsed.scheme}' for '{item}'. Only 'http' and 'https' are allowed."
+            if is_production:
+                raise RuntimeError(f"Production configuration error: {err_msg}")
+            raise ValueError(err_msg)
+
+        if not parsed.netloc:
+            err_msg = f"Invalid CORS origin '{item}': Missing domain or host."
+            if is_production:
+                raise RuntimeError(f"Production configuration error: {err_msg}")
+            raise ValueError(err_msg)
+
+        if parsed.username or parsed.password:
+            err_msg = f"Invalid CORS origin '{item}': Origins must not contain user credentials."
+            if is_production:
+                raise RuntimeError(f"Production configuration error: {err_msg}")
+            raise ValueError(err_msg)
+
+        if parsed.path not in ("", "/"):
+            err_msg = f"Invalid CORS origin '{item}': Origins must not contain paths ('{parsed.path}')."
+            if is_production:
+                raise RuntimeError(f"Production configuration error: {err_msg}")
+            raise ValueError(err_msg)
+
+        if parsed.query or parsed.fragment or parsed.params:
+            err_msg = f"Invalid CORS origin '{item}': Origins must not contain query parameters or fragments."
+            if is_production:
+                raise RuntimeError(f"Production configuration error: {err_msg}")
+            raise ValueError(err_msg)
+
+        # Canonical origin form: scheme://netloc (without trailing slash)
+        canonical = f"{parsed.scheme}://{parsed.netloc}"
+        if canonical not in validated_origins:
+            validated_origins.append(canonical)
+
+    if is_production and not validated_origins:
+        raise RuntimeError(
+            "Production configuration error: CORS_ORIGINS must contain at least one valid explicit HTTP/HTTPS origin."
+        )
+
+    return validated_origins
+
+
 class BaseConfig:
     """Base application configuration."""
 
@@ -81,14 +168,13 @@ class BaseConfig:
     WTF_CSRF_TIME_LIMIT = 3600  # 1 hour token lifetime
 
     # Explicit CORS Allowed Origins
-    CORS_ALLOWED_ORIGINS = [
-        o.strip()
-        for o in os.getenv(
+    CORS_ALLOWED_ORIGINS = validate_cors_origins(
+        os.getenv(
             "CORS_ORIGINS",
             "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5000,http://127.0.0.1:5000"
-        ).split(",")
-        if o.strip()
-    ]
+        ),
+        is_production=False,
+    )
 
     # Application Metadata
     APP_NAME = "EduPredict"

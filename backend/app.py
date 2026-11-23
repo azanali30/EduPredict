@@ -6,7 +6,7 @@ Creates and configures the Flask application instance.
 import os
 import logging
 from flask import Flask, jsonify, request
-from backend.config import get_config, validate_secret_key
+from backend.config import get_config, validate_secret_key, validate_cors_origins
 from backend.extensions import csrf, login_manager, mongo
 from backend.routes.health_routes import health_bp
 from backend.routes.auth_routes import auth_bp
@@ -48,6 +48,11 @@ def create_app(config_name=None):
 
     is_prod = (app.config.get("ENV") == "production" or config_name == "production")
     validate_secret_key(app.config.get("SECRET_KEY"), is_production=is_prod)
+
+    # Validate and normalize CORS origins (fails startup safely if invalid in production)
+    raw_cors = app.config.get("CORS_ALLOWED_ORIGINS")
+    validated_cors = validate_cors_origins(raw_cors, is_production=is_prod)
+    app.config["CORS_ALLOWED_ORIGINS"] = validated_cors
 
     if is_prod:
         # Enforce strict production safety invariants
@@ -120,11 +125,12 @@ def create_app(config_name=None):
     # 6. CORS & Security Headers
     @app.before_request
     def handle_cors_preflight():
-        """Handle CORS OPTIONS preflight requests for allowed origins."""
+        """Handle CORS OPTIONS preflight requests for explicitly allowed origins."""
         if request.method == "OPTIONS":
             origin = request.headers.get("Origin")
             allowed_origins = app.config.get("CORS_ALLOWED_ORIGINS", [])
-            if origin and origin in allowed_origins:
+            # Wildcard '*' is strictly rejected when credentials are enabled
+            if origin and origin != "*" and origin in allowed_origins:
                 response = app.make_default_options_response()
                 response.headers["Access-Control-Allow-Origin"] = origin
                 response.headers["Access-Control-Allow-Credentials"] = "true"
@@ -140,7 +146,8 @@ def create_app(config_name=None):
         """Set explicit CORS and hardening security headers on responses."""
         origin = request.headers.get("Origin")
         allowed_origins = app.config.get("CORS_ALLOWED_ORIGINS", [])
-        if origin and origin in allowed_origins:
+        # Only reflect exact matching origin from allowlist; never reflect wildcard '*'
+        if origin and origin != "*" and origin in allowed_origins:
             response.headers["Access-Control-Allow-Origin"] = origin
             response.headers["Access-Control-Allow-Credentials"] = "true"
             response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"

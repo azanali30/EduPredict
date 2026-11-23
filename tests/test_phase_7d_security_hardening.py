@@ -20,6 +20,7 @@ from bson import ObjectId
 
 from backend.config import (
     validate_secret_key,
+    validate_cors_origins,
     KNOWN_INSECURE_SECRETS,
     BaseConfig,
     DevelopmentConfig,
@@ -28,7 +29,12 @@ from backend.config import (
     get_config,
 )
 from backend.app import create_app
-from backend.services.system_log_service import log_event, redact_sensitive_dict, sanitize_log_string
+from backend.services.system_log_service import (
+    log_event,
+    redact_sensitive_dict,
+    sanitize_log_string,
+    sanitize_and_redact,
+)
 from backend.services.user_service import UserService
 from backend.services.subject_service import SubjectService
 from backend.services.assignment_service import AssignmentService
@@ -45,6 +51,33 @@ def create_valid_image_bytes(fmt: str = "PNG", size: tuple = (10, 10), color: st
     img = Image.new("RGB", size, color=color)
     img.save(buf, format=fmt)
     return buf.getvalue()
+
+
+def create_valid_pdf_bytes() -> bytes:
+    """Generate in-memory binary bytes of a minimal valid PDF-1.4 document."""
+    return (
+        b"%PDF-1.4\n"
+        b"1 0 obj\n"
+        b"<< /Type /Catalog /Pages 2 0 R >>\n"
+        b"endobj\n"
+        b"2 0 obj\n"
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>\n"
+        b"endobj\n"
+        b"3 0 obj\n"
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>\n"
+        b"endobj\n"
+        b"xref\n"
+        b"0 4\n"
+        b"0000000000 65535 f \n"
+        b"0000000010 00000 n \n"
+        b"0000000060 00000 n \n"
+        b"0000000117 00000 n \n"
+        b"trailer\n"
+        b"<< /Size 4 /Root 1 0 R >>\n"
+        b"startxref\n"
+        b"190\n"
+        b"%%EOF\n"
+    )
 
 
 # ==============================================================================
@@ -99,6 +132,7 @@ def test_create_app_in_production_succeeds_with_valid_secret(monkeypatch):
     strong_key = "b9823476abcdf0123456789abcdef0123456789abcdef0123456789abcdef01"
     monkeypatch.setenv("SECRET_KEY", strong_key)
     monkeypatch.setenv("MONGO_URI", "mongodb://localhost:27017/edupredict_test")
+    monkeypatch.setenv("CORS_ORIGINS", "https://edupredict.edu")
 
     app = create_app("production")
     assert app.config["DEBUG"] is False
@@ -467,3 +501,215 @@ def test_system_log_sanitizes_crlf_log_injection(clean_db):
     assert "\n" not in doc["ip_address"]
     assert "\r" not in doc["details"]["note"]
     assert "\n" not in doc["details"]["note"]
+
+
+# ==============================================================================
+# 6. Phase 7D Remediation: Strict CORS, Hardened PDF & Recursive Sanitization
+# ==============================================================================
+
+def test_validate_cors_origins_rejects_wildcard():
+    """Wildcard '*' must be rejected in both development and production when credentials are used."""
+    # Lone wildcard
+    with pytest.raises(ValueError, match="strictly prohibited"):
+        validate_cors_origins("*", is_production=False)
+
+    with pytest.raises(RuntimeError, match="strictly prohibited"):
+        validate_cors_origins("*", is_production=True)
+
+    # Wildcard mixed with valid origin
+    mixed_origins = "https://trusted.edupredict.edu,*"
+    with pytest.raises(ValueError, match="strictly prohibited"):
+        validate_cors_origins(mixed_origins, is_production=False)
+
+    with pytest.raises(RuntimeError, match="strictly prohibited"):
+        validate_cors_origins(mixed_origins, is_production=True)
+
+
+def test_validate_cors_origins_rejects_malformed_and_unexpected_components():
+    """Origins with invalid schemes, paths, queries, fragments, or credentials must be rejected."""
+    bad_origins = [
+        "ftp://edupredict.edu",
+        "javascript:alert(1)",
+        "file:///etc/passwd",
+        "https://edupredict.edu/api/path",
+        "https://edupredict.edu?token=secret",
+        "https://edupredict.edu#fragment",
+        "https://user:pass@edupredict.edu",
+        "not-a-valid-url",
+    ]
+    for bad in bad_origins:
+        with pytest.raises((ValueError, RuntimeError)):
+            validate_cors_origins(bad, is_production=False)
+
+
+def test_validate_cors_origins_normalizes_valid_entries():
+    """Valid HTTP/HTTPS origins must be parsed, stripped of trailing slash, and returned cleanly."""
+    valid_input = "http://localhost:5173, https://app.edupredict.edu/, http://127.0.0.1:5000"
+    normalized = validate_cors_origins(valid_input, is_production=False)
+    assert normalized == [
+        "http://localhost:5173",
+        "https://app.edupredict.edu",
+        "http://127.0.0.1:5000",
+    ]
+
+
+def test_production_startup_fails_with_insecure_or_empty_cors(monkeypatch):
+    """create_app('production') must abort with RuntimeError if CORS_ORIGINS is invalid or empty."""
+    strong_key = "a" * 64
+    monkeypatch.setenv("SECRET_KEY", strong_key)
+    monkeypatch.setenv("MONGO_URI", "mongodb://localhost:27017/edupredict_test")
+
+    # 1. Wildcard in production
+    monkeypatch.setenv("CORS_ORIGINS", "*")
+    with pytest.raises(RuntimeError, match="strictly prohibited"):
+        create_app("production")
+
+    # 2. Mixed wildcard in production
+    monkeypatch.setenv("CORS_ORIGINS", "https://edupredict.edu,*")
+    with pytest.raises(RuntimeError, match="strictly prohibited"):
+        create_app("production")
+
+    # 3. Empty CORS_ORIGINS in production
+    monkeypatch.setenv("CORS_ORIGINS", "")
+    with pytest.raises(RuntimeError, match="at least one valid explicit"):
+        create_app("production")
+
+    # 4. Valid production CORS_ORIGINS succeeds
+    monkeypatch.setenv("CORS_ORIGINS", "https://edupredict.edu, https://admin.edupredict.edu")
+    app = create_app("production")
+    assert "https://edupredict.edu" in app.config["CORS_ALLOWED_ORIGINS"]
+    assert "https://admin.edupredict.edu" in app.config["CORS_ALLOWED_ORIGINS"]
+
+
+def test_upload_valid_pdf_document(client, test_admin):
+    """A structurally valid PDF document is accepted and stored."""
+    client.post("/auth/login", json={"email": test_admin.email, "password": "AdminPassword123!"})
+
+    pdf_bytes = create_valid_pdf_bytes()
+    data = {"file": (io.BytesIO(pdf_bytes), "transcript.pdf"), "category": "document"}
+    res = client.post("/api/upload", data=data, content_type="multipart/form-data")
+
+    assert res.status_code == 201
+    payload = res.get_json()
+    assert "/api/uploads/documents/" in payload["file_url"]
+    assert payload["file_type"] == "pdf"
+
+
+def test_upload_forged_pdf_rejected(client, test_admin):
+    """Files that start with %PDF- but lack valid EOF/xref/trailer structure must be rejected (400)."""
+    client.post("/auth/login", json={"email": test_admin.email, "password": "AdminPassword123!"})
+
+    forged_pdf = b"%PDF-1.4\nMalicious executable content pretending to be a PDF without EOF or xref tables!"
+    data = {"file": (io.BytesIO(forged_pdf), "fake.pdf"), "category": "document"}
+    res = client.post("/api/upload", data=data, content_type="multipart/form-data")
+
+    assert res.status_code == 400
+    msg = res.get_json()["message"].lower()
+    assert "malformed" in msg or "invalid" in msg or "missing" in msg
+
+
+def test_upload_pdf_with_script_action_rejected(client, test_admin):
+    """PDF containing active script actions (/JavaScript) must be rejected for security."""
+    client.post("/auth/login", json={"email": test_admin.email, "password": "AdminPassword123!"})
+
+    active_script_pdf = (
+        b"%PDF-1.4\n"
+        b"1 0 obj\n"
+        b"<< /Type /Catalog /Pages 2 0 R /OpenAction << /S /JavaScript /JS (app.alert('pwned')) >> >>\n"
+        b"endobj\n"
+        b"2 0 obj\n"
+        b"<< /Type /Pages /Kids [] /Count 0 >>\n"
+        b"endobj\n"
+        b"xref\n"
+        b"0 3\n"
+        b"0000000000 65535 f \n"
+        b"0000000010 00000 n \n"
+        b"0000000120 00000 n \n"
+        b"trailer\n"
+        b"<< /Size 3 /Root 1 0 R >>\n"
+        b"startxref\n"
+        b"180\n"
+        b"%%EOF\n"
+    )
+    data = {"file": (io.BytesIO(active_script_pdf), "scripted.pdf"), "category": "document"}
+    res = client.post("/api/upload", data=data, content_type="multipart/form-data")
+
+    assert res.status_code == 400
+    assert "script" in res.get_json()["message"].lower()
+
+
+def test_serve_document_sets_attachment_and_nosniff_headers(client, test_admin):
+    """Serving documents must set Content-Disposition: attachment, Content-Type, and nosniff."""
+    client.post("/auth/login", json={"email": test_admin.email, "password": "AdminPassword123!"})
+
+    pdf_bytes = create_valid_pdf_bytes()
+    data = {"file": (io.BytesIO(pdf_bytes), "verified_certificate.pdf"), "category": "document"}
+    upload_res = client.post("/api/upload", data=data, content_type="multipart/form-data")
+    assert upload_res.status_code == 201
+    file_url = upload_res.get_json()["file_url"]
+
+    # Serve the uploaded document as admin
+    serve_res = client.get(file_url)
+    assert serve_res.status_code == 200
+    assert "attachment" in serve_res.headers.get("Content-Disposition", "")
+    assert serve_res.headers.get("Content-Type") == "application/pdf"
+    assert serve_res.headers.get("X-Content-Type-Options") == "nosniff"
+
+
+def test_system_log_deeply_recursive_redaction_and_crlf_sanitization():
+    """
+    Sanitizer must scrub sensitive keys at every depth across arbitrary combinations
+    of dicts, lists, tuples, and strings without mutating the original input.
+    """
+    raw_input = {
+        "user_email": "analyst@edupredict.edu\r\nInjected-Header: evil",
+        "auth_block": {
+            "token": "secret_jwt_token_here",
+            "metadata": [
+                {
+                    "password": "NestedPassword123!",
+                    "session_id": "sess-xyz-987",
+                    "safe_list": [
+                        "item1\nwith_newline",
+                        {"secret_key": "deep_secret_key", "valid_field": "visible\rvalue"},
+                    ],
+                },
+                ("tuple_string\r\n", {"mongo_uri": "mongodb://user:pass@host/db"}),
+            ],
+        },
+        "count": 42,
+        "is_active": True,
+    }
+
+    # Execute deep recursive sanitization
+    sanitized = sanitize_and_redact(raw_input)
+
+    # 1. Verify original input was NOT mutated
+    assert raw_input["auth_block"]["token"] == "secret_jwt_token_here"
+    assert raw_input["auth_block"]["metadata"][0]["password"] == "NestedPassword123!"
+    assert "\r" in raw_input["user_email"]
+
+    # 2. Verify sensitive fields were scrubbed at all depths
+    assert sanitized["auth_block"]["token"] == "[REDACTED]"
+    assert sanitized["auth_block"]["metadata"][0]["password"] == "[REDACTED]"
+    assert sanitized["auth_block"]["metadata"][0]["session_id"] == "[REDACTED]"
+    assert sanitized["auth_block"]["metadata"][0]["safe_list"][1]["secret_key"] == "[REDACTED]"
+    assert sanitized["auth_block"]["metadata"][1][1]["mongo_uri"] == "[REDACTED]"
+
+    # 3. Verify CRLF injection removed from all strings at all depths
+    assert "\r" not in sanitized["user_email"]
+    assert "\n" not in sanitized["user_email"]
+    assert sanitized["user_email"] == "analyst@edupredict.edu Injected-Header: evil"
+
+    safe_item1 = sanitized["auth_block"]["metadata"][0]["safe_list"][0]
+    assert "\n" not in safe_item1
+    assert safe_item1 == "item1 with_newline"
+
+    tuple_str = sanitized["auth_block"]["metadata"][1][0]
+    assert "\r" not in tuple_str
+    assert "\n" not in tuple_str
+    assert tuple_str == "tuple_string"
+
+    # 4. Verify non-string primitives are preserved as-is
+    assert sanitized["count"] == 42
+    assert sanitized["is_active"] is True

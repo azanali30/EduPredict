@@ -7,6 +7,7 @@ Pillow image re-encoding, and strict path-traversal prevention.
 
 import os
 import io
+import re
 import uuid
 from typing import Tuple, Optional
 from flask import Blueprint, request, jsonify, send_from_directory, current_app
@@ -56,6 +57,43 @@ def validate_magic_bytes(data: bytes, ext: str) -> bool:
     elif ext == "pdf":
         return data.startswith(b"%PDF-")
     return False
+
+
+def validate_pdf_structure(data: bytes) -> Tuple[bool, Optional[str]]:
+    """
+    Validate PDF structural integrity.
+    Rejects malformed or forged files that prepend '%PDF-' to arbitrary binary payloads
+    without valid PDF structural components (version, EOF marker, xref/startxref, objects).
+    Rejects active script triggers (e.g. /JavaScript, /JS, /Launch).
+    """
+    if len(data) < 32:
+        return False, "File is too small to be a valid PDF document."
+
+    if not data.startswith(b"%PDF-"):
+        return False, "File lacks valid '%PDF-' header."
+
+    # Validate version format (e.g. %PDF-1.x)
+    first_line = data.split(b"\n", 1)[0].rstrip(b"\r")
+    if not re.match(rb"^%PDF-[0-9]+\.[0-9]+", first_line):
+        return False, "Invalid PDF header version format."
+
+    # Validate standard %%EOF marker within the final 1024 bytes
+    tail = data[-1024:] if len(data) >= 1024 else data
+    if b"%%EOF" not in tail:
+        return False, "Malformed PDF: Missing standard '%%EOF' marker."
+
+    # Check for structural components (xref table, startxref, trailer dictionary, or /XRef stream)
+    has_structure = (b"xref" in data) or (b"startxref" in data) or (b"/XRef" in data) or (b"trailer" in data)
+    has_obj = bool(re.search(rb"\d+\s+\d+\s+obj\b", data))
+
+    if not (has_structure and has_obj):
+        return False, "Malformed or forged PDF: Missing required xref, object, or trailer structures."
+
+    # Reject active script actions
+    if re.search(rb"/(?:JavaScript|JS|Launch)\b", data):
+        return False, "PDF contains potentially unsafe embedded script actions."
+
+    return True, None
 
 
 def validate_mimetype(declared_mime: Optional[str], ext: str) -> bool:
@@ -212,6 +250,14 @@ def upload_file():
                 "status_code": 400,
             }), 400
     elif ext == "pdf":
+        valid_pdf, pdf_err = validate_pdf_structure(file_bytes)
+        if not valid_pdf:
+            return jsonify({
+                "error": "Bad Request",
+                "message": pdf_err or "Invalid or malformed PDF document structure.",
+                "status_code": 400,
+            }), 400
+
         # Save validated PDF directly
         with open(dest_path, "wb") as f:
             f.write(file_bytes)
@@ -284,5 +330,13 @@ def serve_upload(folder: str, filename: str):
                 "status_code": 403,
             }), 403
 
-    return send_from_directory(folder_path, clean_file)
+    response = send_from_directory(folder_path, clean_file)
+    if clean_folder == "documents":
+        # Enforce attachment disposition for private documents to prevent inline execution
+        download_name = secure_filename(clean_file)
+        response.headers["Content-Disposition"] = f'attachment; filename="{download_name}"'
+        if clean_file.lower().endswith(".pdf"):
+            response.headers["Content-Type"] = "application/pdf"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
 
