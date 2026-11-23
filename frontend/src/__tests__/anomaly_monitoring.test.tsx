@@ -1,4 +1,3 @@
-import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { AnomalyReviewModal } from '../components/anomalies/AnomalyReviewModal';
@@ -14,7 +13,7 @@ const mockAnomaly: AnomalyRecord = {
   anomaly_score: -0.1425,
   cohort_percentile: 98.4,
   is_anomaly: true,
-  anomaly_severity: 'High',
+  anomaly_severity: 'High Anomaly',
   supporting_deviations: [
     {
       feature: 'absences',

@@ -1,8 +1,9 @@
 """
-EduPredict - Anomaly Service Layer (Phase 7C)
+EduPredict - Anomaly Service Layer (Phase 7C & Remediation)
 Module: backend.services.anomaly_service
 Purpose: Business logic for anomaly evaluation, subject-scoped retrieval,
 human review workflows, and privacy-preserving aggregate reporting.
+Enforces strict student-subject RBAC, benchmark isolation, and complementary cell suppression.
 """
 
 import os
@@ -20,6 +21,75 @@ from backend.utils.security import to_object_id
 from backend.services.system_log_service import log_event
 from backend.services.assignment_service import AssignmentService
 from backend.services.enrollment_service import EnrollmentService
+from backend.utils.decorators import can_access_student_subject_data
+
+
+def apply_complementary_partition_suppression(
+    category_counts: Dict[str, int],
+    total_count: int,
+    threshold: int = 5,
+) -> Tuple[Dict[str, Dict[str, Any]], Dict[str, Any]]:
+    """
+    Applies primary (N < 5) and complementary (secondary) cell suppression
+    to a categorical partition that sums to total_count.
+    Guarantees no single cell can be derived by subtracting remaining cells
+    from marginal totals (differencing attack immunity).
+    """
+    result: Dict[str, Dict[str, Any]] = {}
+    primary_suppressed_keys = []
+    unsuppressed_nonzero_keys = []
+
+    for key, val in category_counts.items():
+        if val == 0:
+            result[key] = {"count": 0, "display": "0", "suppressed": False}
+        elif 1 <= val < threshold:
+            result[key] = {
+                "count": None,
+                "display": f"<{threshold}",
+                "suppressed": True,
+                "suppression_type": "primary",
+            }
+            primary_suppressed_keys.append(key)
+        else:
+            result[key] = {"count": val, "display": str(val), "suppressed": False}
+            unsuppressed_nonzero_keys.append(key)
+
+    total_suppressed = False
+    total_display = str(total_count)
+    total_val: Optional[int] = total_count
+
+    # If the total itself falls below threshold:
+    if 1 <= total_count < threshold:
+        total_suppressed = True
+        total_display = f"<{threshold}"
+        total_val = None
+
+    # Complementary suppression:
+    # If exactly 1 cell in the partition is suppressed:
+    if len(primary_suppressed_keys) == 1:
+        if unsuppressed_nonzero_keys:
+            # Suppress the smallest non-zero unsuppressed companion cell
+            smallest_key = min(unsuppressed_nonzero_keys, key=lambda k: category_counts[k])
+            result[smallest_key] = {
+                "count": None,
+                "display": f"<{threshold}",
+                "suppressed": True,
+                "suppression_type": "complementary",
+            }
+        else:
+            # All other cells in the partition are 0, so the total equals the single suppressed cell!
+            # Must suppress the total to prevent direct identification through Total
+            total_suppressed = True
+            total_display = f"<{threshold}"
+            total_val = None
+
+    total_result = {
+        "count": total_val,
+        "display": total_display,
+        "suppressed": total_suppressed,
+    }
+
+    return result, total_result
 
 
 class AnomalyService:
@@ -33,10 +103,13 @@ class AnomalyService:
         actor_user: Optional[User] = None,
         source_record_id: Optional[str] = None,
         student_id: Optional[Any] = None,
+        is_benchmark: bool = False,
+        academic_term: Optional[str] = None,
     ) -> Tuple[Optional[AnomalyRecord], Optional[str]]:
         """
         Evaluate an academic record against the appropriate subject model and
-        persist the result idempotently.
+        persist the result idempotently. Distinguishes benchmark observations
+        from real institutional students.
         """
         if db is None:
             return None, "Database service is unavailable."
@@ -55,14 +128,29 @@ class AnomalyService:
             else str(record_data.get("source_record_id") or record_data.get("student_code") or f"ANOM-SRC-{datetime.now(timezone.utc).timestamp()}").strip()
         )
 
+        # Distinguish benchmark data from institutional student records
+        is_bench = bool(is_benchmark or record_data.get("is_benchmark", False))
         resolved_student_oid = to_object_id(student_id or record_data.get("student_id"))
         student_name = record_data.get("student_name")
 
-        # Resolve student name if student_id is valid ObjectId
-        if resolved_student_oid and not student_name:
-            user_doc = db.users.find_one({"_id": resolved_student_oid}, {"full_name": 1})
+        if is_bench or not resolved_student_oid:
+            # Benchmark / demo observations do not possess an authenticated user profile
+            is_bench = True
+            dataset_type = "benchmark"
+            resolved_student_oid = None
+            student_name = None
+        else:
+            # Institutional student: verify user exists in users collection
+            user_doc = db.users.find_one({"_id": resolved_student_oid}, {"full_name": 1, "role": 1})
             if user_doc:
                 student_name = user_doc.get("full_name")
+                dataset_type = "institutional"
+            else:
+                # Student ID does not correspond to an institutional user; treat as benchmark/demo
+                is_bench = True
+                dataset_type = "benchmark"
+                resolved_student_oid = None
+                student_name = None
 
         now = datetime.now(timezone.utc)
         record = AnomalyRecord(
@@ -80,6 +168,9 @@ class AnomalyService:
             supporting_deviations=inference_result["supporting_deviations"],
             features_summary={k: record_data.get(k) for k in ("studytime", "absences", "failures", "school", "age") if k in record_data},
             review_status="Pending Review",
+            is_benchmark=is_bench,
+            dataset_type=dataset_type,
+            academic_term=academic_term or record_data.get("academic_term"),
             detected_at=now,
             updated_at=now,
         )
@@ -102,6 +193,9 @@ class AnomalyService:
                 "features_summary": record.features_summary,
                 "student_id": record.student_id,
                 "student_name": record.student_name,
+                "is_benchmark": record.is_benchmark,
+                "dataset_type": record.dataset_type,
+                "academic_term": record.academic_term,
                 "updated_at": now,
             },
             "$setOnInsert": {
@@ -134,13 +228,15 @@ class AnomalyService:
         subject: Optional[str] = None,
         severity: Optional[str] = None,
         review_status: Optional[str] = None,
+        is_benchmark: Optional[bool] = None,
         page: int = 1,
         limit: int = 20,
     ) -> Tuple[Dict[str, Any], Optional[str], int]:
         """
-        List anomaly records subject to strict RBAC.
-        - Admin: Full institution view.
-        - Teacher: Scoped strictly to verified assigned subjects.
+        List anomaly records subject to strict RBAC and student-level authorization.
+        - Admin: Full institution view across institutional students and benchmark reference data.
+        - Teacher: Scoped strictly to verified assigned subjects AND active enrolled students.
+                   Teachers can NEVER view unlinked benchmark data or students not in their roster.
         - Student: Denied (403 Forbidden).
         - Analyst: Denied (403 Forbidden - row level access prohibited).
         """
@@ -155,26 +251,75 @@ class AnomalyService:
 
         query: Dict[str, Any] = {}
 
-        # Teacher Subject Authorization Verification
+        # -------------------------------------------------------------
+        # Teacher Student-Level and Subject-Level Scoping
+        # -------------------------------------------------------------
         if actor_user.role == "teacher":
-            teacher_subjects = AssignmentService.get_subjects_for_teacher(db, actor_user.id)
-            if not teacher_subjects:
+            # 1. Fetch teacher's active subject assignments
+            t_assignments = list(db.teacher_subject_assignments.find({
+                "teacher_id": to_object_id(actor_user.id),
+                "status": "active",
+            }))
+            if not t_assignments:
+                # Teacher has no active assigned subjects -> 0 authorized records
                 return {"anomalies": [], "total_count": 0, "page": page, "limit": limit, "total_pages": 0}, None, 200
 
-            authorized_subject_names = [s.get("name") for s in teacher_subjects if s.get("name")]
+            # Map subject_name -> set of enrolled student ObjectIds (with term matching)
+            subj_enrolled_students: Dict[str, set] = {}
+            for a in t_assignments:
+                s_id = a.get("subject_id")
+                a_term = a.get("academic_term")
+                if not s_id:
+                    continue
+                subj_doc = db.subjects.find_one({"_id": s_id})
+                if not subj_doc or not subj_doc.get("is_active", True):
+                    continue
+                subj_name = subj_doc.get("name")
+                if subj_name not in subj_enrolled_students:
+                    subj_enrolled_students[subj_name] = set()
 
+                enroll_q: Dict[str, Any] = {"subject_id": s_id, "status": "active"}
+                if a_term:
+                    enroll_q["academic_term"] = a_term
+                enrollments = db.student_subject_enrollments.find(enroll_q)
+                for e in enrollments:
+                    if "student_id" in e and e["student_id"]:
+                        subj_enrolled_students[subj_name].add(e["student_id"])
+
+            all_authorized_students = set.union(*subj_enrolled_students.values()) if subj_enrolled_students else set()
+            if not all_authorized_students:
+                # Teacher has active assignments but no students enrolled -> 0 records
+                return {"anomalies": [], "total_count": 0, "page": page, "limit": limit, "total_pages": 0}, None, 200
+
+            # 2. Check requested subject filter
             if subject:
                 clean_req = "Mathematics" if "math" in subject.lower() else "Portuguese Language"
-                if not any(clean_req.lower() in s.lower() for s in authorized_subject_names):
+                if clean_req not in subj_enrolled_students:
                     return {}, f"You are not authorized to access anomaly records for '{subject}'.", 403
+                enrolled_for_subj = list(subj_enrolled_students[clean_req])
+                if not enrolled_for_subj:
+                    return {"anomalies": [], "total_count": 0, "page": page, "limit": limit, "total_pages": 0}, None, 200
                 query["subject"] = clean_req
+                query["student_id"] = {"$in": enrolled_for_subj}
             else:
-                # Restrict to all authorized subjects for this teacher
-                query["subject"] = {"$in": authorized_subject_names}
+                # Restrict to all authorized subject + student pairs
+                subject_clauses = []
+                for s_name, st_set in subj_enrolled_students.items():
+                    if st_set:
+                        subject_clauses.append({"subject": s_name, "student_id": {"$in": list(st_set)}})
+                if not subject_clauses:
+                    return {"anomalies": [], "total_count": 0, "page": page, "limit": limit, "total_pages": 0}, None, 200
+                query["$or"] = subject_clauses
+
+            # Crucial Security Rule: Teachers NEVER view unlinked benchmark reference data
+            query["is_benchmark"] = {"$ne": True}
+
         elif actor_user.role == "admin":
             if subject:
                 clean_req = "Mathematics" if "math" in subject.lower() else "Portuguese Language"
                 query["subject"] = clean_req
+            if is_benchmark is not None:
+                query["is_benchmark"] = bool(is_benchmark)
 
         if severity and severity in VALID_SEVERITIES:
             query["anomaly_severity"] = severity
@@ -189,7 +334,22 @@ class AnomalyService:
         try:
             total_count = db.anomaly_records.count_documents(query)
             cursor = db.anomaly_records.find(query).sort("detected_at", -1).skip(skip).limit(limit)
-            anomalies = [AnomalyRecord.from_doc(doc).to_dict() for doc in cursor if doc]
+
+            anomalies = []
+            for doc in cursor:
+                if not doc:
+                    continue
+                rec = AnomalyRecord.from_doc(doc)
+                if not rec:
+                    continue
+                # Defense-in-depth: For teachers, verify can_access_student_subject_data
+                if actor_user.role == "teacher":
+                    if rec.is_benchmark or not rec.student_id:
+                        continue
+                    if not can_access_student_subject_data(actor_user, rec.student_id, rec.subject, db, academic_term=rec.academic_term):
+                        continue
+                anomalies.append(rec.to_dict())
+
             total_pages = (total_count + limit - 1) // limit
 
             return {
@@ -208,7 +368,9 @@ class AnomalyService:
         anomaly_id: str,
         actor_user: User,
     ) -> Tuple[Optional[Dict[str, Any]], Optional[str], int]:
-        """Retrieve single anomaly record with RBAC authorization check."""
+        """
+        Retrieve single anomaly record with strict RBAC and student-subject authorization check.
+        """
         if db is None:
             return None, "Database unavailable.", 500
 
@@ -227,13 +389,13 @@ class AnomalyService:
         if not record:
             return None, "Anomaly record corrupted.", 500
 
-        # Teacher authorization verification
+        # Teacher authorization verification: Must be institutional student in teacher's roster
         if actor_user.role == "teacher":
-            teacher_subjects = AssignmentService.get_subjects_for_teacher(db, actor_user.id)
-            authorized_subjects = [s.get("name") for s in teacher_subjects if s.get("name")]
+            if record.is_benchmark or not record.student_id:
+                return None, "Teachers cannot access benchmark evaluation records.", 403
 
-            if not any(record.subject.lower() in s.lower() for s in authorized_subjects):
-                return None, f"You are not authorized to view anomaly records for '{record.subject}'.", 403
+            if not can_access_student_subject_data(actor_user, record.student_id, record.subject, db, academic_term=record.academic_term):
+                return None, "You do not have authorization to view this student's anomaly record.", 403
 
         return record.to_dict(), None, 200
 
@@ -247,7 +409,7 @@ class AnomalyService:
     ) -> Tuple[Optional[Dict[str, Any]], Optional[str], int]:
         """
         Update the review status of an anomaly record.
-        Only Admin or authorized assigned Teacher can review.
+        Only Admin or authorized assigned Teacher with active student enrollment can review.
         """
         if db is None:
             return None, "Database unavailable.", 500
@@ -270,12 +432,13 @@ class AnomalyService:
         if not record:
             return None, "Corrupted anomaly record.", 500
 
-        # Teacher subject check
+        # Teacher authorization check
         if actor_user.role == "teacher":
-            teacher_subjects = AssignmentService.get_subjects_for_teacher(db, actor_user.id)
-            authorized_subjects = [s.get("name") for s in teacher_subjects if s.get("name")]
-            if not any(record.subject.lower() in s.lower() for s in authorized_subjects):
-                return None, "You are not authorized to review records in this subject.", 403
+            if record.is_benchmark or not record.student_id:
+                return None, "Teachers cannot review benchmark evaluation records.", 403
+
+            if not can_access_student_subject_data(actor_user, record.student_id, record.subject, db, academic_term=record.academic_term):
+                return None, "You do not have authorization to review this student's anomaly record.", 403
 
         now = datetime.now(timezone.utc)
         clean_notes = review_notes.strip() if review_notes and isinstance(review_notes, str) else None
@@ -323,22 +486,19 @@ class AnomalyService:
         data_path: Optional[str] = None,
     ) -> Tuple[Dict[str, Any], Optional[str], int]:
         """
-        Batch evaluate all academic records for a subject.
-        Admin or authorized Teacher.
+        Batch evaluate academic records for a subject.
+        RESTRICTED TO ADMINISTRATORS ONLY.
+        Because benchmark CSV rows represent anonymized research datasets that cannot
+        be linked to authenticated institutional students, teacher batch execution is rejected.
         """
         if db is None:
             return {}, "Database unavailable.", 500
 
-        if actor_user.role not in ("admin", "teacher"):
-            return {}, "Unauthorized to trigger batch anomaly evaluation.", 403
+        # Teacher batch evaluation restriction (Remediation Item 2)
+        if actor_user.role != "admin":
+            return {}, "Teacher batch evaluation is restricted to enrolled institutional students. Benchmark cohort evaluation is reserved for institutional administrators.", 403
 
         clean_subj = "Mathematics" if "math" in subject.lower() else "Portuguese Language"
-
-        if actor_user.role == "teacher":
-            teacher_assignments = AssignmentService.get_teacher_assignments(db, actor_user.id)
-            authorized = any(clean_subj.lower() in db.subjects.find_one({"_id": a.subject_id}).get("name", "").lower() for a in teacher_assignments if db.subjects.find_one({"_id": a.subject_id}))
-            if not authorized:
-                return {}, f"You are not assigned to teach {clean_subj}.", 403
 
         base_data_file = data_path or os.path.join(
             os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")),
@@ -361,6 +521,8 @@ class AnomalyService:
                 subject=clean_subj,
                 actor_user=actor_user,
                 source_record_id=str(row_dict.get("student_code", "")),
+                student_id=None,
+                is_benchmark=True,
             )
             if rec:
                 processed += 1
@@ -370,13 +532,14 @@ class AnomalyService:
         log_event(
             db,
             "BATCH_ANOMALY_EVALUATION",
-            {"subject": clean_subj, "processed": processed, "flagged": flagged_anomalies},
+            {"subject": clean_subj, "processed": processed, "flagged": flagged_anomalies, "dataset_type": "benchmark"},
             user_id=actor_user.id,
         )
 
         return {
-            "message": f"Batch anomaly evaluation completed for {clean_subj}.",
+            "message": f"Batch benchmark anomaly evaluation completed for {clean_subj}.",
             "subject": clean_subj,
+            "dataset_type": "benchmark",
             "records_evaluated": processed,
             "anomalies_detected": flagged_anomalies,
         }, None, 200
@@ -384,67 +547,70 @@ class AnomalyService:
     @staticmethod
     def get_analyst_aggregate_stats(db: Database) -> Dict[str, Any]:
         """
-        Privacy-preserving aggregate anomaly analytics for the Analyst role.
-        Applies mandatory N < 5 minimum cell suppression and complementary suppression.
+        Statistical Disclosure Control (SDC) aggregate anomaly analytics for Analyst role.
+        Applies mandatory primary N < 5 cell suppression and complementary (secondary)
+        suppression on marginal totals to eliminate differencing and subtraction attacks.
         """
         if db is None:
             return {"error": "Database unavailable", "status_code": 500}
-
-        def apply_suppression(val: int) -> Dict[str, Any]:
-            if 1 <= val < 5:
-                return {"count": None, "display": "<5", "suppressed": True}
-            return {"count": val, "display": str(val), "suppressed": False}
-
-        pipeline = [
-            {
-                "$group": {
-                    "_id": {
-                        "subject": "$subject",
-                        "severity": "$anomaly_severity",
-                        "review_status": "$review_status",
-                    },
-                    "count": {"$sum": 1},
-                }
-            }
-        ]
-
-        raw_groups = list(db.anomaly_records.aggregate(pipeline))
 
         # Overall totals
         total_records = db.anomaly_records.count_documents({})
         total_anomalies = db.anomaly_records.count_documents({"is_anomaly": True})
 
-        # By Subject
-        subject_breakdown = {}
-        for subj in ("Mathematics", "Portuguese Language"):
-            subj_total = db.anomaly_records.count_documents({"subject": subj})
-            subj_anom = db.anomaly_records.count_documents({"subject": subj, "is_anomaly": True})
-            subject_breakdown[subj] = {
-                "total_records": apply_suppression(subj_total),
-                "anomalies_count": apply_suppression(subj_anom),
-            }
+        # 1. Subject Breakdown with Complementary Suppression
+        subject_anom_counts = {
+            "Mathematics": db.anomaly_records.count_documents({"subject": "Mathematics", "is_anomaly": True}),
+            "Portuguese Language": db.anomaly_records.count_documents({"subject": "Portuguese Language", "is_anomaly": True}),
+        }
+        subject_total_counts = {
+            "Mathematics": db.anomaly_records.count_documents({"subject": "Mathematics"}),
+            "Portuguese Language": db.anomaly_records.count_documents({"subject": "Portuguese Language"}),
+        }
 
-        # By Severity
-        severity_breakdown = {}
-        for sev in VALID_SEVERITIES:
-            sev_cnt = db.anomaly_records.count_documents({"anomaly_severity": sev})
-            severity_breakdown[sev] = apply_suppression(sev_cnt)
+        supp_subject_anom, supp_total_anomalies = apply_complementary_partition_suppression(
+            subject_anom_counts, total_anomalies, threshold=5
+        )
+        supp_subject_totals, supp_overall_total = apply_complementary_partition_suppression(
+            subject_total_counts, total_records, threshold=5
+        )
 
-        # By Review Status
-        status_breakdown = {}
-        for st in VALID_REVIEW_STATUSES:
-            st_cnt = db.anomaly_records.count_documents({"review_status": st})
-            status_breakdown[st] = apply_suppression(st_cnt)
+        # 2. Severity Breakdown with Complementary Suppression
+        severity_counts = {
+            sev: db.anomaly_records.count_documents({"anomaly_severity": sev})
+            for sev in ("High Anomaly", "Moderate Anomaly", "Low / Typical")
+        }
+        supp_severity, _ = apply_complementary_partition_suppression(
+            severity_counts, total_records, threshold=5
+        )
+
+        # 3. Review Status Breakdown with Complementary Suppression
+        status_counts = {
+            st: db.anomaly_records.count_documents({"review_status": st})
+            for st in ("Pending Review", "Confirmed Anomaly", "Dismissed (Benign)")
+        }
+        supp_status, _ = apply_complementary_partition_suppression(
+            status_counts, total_records, threshold=5
+        )
 
         return {
-            "total_evaluated_records": total_records,
-            "total_anomalies": apply_suppression(total_anomalies),
-            "subject_breakdown": subject_breakdown,
-            "severity_breakdown": severity_breakdown,
-            "status_breakdown": status_breakdown,
+            "total_evaluated_records": supp_overall_total,
+            "total_anomalies": supp_total_anomalies,
+            "subject_breakdown": {
+                "Mathematics": {
+                    "total_records": supp_subject_totals["Mathematics"],
+                    "anomalies_count": supp_subject_anom["Mathematics"],
+                },
+                "Portuguese Language": {
+                    "total_records": supp_subject_totals["Portuguese Language"],
+                    "anomalies_count": supp_subject_anom["Portuguese Language"],
+                },
+            },
+            "severity_breakdown": supp_severity,
+            "status_breakdown": supp_status,
             "privacy_notice": (
-                "Cell suppression (N < 5) has been applied to analytical counts. "
-                "Individual student identification from aggregate frequencies is mathematically prohibited."
+                "Statistical Disclosure Control (SDC) with primary (N < 5) and complementary cell suppression is active. "
+                "Marginal totals and small-cohort frequencies are protected against subtraction and differencing attacks."
             ),
             "generated_at": datetime.now(timezone.utc).isoformat(),
         }

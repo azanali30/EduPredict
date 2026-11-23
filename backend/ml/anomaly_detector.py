@@ -167,9 +167,9 @@ class AnomalyModelBundle:
         df_input = pd.DataFrame([row], columns=APPROVED_BASELINE_FEATURES)
 
         # 3. Model Inference
-        # decision_function: lower (negative) values denote higher anomaly severity
+        # decision_function: lower (negative) values denote higher anomaly severity (< 0 is outlier)
         raw_decision_score = float(self.pipeline.decision_function(df_input)[0])
-        is_anomaly_flag = bool(self.pipeline.predict(df_input)[0] == -1)
+        is_anomaly_flag = bool(raw_decision_score < 0.0)
 
         # 4. Empirical Cohort Percentile Calculation
         # Map decision score against training percentiles (higher percentile = more anomalous)

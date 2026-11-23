@@ -26,7 +26,11 @@ def list_anomalies():
     """
     subject = request.args.get("subject")
     severity = request.args.get("severity")
-    review_status = request.args.get("review_status")
+    review_status = request.args.get("review_status") or request.args.get("status")
+    is_benchmark_param = request.args.get("is_benchmark")
+    is_benchmark = None
+    if is_benchmark_param is not None:
+        is_benchmark = is_benchmark_param.lower() in ("true", "1", "yes")
     
     try:
         page = int(request.args.get("page", 1))
@@ -40,6 +44,7 @@ def list_anomalies():
         subject=subject,
         severity=severity,
         review_status=review_status,
+        is_benchmark=is_benchmark,
         page=page,
         limit=limit,
     )
@@ -111,7 +116,7 @@ def update_anomaly_status(anomaly_id: str):
 
 @anomaly_bp.route("/batch-evaluate", methods=["POST"])
 @login_required
-@role_required("admin", "teacher")
+@role_required("admin")
 def batch_evaluate():
     """Trigger batch evaluation of subject records."""
     data = request.get_json() or {}

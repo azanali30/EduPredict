@@ -312,7 +312,7 @@ export interface AnalystCurriculumStatsResponse {
 // ==========================================
 
 export type AnomalyReviewStatus = 'Pending Review' | 'Confirmed Anomaly' | 'Dismissed (Benign)';
-export type AnomalySeverity = 'Low' | 'Medium' | 'High' | 'Critical';
+export type AnomalySeverity = 'High Anomaly' | 'Moderate Anomaly' | 'Low / Typical';
 
 export interface SupportingDeviation {
   feature: string;
@@ -327,10 +327,12 @@ export interface SupportingDeviation {
 export interface AnomalyRecord {
   id: string;
   source_record_id: string;
+  student_id?: string | null;
   student_id_ref?: string | null;
+  student_name?: string | null;
   subject: string;
   model_version: string;
-  milestone: string;
+  milestone: string | number;
   anomaly_score: number;
   cohort_percentile: number;
   is_anomaly: boolean;
@@ -341,6 +343,9 @@ export interface AnomalyRecord {
   reviewed_by_name?: string | null;
   reviewed_at?: string | null;
   review_notes?: string | null;
+  is_benchmark?: boolean;
+  dataset_type?: 'benchmark' | 'institutional';
+  academic_term?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -356,7 +361,13 @@ export interface AnomalyListResponse {
 
 export interface AnalystAnomalyStats {
   status_code: number;
-  total_evaluated_records: number;
+  total_evaluated_records:
+    | {
+        count: number | null;
+        display: string;
+        suppressed: boolean;
+      }
+    | number;
   total_anomalies: {
     count: number | null;
     display: string;

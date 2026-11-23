@@ -49,12 +49,11 @@ export const AnomalyReviewModal: React.FC<AnomalyReviewModalProps> = ({
 
   const getSeverityBadgeType = (sev: string) => {
     switch (sev) {
-      case 'Critical':
+      case 'High Anomaly':
         return 'error' as const;
-      case 'High':
+      case 'Moderate Anomaly':
         return 'warning' as const;
-      case 'Medium':
-        return 'warning' as const;
+      case 'Low / Typical':
       default:
         return 'info' as const;
     }
@@ -122,6 +121,15 @@ export const AnomalyReviewModal: React.FC<AnomalyReviewModalProps> = ({
               status={record.anomaly_severity}
               type={getSeverityBadgeType(record.anomaly_severity)}
             />
+            <span
+              className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                record.is_benchmark
+                  ? 'bg-purple-100 text-purple-800'
+                  : 'bg-emerald-100 text-emerald-800'
+              }`}
+            >
+              {record.is_benchmark ? 'Benchmark Reference' : 'Institutional Student'}
+            </span>
           </div>
           <div className="text-slate-400 text-[11px]">
             Model Version: <span className="font-mono text-slate-600">{record.model_version}</span>

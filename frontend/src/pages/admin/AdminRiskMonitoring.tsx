@@ -19,7 +19,7 @@ import {
   Filter,
   Search,
   ShieldAlert,
-  Info,
+  Info, 
   RefreshCw,
   Cpu,
 } from 'lucide-react';
@@ -126,12 +126,11 @@ export const AdminRiskMonitoring: React.FC = () => {
 
   const getSeverityBadgeType = (sev: string) => {
     switch (sev) {
-      case 'Critical':
+      case 'High Anomaly':
         return 'error' as const;
-      case 'High':
+      case 'Moderate Anomaly':
         return 'warning' as const;
-      case 'Medium':
-        return 'warning' as const;
+      case 'Low / Typical':
       default:
         return 'info' as const;
     }
@@ -160,11 +159,10 @@ export const AdminRiskMonitoring: React.FC = () => {
       <div className="flex border-b border-slate-200 gap-4 text-sm font-semibold">
         <button
           onClick={() => setActiveTab('anomalies')}
-          className={`pb-3 px-2 flex items-center gap-2 border-b-2 transition-colors ${
-            activeTab === 'anomalies'
-              ? 'border-brand-600 text-brand-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
+          className={`pb-3 px-2 flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'anomalies'
+            ? 'border-brand-600 text-brand-600'
+            : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
         >
           <Cpu size={16} />
           <span>Unsupervised Anomaly Triage (Phase 7C)</span>
@@ -176,11 +174,10 @@ export const AdminRiskMonitoring: React.FC = () => {
         </button>
         <button
           onClick={() => setActiveTab('predictions')}
-          className={`pb-3 px-2 flex items-center gap-2 border-b-2 transition-colors ${
-            activeTab === 'predictions'
-              ? 'border-brand-600 text-brand-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
+          className={`pb-3 px-2 flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'predictions'
+            ? 'border-brand-600 text-brand-600'
+            : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
         >
           <ShieldAlert size={16} />
           <span>Supervised Risk Warnings</span>
@@ -277,13 +274,12 @@ export const AdminRiskMonitoring: React.FC = () => {
               <select
                 value={severityFilter}
                 onChange={(e) => setSeverityFilter(e.target.value)}
-                className="input py-1.5 px-3 text-xs w-36"
+                className="input py-1.5 px-3 text-xs w-44"
               >
                 <option value="">All Severities</option>
-                <option value="Critical">Critical</option>
-                <option value="High">High</option>
-                <option value="Medium">Medium</option>
-                <option value="Low">Low</option>
+                <option value="High Anomaly">High Anomaly</option>
+                <option value="Moderate Anomaly">Moderate Anomaly</option>
+                <option value="Low / Typical">Low / Typical</option>
               </select>
 
               <select
@@ -320,6 +316,7 @@ export const AdminRiskMonitoring: React.FC = () => {
                     <tr>
                       <th>Subject & Milestone</th>
                       <th>Source Record Ref</th>
+                      <th>Dataset Type</th>
                       <th>Anomaly Score (Uncalibrated)</th>
                       <th>Cohort Percentile</th>
                       <th>Severity</th>
@@ -339,7 +336,18 @@ export const AdminRiskMonitoring: React.FC = () => {
                         </td>
                         <td>
                           <span className="font-mono text-xs text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">
-                            {anom.source_record_id.slice(-8)}
+                            {anom.student_name ? `${anom.student_name} (${anom.source_record_id.slice(-8)})` : anom.source_record_id.slice(-12)}
+                          </span>
+                        </td>
+                        <td>
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              anom.is_benchmark
+                                ? 'bg-purple-100 text-purple-800'
+                                : 'bg-emerald-100 text-emerald-800'
+                            }`}
+                          >
+                            {anom.is_benchmark ? 'Benchmark' : 'Institutional'}
                           </span>
                         </td>
                         <td>
@@ -477,11 +485,10 @@ export const AdminRiskMonitoring: React.FC = () => {
                           </td>
                           <td>
                             <span
-                              className={`badge ${
-                                pred.predicted_status === 'High Risk'
-                                  ? 'bg-rose-100 text-rose-800'
-                                  : 'bg-amber-100 text-amber-800'
-                              } text-[10px] font-bold`}
+                              className={`badge ${pred.predicted_status === 'High Risk'
+                                ? 'bg-rose-100 text-rose-800'
+                                : 'bg-amber-100 text-amber-800'
+                                } text-[10px] font-bold`}
                             >
                               {pred.predicted_status}
                             </span>

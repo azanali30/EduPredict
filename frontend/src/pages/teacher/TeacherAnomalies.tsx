@@ -75,12 +75,11 @@ export const TeacherAnomalies: React.FC = () => {
 
   const getSeverityBadgeType = (sev: string) => {
     switch (sev) {
-      case 'Critical':
+      case 'High Anomaly':
         return 'error' as const;
-      case 'High':
+      case 'Moderate Anomaly':
         return 'warning' as const;
-      case 'Medium':
-        return 'warning' as const;
+      case 'Low / Typical':
       default:
         return 'info' as const;
     }
@@ -203,9 +202,9 @@ export const TeacherAnomalies: React.FC = () => {
                 {anomalies.map((anom) => (
                   <tr key={anom.id} className="hover:bg-slate-50/80 transition-colors">
                     <td>
-                      <div className="font-bold text-navy-900">{anom.milestone}</div>
+                      <div className="font-bold text-navy-900">{anom.student_name || 'Enrolled Student'}</div>
                       <div className="text-[10px] text-slate-500 font-mono">
-                        Ref: {anom.source_record_id.slice(-8)}
+                        {anom.milestone} • Ref: {anom.source_record_id.slice(-8)}
                       </div>
                     </td>
                     <td>

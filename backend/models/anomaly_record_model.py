@@ -36,6 +36,9 @@ class AnomalyRecord:
         reviewed_by_name: Optional[str] = None,
         reviewed_at: Optional[datetime] = None,
         review_notes: Optional[str] = None,
+        is_benchmark: bool = False,
+        dataset_type: str = "institutional",
+        academic_term: Optional[str] = None,
         detected_at: Optional[datetime] = None,
         updated_at: Optional[datetime] = None,
         record_id: Optional[ObjectId | str] = None,
@@ -59,6 +62,9 @@ class AnomalyRecord:
         self.reviewed_by_name = reviewed_by_name.strip() if reviewed_by_name else None
         self.reviewed_at = reviewed_at
         self.review_notes = review_notes.strip() if review_notes else None
+        self.is_benchmark = bool(is_benchmark)
+        self.dataset_type = "benchmark" if is_benchmark or dataset_type == "benchmark" else "institutional"
+        self.academic_term = academic_term.strip() if academic_term and isinstance(academic_term, str) else None
 
         now = datetime.now(timezone.utc)
         self.detected_at = detected_at or now
@@ -86,6 +92,9 @@ class AnomalyRecord:
             "reviewed_by_name": self.reviewed_by_name,
             "reviewed_at": self.reviewed_at,
             "review_notes": self.review_notes,
+            "is_benchmark": self.is_benchmark,
+            "dataset_type": self.dataset_type,
+            "academic_term": self.academic_term,
             "detected_at": self.detected_at,
             "updated_at": self.updated_at,
         }
@@ -112,6 +121,9 @@ class AnomalyRecord:
             "reviewed_by_name": self.reviewed_by_name,
             "reviewed_at": self.reviewed_at.isoformat() if self.reviewed_at else None,
             "review_notes": self.review_notes,
+            "is_benchmark": self.is_benchmark,
+            "dataset_type": self.dataset_type,
+            "academic_term": self.academic_term,
             "detected_at": self.detected_at.isoformat() if self.detected_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
@@ -141,6 +153,9 @@ class AnomalyRecord:
             reviewed_by_name=doc.get("reviewed_by_name"),
             reviewed_at=doc.get("reviewed_at"),
             review_notes=doc.get("review_notes"),
+            is_benchmark=doc.get("is_benchmark", False),
+            dataset_type=doc.get("dataset_type", "benchmark" if doc.get("is_benchmark") else "institutional"),
+            academic_term=doc.get("academic_term"),
             detected_at=doc.get("detected_at"),
             updated_at=doc.get("updated_at"),
         )

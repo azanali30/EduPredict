@@ -42,7 +42,7 @@ export const AnalystAnomalies: React.FC = () => {
     return (
       <LoadingState
         title="Connecting to Analyst Aggregate Telemetry..."
-        description="Fetching differential privacy and cell-suppressed anomaly analytics."
+        description="Fetching Statistical Disclosure Control (SDC) and cell-suppressed anomaly analytics."
       />
     );
   }
@@ -91,7 +91,11 @@ export const AnalystAnomalies: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <StatCard
           title="Total Evaluated Records"
-          value={stats?.total_evaluated_records ?? 0}
+          value={
+            typeof stats?.total_evaluated_records === 'object' && stats?.total_evaluated_records !== null
+              ? renderSuppressedValue(stats.total_evaluated_records)
+              : (stats?.total_evaluated_records ?? 0)
+          }
           subtitle="Mathematics & Portuguese Language"
           icon={<Layers size={20} className="text-brand-royal" />}
         />
@@ -102,9 +106,9 @@ export const AnalystAnomalies: React.FC = () => {
           icon={<AlertTriangle size={20} className="text-amber-500" />}
         />
         <StatCard
-          title="Differential Privacy"
-          value="N < 5 Policy"
-          subtitle="Active cell suppression"
+          title="Statistical Disclosure Control"
+          value="Complementary SDC"
+          subtitle="N < 5 & subtraction immunity"
           icon={<Lock size={20} className="text-emerald-500" />}
         />
         <StatCard
@@ -156,7 +160,7 @@ export const AnalystAnomalies: React.FC = () => {
               <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
                 Severity Stratification
               </h4>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {stats?.severity_breakdown &&
                   Object.entries(stats.severity_breakdown).map(([sev, item]) => (
                     <div

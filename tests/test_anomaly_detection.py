@@ -32,6 +32,7 @@ from backend.services.anomaly_service import AnomalyService
 from backend.services.user_service import UserService
 from backend.services.subject_service import SubjectService
 from backend.services.assignment_service import AssignmentService
+from backend.services.enrollment_service import EnrollmentService
 
 
 @pytest.fixture
@@ -312,33 +313,135 @@ def test_admin_can_access_anomaly_endpoints(client, test_admin, clean_db, sample
     assert data["total_count"] >= 1
 
 
-def test_teacher_subject_authorization_enforced(client, test_teacher, test_admin, clean_db, sample_valid_features):
+def test_teacher_subject_authorization_enforced(client, test_teacher, test_student, test_admin, clean_db, sample_valid_features):
     """
-    Teacher assigned to Mathematics can access Mathematics anomalies.
+    Teacher assigned to Mathematics can access anomalies for their enrolled students in Mathematics.
     Teacher NOT assigned to Portuguese Language is denied (403 Forbidden).
     """
-    # Ensure canonical subjects exist
     SubjectService.ensure_canonical_subjects(clean_db)
     math_subj = SubjectService.get_subject_by_canonical_key(clean_db, "mathematics")
     por_subj = SubjectService.get_subject_by_canonical_key(clean_db, "portuguese_language")
 
     # Assign teacher strictly to Mathematics
     AssignmentService.assign_teacher_to_subject(clean_db, test_teacher.id, math_subj.id, "2025-2026-T1", test_admin.id)
+    # Enroll student in Mathematics with matching term
+    EnrollmentService.enroll_student(clean_db, test_student.id, math_subj.id, "2025-2026-T1", test_admin.id)
 
-    # Populate records
-    AnomalyService.evaluate_and_store_record(clean_db, sample_valid_features, "Mathematics", test_admin, "STU-MATH-TCH-1")
-    AnomalyService.evaluate_and_store_record(clean_db, sample_valid_features, "Portuguese Language", test_admin, "STU-POR-TCH-1")
+    # Populate records: one enrolled student in Math, one benchmark in Math, one in Portuguese
+    AnomalyService.evaluate_and_store_record(
+        clean_db, sample_valid_features, "Mathematics", test_admin, "STU-MATH-ENROLLED",
+        student_id=test_student.id, academic_term="2025-2026-T1"
+    )
+    AnomalyService.evaluate_and_store_record(
+        clean_db, sample_valid_features, "Mathematics", test_admin, "MAT-BENCH-1",
+        is_benchmark=True
+    )
+    AnomalyService.evaluate_and_store_record(
+        clean_db, sample_valid_features, "Portuguese Language", test_admin, "STU-POR-TCH-1",
+        student_id=test_student.id, academic_term="2025-2026-T1"
+    )
 
     client.post("/auth/login", json={"email": test_teacher.email, "password": "TeacherPassword123!"})
 
-    # Permitted subject
+    # Permitted subject returns only enrolled student (benchmark is excluded)
     res_math = client.get("/api/anomalies?subject=Mathematics")
     assert res_math.status_code == 200
+    math_data = res_math.get_json()
+    assert math_data["total_count"] == 1
+    assert math_data["anomalies"][0]["student_id"] == str(test_student.id)
 
     # Forbidden unauthorized subject
     res_por = client.get("/api/anomalies?subject=Portuguese Language")
     assert res_por.status_code == 403
     assert "not authorized" in res_por.get_json().get("message", "").lower()
+
+
+def test_teacher_student_level_authorization_and_isolation(client, test_teacher, test_student, test_admin, clean_db, sample_valid_features):
+    """
+    Teacher A cannot view or review anomaly records of an unrelated student
+    who is enrolled with a different teacher or not enrolled in Teacher A's roster.
+    """
+    SubjectService.ensure_canonical_subjects(clean_db)
+    math_subj = SubjectService.get_subject_by_canonical_key(clean_db, "mathematics")
+
+    # Teacher A assigned to Mathematics for 2025-2026-T1
+    AssignmentService.assign_teacher_to_subject(clean_db, test_teacher.id, math_subj.id, "2025-2026-T1", test_admin.id)
+    # Student A is enrolled with Teacher A
+    EnrollmentService.enroll_student(clean_db, test_student.id, math_subj.id, "2025-2026-T1", test_admin.id)
+
+    # Create a second student (Student B) who is NOT enrolled in Mathematics for Teacher A
+    other_student, _ = UserService.create_user(
+        clean_db, email="other.student@edupredict.edu", plain_password="OtherPassword123!",
+        full_name="Other Student", role="student"
+    )
+
+    # Store anomaly for enrolled Student A
+    rec_a, _ = AnomalyService.evaluate_and_store_record(
+        clean_db, sample_valid_features, "Mathematics", test_admin, "STU-A-MATH",
+        student_id=test_student.id, academic_term="2025-2026-T1"
+    )
+    # Store anomaly for unassigned Student B
+    rec_b, _ = AnomalyService.evaluate_and_store_record(
+        clean_db, sample_valid_features, "Mathematics", test_admin, "STU-B-MATH",
+        student_id=other_student.id, academic_term="2025-2026-T1"
+    )
+
+    client.post("/auth/login", json={"email": test_teacher.email, "password": "TeacherPassword123!"})
+
+    # 1. List endpoint isolates Student B out of the result
+    res_list = client.get("/api/anomalies?subject=Mathematics")
+    assert res_list.status_code == 200
+    ids_returned = [a["id"] for a in res_list.get_json()["anomalies"]]
+    assert str(rec_a.id) in ids_returned
+    assert str(rec_b.id) not in ids_returned
+
+    # 2. Detail endpoint fails closed for Student B
+    res_detail = client.get(f"/api/anomalies/{rec_b.id}")
+    assert res_detail.status_code == 403
+    assert "not have authorization" in res_detail.get_json().get("message", "").lower()
+
+    # 3. Status update fails closed for Student B
+    res_review = client.patch(
+        f"/api/anomalies/{rec_b.id}/status",
+        json={"review_status": "Confirmed Anomaly", "review_notes": "Attempted unauthorized review"}
+    )
+    assert res_review.status_code == 403
+    assert "not have authorization" in res_review.get_json().get("message", "").lower()
+
+
+def test_teacher_cannot_trigger_batch_benchmark_scan(client, test_teacher, clean_db):
+    """Teachers are strictly denied from triggering batch benchmark evaluations (403 Forbidden)."""
+    client.post("/auth/login", json={"email": test_teacher.email, "password": "TeacherPassword123!"})
+    res = client.post("/api/anomalies/batch-evaluate", json={"subject": "Mathematics"})
+    assert res.status_code == 403
+
+
+def test_unlinked_benchmark_records_isolated_from_teachers(client, test_teacher, test_admin, clean_db, sample_valid_features):
+    """
+    Unlinked benchmark records (from CSV / benchmark evaluations) must NEVER appear
+    as classroom anomalies in a teacher's monitoring queue or detail lookups.
+    """
+    SubjectService.ensure_canonical_subjects(clean_db)
+    math_subj = SubjectService.get_subject_by_canonical_key(clean_db, "mathematics")
+    AssignmentService.assign_teacher_to_subject(clean_db, test_teacher.id, math_subj.id, "2025-2026-T1", test_admin.id)
+
+    # Store benchmark observation with student_code MAT_099 and no student_id
+    bench_rec, _ = AnomalyService.evaluate_and_store_record(
+        clean_db, sample_valid_features, "Mathematics", test_admin, "MAT_099",
+        is_benchmark=True, student_id=None
+    )
+
+    client.post("/auth/login", json={"email": test_teacher.email, "password": "TeacherPassword123!"})
+
+    # Teacher list has 0 records
+    res_list = client.get("/api/anomalies?subject=Mathematics")
+    assert res_list.status_code == 200
+    assert res_list.get_json()["total_count"] == 0
+
+    # Teacher direct detail lookup returns 403
+    res_detail = client.get(f"/api/anomalies/{bench_rec.id}")
+    assert res_detail.status_code == 403
+    assert "benchmark" in res_detail.get_json().get("message", "").lower()
 
 
 def test_student_and_analyst_denied_row_level_anomalies(client, test_student, test_analyst):
@@ -354,31 +457,57 @@ def test_student_and_analyst_denied_row_level_anomalies(client, test_student, te
     assert res_ana.status_code == 403
 
 
-def test_analyst_aggregate_stats_with_cell_suppression(client, test_analyst, test_admin, clean_db, sample_valid_features):
+def test_analyst_complementary_cell_suppression_prevents_subtraction(client, test_analyst, test_admin, clean_db, sample_valid_features):
     """
-    Analyst can query /api/analyst/anomalies/stats.
-    Small cohort counts (1-4) are suppressed to protect student privacy.
+    Verify that when one subject has a suppressed count (1-4) and the other has >= 5,
+    the unsuppressed subject is ALSO complementary-suppressed, preventing subtraction disclosure.
     """
-    # Insert 2 anomaly records in Mathematics (triggers N < 5 suppression)
+    clean_db.anomaly_records.delete_many({})
+
+    # Insert 2 anomalies in Mathematics (primary suppressed: 1 <= 2 < 5)
     for i in range(2):
-        AnomalyService.evaluate_and_store_record(clean_db, sample_valid_features, "Mathematics", test_admin, f"STU-ANALYST-TEST-{i}")
+        AnomalyService.evaluate_and_store_record(
+            clean_db, sample_valid_features, "Mathematics", test_admin, f"STU-DIFF-M-{i}"
+        )
+    # Insert 6 anomalies in Portuguese Language (normally >= 5)
+    for i in range(6):
+        AnomalyService.evaluate_and_store_record(
+            clean_db, sample_valid_features, "Portuguese Language", test_admin, f"STU-DIFF-P-{i}"
+        )
+
+    # Force is_anomaly=True on all inserted records
+    clean_db.anomaly_records.update_many({}, {"$set": {"is_anomaly": True}})
 
     client.post("/auth/login", json={"email": test_analyst.email, "password": "AnalystPassword123!"})
     res = client.get("/api/analyst/anomalies/stats")
     assert res.status_code == 200
     data = res.get_json()
 
-    assert "subject_breakdown" in data
-    assert "severity_breakdown" in data
-    assert "privacy_notice" in data
+    math_anom = data["subject_breakdown"]["Mathematics"]["anomalies_count"]
+    por_anom = data["subject_breakdown"]["Portuguese Language"]["anomalies_count"]
 
-    # Check cell suppression on Mathematics
-    math_stats = data["subject_breakdown"].get("Mathematics", {})
-    anom_cell = math_stats.get("anomalies_count", {})
-    # If 1 <= count < 5, count is None, display is '<5', and suppressed is True
-    if anom_cell.get("count") is None:
-        assert anom_cell.get("display") == "<5"
-        assert anom_cell.get("suppressed") is True
+    # Mathematics is primary suppressed (<5)
+    assert math_anom["suppressed"] is True
+    assert math_anom["count"] is None
+    assert math_anom["display"] == "<5"
+
+    # Portuguese Language MUST BE complementary suppressed (<5) to prevent subtraction: Total (8) - Por (6) = 2
+    assert por_anom["suppressed"] is True
+    assert por_anom["count"] is None
+    assert por_anom["display"] == "<5"
+
+    # Total anomalies and evaluated records
+    assert data["total_evaluated_records"]["suppressed"] is False
+    assert data["total_evaluated_records"]["count"] == 8
+    assert data["total_anomalies"]["suppressed"] is False
+    assert data["total_anomalies"]["count"] == 8
+
+
+def test_severity_values_consistent_across_models():
+    """Verify that severity classifications strictly use High Anomaly, Moderate Anomaly, Low / Typical."""
+    from backend.models.anomaly_record_model import VALID_SEVERITIES
+    assert VALID_SEVERITIES == {"High Anomaly", "Moderate Anomaly", "Low / Typical"}
+    assert "Critical" not in VALID_SEVERITIES
 
 
 # ==============================================================================

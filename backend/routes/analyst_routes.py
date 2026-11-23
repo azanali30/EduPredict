@@ -3,7 +3,7 @@ EduPredict - Educational Analyst Routes Blueprint
 Module: backend.routes.analyst_routes
 Exposes secure REST APIs for institutional aggregate reporting, curriculum telemetry,
 and analytical metrics. Enforces strict least-privilege role boundaries and
-differential privacy / minimum cell suppression safeguards.
+Statistical Disclosure Control (SDC) / minimum cell suppression safeguards.
 """
 
 from typing import Dict, Any

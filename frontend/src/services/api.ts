@@ -418,6 +418,7 @@ export const api = {
     subject?: string;
     status?: string;
     severity?: string;
+    is_benchmark?: boolean;
   }) => {
     const query = new URLSearchParams();
     if (params?.page) query.set('page', params.page.toString());
@@ -425,6 +426,7 @@ export const api = {
     if (params?.subject) query.set('subject', params.subject);
     if (params?.status) query.set('status', params.status);
     if (params?.severity) query.set('severity', params.severity);
+    if (params?.is_benchmark !== undefined) query.set('is_benchmark', String(params.is_benchmark));
     const qs = query.toString() ? `?${query.toString()}` : '';
     return apiRequest<AnomalyListResponse>(`/api/anomalies${qs}`);
   },
