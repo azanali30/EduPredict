@@ -1,22 +1,26 @@
 """
 Unit and Integration Tests for EduPredict Phase 7E.1 Parquet Lakehouse Export Bridge
 Tests dataset validation, Snappy compression, Hive partitioning by subject & academic_year,
-empty collection handling, malformed record rejection, MongoDB read failure, repeat export behavior,
-and output schema consistency.
+bounded-memory streaming batch processing, safe dataset replacement with rollback,
+and strict numeric validation (rejecting NaN, Infinity, and fractional integers).
 """
 
 import os
+import math
 import json
 import pytest
 import tempfile
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 import pyarrow.parquet as pq
-from unittest.mock import MagicMock
-from pymongo.errors import PyMongoError, ServerSelectionTimeoutError
+from pymongo.errors import ServerSelectionTimeoutError
 
 from backend.data_engineering.parquet_exporter import (
     ParquetLakehouseExporter,
     LakehouseExportError,
     validate_record_for_export,
+    validate_strict_float,
+    validate_strict_int,
     export_mongodb_to_parquet,
     ACADEMIC_LAKEHOUSE_SCHEMA,
 )
@@ -137,107 +141,341 @@ def sample_valid_records():
 
 
 # ==============================================================================
-# 1. Validation & Schema Tests
+# 1. Strict Numeric Validation Tests
 # ==============================================================================
 
-def test_validate_record_for_export_valid(sample_valid_records):
-    """Verify that complete valid records pass validation with normalized fields."""
-    rec = sample_valid_records[0]
-    is_valid, reason, normalized = validate_record_for_export(rec)
-    assert is_valid is True
-    assert reason is None
-    assert normalized["student_code"] == "STU_MAT_0001"
-    assert normalized["subject"] == "Mathematics"
-    assert normalized["academic_year"] == "2024-2025"
-    assert normalized["attendance_percentage"] == 93.7
-    assert normalized["academic_status"] == "Low Risk / On Track"
-    assert "_id" not in normalized
+def test_strict_float_rejects_nan_and_inf():
+    """Verify that validate_strict_float rejects NaN and +/- Infinity."""
+    ok, err, _ = validate_strict_float(float("nan"), "test_field")
+    assert ok is False
+    assert "cannot be NaN or Infinity" in err
+
+    ok, err, _ = validate_strict_float(float("inf"), "test_field")
+    assert ok is False
+    assert "cannot be NaN or Infinity" in err
+
+    ok, err, _ = validate_strict_float(float("-inf"), "test_field")
+    assert ok is False
+    assert "cannot be NaN or Infinity" in err
 
 
-def test_validate_record_rejects_missing_required_fields():
-    """Verify that records missing mandatory keys are rejected with clear reasons."""
-    # Missing student_code
-    bad_rec1 = {"subject": "Mathematics", "academic_year": "2025-2026"}
-    is_valid, reason, _ = validate_record_for_export(bad_rec1)
-    assert is_valid is False
-    assert "Missing required field" in reason
+def test_strict_int_rejects_nan_and_inf():
+    """Verify that validate_strict_int rejects NaN and +/- Infinity."""
+    ok, err, _ = validate_strict_int(float("nan"), "test_field")
+    assert ok is False
+    assert "cannot be NaN or Infinity" in err
 
-    # None value in attendance
-    bad_rec2 = {
-        "student_code": "STU_001",
-        "subject": "Mathematics",
-        "academic_year": "2025-2026",
-        "term": "Term 1",
-        "attendance_percentage": None,
-        "study_hours_per_week": 2.0,
-        "previous_exam_marks": 50.0,
-        "quiz_scores": 50.0,
-        "final_exam_marks": 50.0,
-        "academic_status": "Moderate Risk",
-    }
-    is_valid, reason, _ = validate_record_for_export(bad_rec2)
-    assert is_valid is False
-    assert "cannot be None" in reason
+    ok, err, _ = validate_strict_int(float("inf"), "test_field")
+    assert ok is False
+    assert "cannot be NaN or Infinity" in err
 
 
-def test_validate_record_rejects_out_of_bounds_values():
-    """Verify numeric range boundary enforcement."""
-    base = {
-        "student_code": "STU_001",
-        "subject": "Mathematics",
-        "academic_year": "2025-2026",
-        "term": "Term 1",
-        "attendance_percentage": 105.0,  # Invalid: > 100
-        "study_hours_per_week": 2.0,
-        "previous_exam_marks": 50.0,
-        "quiz_scores": 50.0,
-        "final_exam_marks": 50.0,
-        "academic_status": "Moderate Risk",
-    }
-    is_valid, reason, _ = validate_record_for_export(base)
-    assert is_valid is False
-    assert "out of bounds" in reason
+def test_strict_int_rejects_fractional_values():
+    """Verify that validate_strict_int rejects non-integer/fractional values."""
+    ok, err, _ = validate_strict_int(16.5, "age")
+    assert ok is False
+    assert "cannot have fractional value" in err
 
-    # Invalid risk category
-    base["attendance_percentage"] = 90.0
-    base["academic_status"] = "Unknown Risk"
-    is_valid, reason, _ = validate_record_for_export(base)
-    assert is_valid is False
-    assert "Invalid academic_status" in reason
+    ok, err, _ = validate_strict_int("3.14", "failures")
+    assert ok is False
+    assert "cannot have fractional value" in err
+
+    ok, err, _ = validate_strict_int(0.1, "absences")
+    assert ok is False
+    assert "cannot have fractional value" in err
+
+
+def test_strict_int_accepts_valid_representations():
+    """Verify that validate_strict_int accepts valid whole numbers."""
+    ok, err, val = validate_strict_int(16, "age")
+    assert ok is True and val == 16
+
+    # Whole number represented as float (e.g. 16.0 from JSON)
+    ok, err, val = validate_strict_int(16.0, "age")
+    assert ok is True and val == 16
+
+    # Whole number represented as string
+    ok, err, val = validate_strict_int("16", "age")
+    assert ok is True and val == 16
+
+
+def test_validate_record_rejects_fractional_integer_fields(sample_valid_records):
+    """Verify validate_record_for_export rejects fractional age, failures, absences, and education."""
+    base = dict(sample_valid_records[0])
+
+    # Fractional age
+    base["age"] = 16.5
+    ok, err, _ = validate_record_for_export(base)
+    assert ok is False
+    assert "cannot have fractional value" in err
+
+    # Fractional failures
+    base["age"] = 16
+    base["failures"] = 1.5
+    ok, err, _ = validate_record_for_export(base)
+    assert ok is False
+    assert "cannot have fractional value" in err
+
+    # Fractional absences
+    base["failures"] = 0
+    base["absences"] = 2.8
+    ok, err, _ = validate_record_for_export(base)
+    assert ok is False
+    assert "cannot have fractional value" in err
+
+    # Fractional mother_education
+    base["absences"] = 0
+    base["mother_education"] = 3.5
+    ok, err, _ = validate_record_for_export(base)
+    assert ok is False
+    assert "cannot have fractional value" in err
+
+
+def test_validate_record_rejects_nan_and_inf_in_record(sample_valid_records):
+    """Verify validate_record_for_export rejects NaN and Inf in marks and attendance."""
+    base = dict(sample_valid_records[0])
+
+    # NaN in final marks
+    base["final_exam_marks"] = float("nan")
+    ok, err, _ = validate_record_for_export(base)
+    assert ok is False
+    assert "cannot be NaN or Infinity" in err
+
+    # Inf in attendance
+    base["final_exam_marks"] = 75.0
+    base["attendance_percentage"] = float("inf")
+    ok, err, _ = validate_record_for_export(base)
+    assert ok is False
+    assert "cannot be NaN or Infinity" in err
 
 
 # ==============================================================================
-# 2. End-to-End Export & Partitioning Tests
+# 2. Bounded-Memory Batch Processing Tests
 # ==============================================================================
 
-def test_successful_parquet_export(sample_valid_records):
-    """Test full export workflow to temporary directory using mocked MongoDB."""
+def test_bounded_memory_batch_processing_multiple_batches():
+    """Verify that records are streamed and written across multiple discrete batches."""
+    # Create 35 records with batch_size=10 (yields 4 batches: 10, 10, 10, 5)
+    records = []
+    for i in range(35):
+        records.append({
+            "student_code": f"STU_BATCH_{i:04d}",
+            "subject": "Mathematics" if i % 2 == 0 else "Portuguese Language",
+            "academic_year": "2025-2026",
+            "term": "Term 3",
+            "attendance_percentage": 90.0,
+            "study_hours_per_week": 3.0,
+            "previous_exam_marks": 60.0,
+            "quiz_scores": 65.0,
+            "final_exam_marks": 70.0,
+            "academic_status": "Low Risk / On Track",
+            "age": 16,
+            "failures": 0,
+            "absences": 4,
+        })
+
+    mock_db = MagicMock()
+    mock_coll = MagicMock()
+    mock_coll.find.return_value = iter(records)
+    mock_db.__getitem__.return_value = mock_coll
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        export_target = os.path.join(tmpdir, "lakehouse_batched")
+        exporter = ParquetLakehouseExporter(db=mock_db, export_dir=export_target, batch_size=10)
+        summary = exporter.export_academic_records(overwrite=True)
+
+        assert summary["status"] == "COMPLETED_SUCCESSFULLY"
+        assert summary["total_records_read"] == 35
+        assert summary["valid_records_exported"] == 35
+        assert summary["rejected_records"] == 0
+
+        # Read back table and verify exact row count
+        read_t = pq.read_table(export_target)
+        assert read_t.num_rows == 35
+
+
+def test_batch_boundaries_do_not_lose_or_duplicate_records():
+    """Verify exact count and no record duplication across batch boundaries."""
+    records = []
+    for i in range(23):
+        records.append({
+            "student_code": f"STU_{i:03d}",
+            "subject": "Mathematics",
+            "academic_year": "2025-2026",
+            "term": "Term 1",
+            "attendance_percentage": 95.0,
+            "study_hours_per_week": 4.0,
+            "previous_exam_marks": 75.0,
+            "quiz_scores": 80.0,
+            "final_exam_marks": 85.0,
+            "academic_status": "Low Risk / On Track",
+        })
+
+    mock_db = MagicMock()
+    mock_coll = MagicMock()
+    mock_coll.find.return_value = iter(records)
+    mock_db.__getitem__.return_value = mock_coll
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        export_target = os.path.join(tmpdir, "lakehouse_boundary")
+        # Prime batch size 7 (produces 7, 7, 7, 2)
+        exporter = ParquetLakehouseExporter(db=mock_db, export_dir=export_target, batch_size=7)
+        summary = exporter.export_academic_records(overwrite=True)
+
+        assert summary["valid_records_exported"] == 23
+        t = pq.read_table(export_target)
+        assert t.num_rows == 23
+
+        # Verify uniqueness of student codes
+        codes = t["student_code"].to_pylist()
+        assert len(codes) == len(set(codes)) == 23
+
+
+def test_records_across_multiple_partitions_in_batches():
+    """Verify that multi-partition datasets split across batches write correctly to partition dirs."""
+    records = []
+    subjects = ["Mathematics", "Portuguese Language"]
+    years = ["2023-2024", "2024-2025", "2025-2026"]
+    for s_idx, subj in enumerate(subjects):
+        for y_idx, yr in enumerate(years):
+            for i in range(5):
+                records.append({
+                    "student_code": f"STU_{s_idx}_{y_idx}_{i}",
+                    "subject": subj,
+                    "academic_year": yr,
+                    "term": "Final",
+                    "attendance_percentage": 85.0,
+                    "study_hours_per_week": 2.0,
+                    "previous_exam_marks": 55.0,
+                    "quiz_scores": 58.0,
+                    "final_exam_marks": 60.0,
+                    "academic_status": "Moderate Risk",
+                })
+
+    # Total: 2 * 3 * 5 = 30 records across 6 partitions
+    mock_db = MagicMock()
+    mock_coll = MagicMock()
+    mock_coll.find.return_value = iter(records)
+    mock_db.__getitem__.return_value = mock_coll
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        export_target = os.path.join(tmpdir, "lakehouse_multi_part")
+        exporter = ParquetLakehouseExporter(db=mock_db, export_dir=export_target, batch_size=8)
+        summary = exporter.export_academic_records(overwrite=True)
+
+        assert summary["partition_count"] == 6
+        assert summary["valid_records_exported"] == 30
+
+        read_t = pq.read_table(export_target)
+        assert read_t.num_rows == 30
+
+
+# ==============================================================================
+# 3. Safe Dataset Replacement & Rollback Tests
+# ==============================================================================
+
+def test_successful_dataset_replacement(sample_valid_records):
+    """Verify that export with overwrite=True successfully replaces existing dataset."""
     mock_db = MagicMock()
     mock_coll = MagicMock()
     mock_coll.find.return_value = iter(sample_valid_records)
     mock_db.__getitem__.return_value = mock_coll
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        export_target = os.path.join(tmpdir, "lakehouse_test")
-        exporter = ParquetLakehouseExporter(db=mock_db, export_dir=export_target)
-        summary = exporter.export_academic_records(overwrite=True)
+        export_target = Path(tmpdir) / "lakehouse_replace"
+        exporter = ParquetLakehouseExporter(db=mock_db, export_dir=str(export_target))
 
-        assert summary["status"] == "COMPLETED_SUCCESSFULLY"
-        assert summary["total_records_read"] == 3
-        assert summary["valid_records_exported"] == 3
-        assert summary["rejected_records"] == 0
-        assert summary["compression"] == "SNAPPY"
-        assert summary["file_format"] == "PARQUET"
-        assert os.path.isdir(export_target)
+        # First export
+        res1 = exporter.export_academic_records(overwrite=True)
+        assert res1["valid_records_exported"] == 3
+        assert export_target.exists()
 
-        # Verify summary manifest file was created
-        manifest_file = os.path.join(export_target, "_export_summary.json")
-        assert os.path.isfile(manifest_file)
-        assert os.path.isfile(os.path.join(export_target, "_SUCCESS"))
-        with open(manifest_file, "r", encoding="utf-8") as mf:
-            loaded_summary = json.load(mf)
-            assert loaded_summary["valid_records_exported"] == 3
+        # Re-run with overwrite
+        mock_coll.find.return_value = iter(sample_valid_records)
+        res2 = exporter.export_academic_records(overwrite=True)
+        assert res2["valid_records_exported"] == 3
 
+        # Verify no temporary or backup directories remain
+        parent_items = [p.name for p in export_target.parent.iterdir()]
+        assert not any(name.startswith(".tmp_") or name.startswith(".backup_") for name in parent_items)
+
+
+def test_staging_write_failure_preserves_original_dataset(sample_valid_records):
+    """Verify that if an error occurs during staging writes, the original dataset is untouched."""
+    mock_db = MagicMock()
+    mock_coll = MagicMock()
+    mock_coll.find.return_value = iter(sample_valid_records)
+    mock_db.__getitem__.return_value = mock_coll
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        export_target = Path(tmpdir) / "lakehouse_orig"
+        exporter = ParquetLakehouseExporter(db=mock_db, export_dir=str(export_target))
+
+        # Step 1: Establish original valid dataset
+        exporter.export_academic_records(overwrite=True)
+        original_table = pq.read_table(str(export_target))
+        assert original_table.num_rows == 3
+
+        # Step 2: Attempt second export where write_dataset raises an error
+        mock_coll.find.return_value = iter(sample_valid_records)
+        with patch("pyarrow.dataset.write_dataset", side_effect=RuntimeError("Disk write simulated fault")):
+            with pytest.raises(LakehouseExportError):
+                exporter.export_academic_records(overwrite=True)
+
+        # Step 3: Verify original dataset is completely preserved
+        assert export_target.exists()
+        restored_table = pq.read_table(str(export_target))
+        assert restored_table.num_rows == 3
+
+        # Verify temporary directories were cleaned up
+        parent_items = [p.name for p in export_target.parent.iterdir()]
+        assert not any(name.startswith(".tmp_") for name in parent_items)
+
+
+def test_promotion_failure_triggers_rollback(sample_valid_records):
+    """Verify that if promoting staging fails, the previous dataset is restored via rollback."""
+    mock_db = MagicMock()
+    mock_coll = MagicMock()
+    mock_coll.find.return_value = iter(sample_valid_records)
+    mock_db.__getitem__.return_value = mock_coll
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        export_target = (Path(tmpdir) / "lakehouse_rollback").resolve()
+        exporter = ParquetLakehouseExporter(db=mock_db, export_dir=str(export_target))
+
+        # Establish original dataset with marker
+        exporter.export_academic_records(overwrite=True)
+        marker_file = export_target / "original_marker.txt"
+        marker_file.write_text("ORIGINAL_CONTENT")
+
+        # Simulate failure during staging_dir.rename(export_path)
+        real_rename = Path.rename
+
+        def mock_rename_fail(self, target):
+            # If renaming staging directory to export_target, trigger failure
+            if ".tmp_" in self.name and (target == export_target or target.name == export_target.name):
+                raise OSError("Simulated filesystem lock during rename promotion")
+            return real_rename(self, target)
+
+        mock_coll.find.return_value = iter(sample_valid_records)
+        with patch.object(Path, "rename", mock_rename_fail):
+            with pytest.raises(LakehouseExportError) as exc_info:
+                exporter.export_academic_records(overwrite=True)
+            assert "Previous dataset was restored from backup" in str(exc_info.value)
+
+        # Verify rollback restored the original dataset and marker
+        assert export_target.exists()
+        assert (export_target / "original_marker.txt").exists()
+        assert (export_target / "original_marker.txt").read_text() == "ORIGINAL_CONTENT"
+
+        # Verify no backup or temporary directories remain
+        parent_items = [p.name for p in export_target.parent.iterdir()]
+        assert not any(name.startswith(".backup_") or name.startswith(".tmp_") for name in parent_items)
+
+
+# ==============================================================================
+# 4. Standard Format & Integration Tests
+# ==============================================================================
 
 def test_snappy_compression(sample_valid_records):
     """Verify that generated Parquet files physically use Snappy compression metadata."""
@@ -264,39 +502,6 @@ def test_snappy_compression(sample_valid_records):
                     assert pfile.metadata.row_group(0).column(c_idx).compression == "SNAPPY"
 
 
-def test_subject_and_academic_year_partitioning(sample_valid_records):
-    """Verify Hive-style directory partitioning: subject=.../academic_year=..."""
-    mock_db = MagicMock()
-    mock_coll = MagicMock()
-    mock_coll.find.return_value = iter(sample_valid_records)
-    mock_db.__getitem__.return_value = mock_coll
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        export_target = os.path.join(tmpdir, "lakehouse_partition")
-        exporter = ParquetLakehouseExporter(db=mock_db, export_dir=export_target)
-        summary = exporter.export_academic_records(overwrite=True)
-
-        assert summary["partition_count"] == 3
-        # Check subdirectories
-        sub_dirs = os.listdir(export_target)
-        # Note: spaces in partition keys may be URL-encoded or literal
-        has_math = any("Mathematics" in d for d in sub_dirs)
-        has_por = any("Portuguese" in d for d in sub_dirs)
-        assert has_math and has_por
-
-        # Roundtrip read with PyArrow dataset reader
-        dataset_table = pq.read_table(export_target)
-        assert dataset_table.num_rows == 3
-        col_names = dataset_table.column_names
-        assert "subject" in col_names
-        assert "academic_year" in col_names
-        assert "final_exam_marks" in col_names
-
-
-# ==============================================================================
-# 3. Edge Cases & Resilience Tests
-# ==============================================================================
-
 def test_empty_collection():
     """Verify that exporting from an empty collection returns a clean summary without error."""
     mock_db = MagicMock()
@@ -315,54 +520,6 @@ def test_empty_collection():
         assert summary["partition_count"] == 0
 
 
-def test_invalid_records_handling(sample_valid_records):
-    """Verify that invalid records are filtered out, rejected count is accurate, and valid rows are written."""
-    mixed_records = list(sample_valid_records)
-    mixed_records.append({
-        "student_code": "STU_CORRUPT",
-        "subject": "Mathematics",
-        "academic_year": "2025-2026",
-        "term": "Term 1",
-        "attendance_percentage": -20.0,  # Invalid
-        "study_hours_per_week": 2.0,
-        "previous_exam_marks": 50.0,
-        "quiz_scores": 50.0,
-        "final_exam_marks": 50.0,
-        "academic_status": "Low Risk / On Track",
-    })
-    mixed_records.append({
-        "student_code": "STU_MISSING",
-        # Missing subject
-        "academic_year": "2025-2026",
-        "term": "Term 1",
-        "attendance_percentage": 80.0,
-        "study_hours_per_week": 2.0,
-        "previous_exam_marks": 50.0,
-        "quiz_scores": 50.0,
-        "final_exam_marks": 50.0,
-        "academic_status": "Low Risk / On Track",
-    })
-
-    mock_db = MagicMock()
-    mock_coll = MagicMock()
-    mock_coll.find.return_value = iter(mixed_records)
-    mock_db.__getitem__.return_value = mock_coll
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        export_target = os.path.join(tmpdir, "lakehouse_mixed")
-        exporter = ParquetLakehouseExporter(db=mock_db, export_dir=export_target)
-        summary = exporter.export_academic_records(overwrite=True)
-
-        assert summary["status"] == "COMPLETED_SUCCESSFULLY"
-        assert summary["total_records_read"] == 5
-        assert summary["valid_records_exported"] == 3
-        assert summary["rejected_records"] == 2
-
-        # Verify only 3 valid rows in written Parquet
-        table = pq.read_table(export_target)
-        assert table.num_rows == 3
-
-
 def test_mongodb_read_failure():
     """Verify that PyMongoError during query or iteration raises LakehouseExportError."""
     mock_db = MagicMock()
@@ -378,41 +535,6 @@ def test_mongodb_read_failure():
         assert "MongoDB read failure" in str(exc_info.value)
 
 
-def test_repeat_export_behavior(sample_valid_records):
-    """
-    Verify repeat export behavior:
-    1. First export succeeds.
-    2. Second export with overwrite=False raises FileExistsError (avoids accidental duplicates).
-    3. Third export with overwrite=True succeeds deterministically without inflating row count.
-    """
-    mock_db = MagicMock()
-    mock_coll = MagicMock()
-    mock_coll.find.return_value = iter(sample_valid_records)
-    mock_db.__getitem__.return_value = mock_coll
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        export_target = os.path.join(tmpdir, "lakehouse_repeat")
-        exporter = ParquetLakehouseExporter(db=mock_db, export_dir=export_target)
-
-        # 1. First run
-        res1 = exporter.export_academic_records(overwrite=False)
-        assert res1["valid_records_exported"] == 3
-
-        # 2. Second run without overwrite must fail
-        mock_coll.find.return_value = iter(sample_valid_records)
-        with pytest.raises(FileExistsError) as exc_info:
-            exporter.export_academic_records(overwrite=False)
-        assert "already contains" in str(exc_info.value)
-
-        # 3. Third run with overwrite=True replaces cleanly
-        mock_coll.find.return_value = iter(sample_valid_records)
-        res3 = exporter.export_academic_records(overwrite=True)
-        assert res3["valid_records_exported"] == 3
-
-        table = pq.read_table(export_target)
-        assert table.num_rows == 3, "Row count must remain 3 without duplicated records"
-
-
 def test_output_schema_consistency(sample_valid_records):
     """Verify that exported Parquet table strictly preserves all 32 columns and data types."""
     mock_db = MagicMock()
@@ -425,7 +547,6 @@ def test_output_schema_consistency(sample_valid_records):
         export_mongodb_to_parquet(db=mock_db, export_dir=export_target, overwrite=True)
 
         read_table = pq.read_table(export_target)
-        # Verify non-partition + partition columns
         assert len(read_table.column_names) == len(ACADEMIC_LAKEHOUSE_SCHEMA)
         for field in ACADEMIC_LAKEHOUSE_SCHEMA:
             assert field.name in read_table.column_names

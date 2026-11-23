@@ -2,18 +2,26 @@
 EduPredict - MongoDB to Partitioned Parquet Lakehouse Export Bridge
 Reads academic records from MongoDB 6.x, validates data types and domain constraints,
 and exports partitioned Snappy-compressed Parquet files for the EduPredict Analytical Lakehouse.
+
+Features:
+- Bounded-memory streaming batch processing (no full-collection loading into RAM).
+- Safe dataset replacement transaction with rollback on failure (preserves previous valid data).
+- Strict numeric validation (rejects NaN, +/- Infinity, and fractional integer values).
+- Preserves 32-column schema, Snappy compression, and Hive subject/academic_year partitioning.
 """
 
 import os
+import math
 import shutil
 import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional, Tuple, Iterator
 from uuid import uuid4
 
 import pyarrow as pa
+import pyarrow.dataset as ds
 import pyarrow.parquet as pq
 from pymongo.database import Database
 from pymongo.errors import PyMongoError
@@ -80,14 +88,94 @@ VALID_RISK_STATUSES = {"High Risk", "Moderate Risk", "Low Risk / On Track"}
 
 
 class LakehouseExportError(Exception):
-    """Raised when an error occurs during the Lakehouse Parquet export process."""
+    """Raised when an unrecoverable error occurs during the Lakehouse Parquet export process."""
     pass
+
+
+# ==============================================================================
+# Strict Numeric Validation Helpers
+# ==============================================================================
+
+def validate_strict_float(
+    val: Any,
+    field_name: str,
+    min_val: Optional[float] = None,
+    max_val: Optional[float] = None,
+) -> Tuple[bool, Optional[str], Optional[float]]:
+    """
+    Validate a floating-point numeric field strictly.
+    Rejects None, booleans, non-numeric types, NaN, and positive/negative infinity.
+    Enforces minimum and maximum boundary constraints.
+    """
+    if val is None or isinstance(val, bool):
+        return False, f"Field '{field_name}' must be numeric, got {type(val).__name__}.", None
+
+    try:
+        f = float(val)
+    except (ValueError, TypeError):
+        return False, f"Field '{field_name}' is not a valid number: '{val}'.", None
+
+    if math.isnan(f) or math.isinf(f):
+        return False, f"Field '{field_name}' cannot be NaN or Infinity.", None
+
+    if min_val is not None and f < min_val:
+        return False, f"Field '{field_name}' ({f}) out of bounds, minimum is {min_val}.", None
+    if max_val is not None and f > max_val:
+        return False, f"Field '{field_name}' ({f}) out of bounds, maximum is {max_val}.", None
+
+    return True, None, f
+
+
+def validate_strict_int(
+    val: Any,
+    field_name: str,
+    min_val: Optional[int] = None,
+    max_val: Optional[int] = None,
+) -> Tuple[bool, Optional[str], Optional[int]]:
+    """
+    Validate an integer schema field strictly.
+    Rejects None, booleans, non-numeric types, NaN, +/- Infinity, and fractional floats (e.g. 16.5).
+    Accepts whole numbers represented as int, float (e.g. 16.0), or string ("16").
+    Enforces minimum and maximum boundary constraints.
+    """
+    if val is None or isinstance(val, bool):
+        return False, f"Field '{field_name}' must be an integer, got {type(val).__name__}.", None
+
+    if isinstance(val, (int, float)):
+        if math.isnan(val) or math.isinf(val):
+            return False, f"Field '{field_name}' cannot be NaN or Infinity.", None
+        if isinstance(val, float):
+            if not val.is_integer():
+                return False, f"Field '{field_name}' cannot have fractional value: {val}.", None
+            int_val = int(val)
+        else:
+            int_val = val
+    elif isinstance(val, str):
+        val_str = val.strip()
+        try:
+            f = float(val_str)
+            if math.isnan(f) or math.isinf(f):
+                return False, f"Field '{field_name}' cannot be NaN or Infinity.", None
+            if not f.is_integer():
+                return False, f"Field '{field_name}' cannot have fractional value: '{val}'.", None
+            int_val = int(f)
+        except ValueError:
+            return False, f"Field '{field_name}' is not a valid integer string: '{val}'.", None
+    else:
+        return False, f"Field '{field_name}' has unsupported type {type(val).__name__}.", None
+
+    if min_val is not None and int_val < min_val:
+        return False, f"Field '{field_name}' ({int_val}) cannot be less than {min_val}.", None
+    if max_val is not None and int_val > max_val:
+        return False, f"Field '{field_name}' ({int_val}) cannot be greater than {max_val}.", None
+
+    return True, None, int_val
 
 
 def validate_record_for_export(doc: Dict[str, Any]) -> Tuple[bool, Optional[str], Optional[Dict[str, Any]]]:
     """
     Validate a single MongoDB document for lakehouse export.
-    Verifies presence of required fields, data types, and value boundaries.
+    Verifies presence of required fields, strict data types, and value boundaries.
     Returns (is_valid, rejection_reason, normalized_record).
     """
     if not isinstance(doc, dict):
@@ -117,48 +205,96 @@ def validate_record_for_export(doc: Dict[str, Any]) -> Tuple[bool, Optional[str]
             None,
         )
 
-    # 3. Numeric range validations
-    try:
-        attendance_percentage = float(doc["attendance_percentage"])
-        if not (0.0 <= attendance_percentage <= 100.0):
-            return False, f"attendance_percentage {attendance_percentage} out of bounds [0.0, 100.0].", None
+    # 3. Strict numeric float validations (reject NaN, Inf, out-of-bounds)
+    ok, err, attendance_percentage = validate_strict_float(
+        doc["attendance_percentage"], "attendance_percentage", min_val=0.0, max_val=100.0
+    )
+    if not ok:
+        return False, err, None
 
-        previous_exam_marks = float(doc["previous_exam_marks"])
-        if not (0.0 <= previous_exam_marks <= 100.0):
-            return False, f"previous_exam_marks {previous_exam_marks} out of bounds [0.0, 100.0].", None
+    ok, err, previous_exam_marks = validate_strict_float(
+        doc["previous_exam_marks"], "previous_exam_marks", min_val=0.0, max_val=100.0
+    )
+    if not ok:
+        return False, err, None
 
-        quiz_scores = float(doc["quiz_scores"])
-        if not (0.0 <= quiz_scores <= 100.0):
-            return False, f"quiz_scores {quiz_scores} out of bounds [0.0, 100.0].", None
+    ok, err, quiz_scores = validate_strict_float(
+        doc["quiz_scores"], "quiz_scores", min_val=0.0, max_val=100.0
+    )
+    if not ok:
+        return False, err, None
 
-        final_exam_marks = float(doc["final_exam_marks"])
-        if not (0.0 <= final_exam_marks <= 100.0):
-            return False, f"final_exam_marks {final_exam_marks} out of bounds [0.0, 100.0].", None
+    ok, err, final_exam_marks = validate_strict_float(
+        doc["final_exam_marks"], "final_exam_marks", min_val=0.0, max_val=100.0
+    )
+    if not ok:
+        return False, err, None
 
-        study_hours_per_week = float(doc["study_hours_per_week"])
-        if study_hours_per_week < 0.0:
-            return False, f"study_hours_per_week {study_hours_per_week} cannot be negative.", None
+    ok, err, study_hours_per_week = validate_strict_float(
+        doc["study_hours_per_week"], "study_hours_per_week", min_val=0.0
+    )
+    if not ok:
+        return False, err, None
 
-        age = int(doc.get("age", 0))
-        if age < 0:
-            return False, f"age {age} cannot be negative.", None
+    ok, err, assignment_completion_rate = validate_strict_float(
+        doc.get("assignment_completion_rate", 75.0),
+        "assignment_completion_rate",
+        min_val=0.0,
+        max_val=100.0,
+    )
+    if not ok:
+        return False, err, None
 
-        failures = int(doc.get("failures", 0))
-        if failures < 0:
-            return False, f"failures {failures} cannot be negative.", None
+    # 4. Strict integer validations (reject NaN, Inf, and fractional values)
+    ok, err, age = validate_strict_int(doc.get("age", 0), "age", min_val=0)
+    if not ok:
+        return False, err, None
 
-        absences = int(doc.get("absences", 0))
-        if absences < 0:
-            return False, f"absences {absences} cannot be negative.", None
+    ok, err, failures = validate_strict_int(doc.get("failures", 0), "failures", min_val=0)
+    if not ok:
+        return False, err, None
 
-        assignment_completion_rate = float(doc.get("assignment_completion_rate", 75.0))
-        if not (0.0 <= assignment_completion_rate <= 100.0):
-            return False, f"assignment_completion_rate {assignment_completion_rate} out of bounds [0.0, 100.0].", None
+    ok, err, absences = validate_strict_int(doc.get("absences", 0), "absences", min_val=0)
+    if not ok:
+        return False, err, None
 
-    except (ValueError, TypeError) as e:
-        return False, f"Numeric conversion error: {str(e)}", None
+    ok, err, mother_education = validate_strict_int(
+        doc.get("mother_education", doc.get("Medu", 0)), "mother_education"
+    )
+    if not ok:
+        return False, err, None
 
-    # 4. Construct normalized record strictly adhering to ACADEMIC_LAKEHOUSE_SCHEMA
+    ok, err, father_education = validate_strict_int(
+        doc.get("father_education", doc.get("Fedu", 0)), "father_education"
+    )
+    if not ok:
+        return False, err, None
+
+    ok, err, family_relationship = validate_strict_int(
+        doc.get("family_relationship", doc.get("famrel", 3)), "family_relationship"
+    )
+    if not ok:
+        return False, err, None
+
+    ok, err, free_time = validate_strict_int(
+        doc.get("free_time", doc.get("freetime", 3)), "free_time"
+    )
+    if not ok:
+        return False, err, None
+
+    ok, err, go_out = validate_strict_int(
+        doc.get("go_out", doc.get("goout", 3)), "go_out"
+    )
+    if not ok:
+        return False, err, None
+
+    ok, err, health = validate_strict_int(
+        doc.get("health", 3), "health"
+    )
+    if not ok:
+        return False, err, None
+
+    # 5. Construct normalized record strictly adhering to ACADEMIC_LAKEHOUSE_SCHEMA
     normalized = {
         "student_code": student_code,
         "term": term,
@@ -168,8 +304,8 @@ def validate_record_for_export(doc: Dict[str, Any]) -> Tuple[bool, Optional[str]
         "address": str(doc.get("address", "")).strip(),
         "famsize": str(doc.get("famsize", "")).strip(),
         "p_status": str(doc.get("p_status", doc.get("Pstatus", ""))).strip(),
-        "mother_education": int(doc.get("mother_education", doc.get("Medu", 0))),
-        "father_education": int(doc.get("father_education", doc.get("Fedu", 0))),
+        "mother_education": mother_education,
+        "father_education": father_education,
         "study_hours_per_week": study_hours_per_week,
         "failures": failures,
         "school_support": str(doc.get("school_support", doc.get("schoolsup", "no"))).strip(),
@@ -179,10 +315,10 @@ def validate_record_for_export(doc: Dict[str, Any]) -> Tuple[bool, Optional[str]
         "higher_education": str(doc.get("higher_education", doc.get("higher", "yes"))).strip(),
         "internet": str(doc.get("internet", "yes")).strip(),
         "romantic": str(doc.get("romantic", "no")).strip(),
-        "family_relationship": int(doc.get("family_relationship", doc.get("famrel", 3))),
-        "free_time": int(doc.get("free_time", doc.get("freetime", 3))),
-        "go_out": int(doc.get("go_out", doc.get("goout", 3))),
-        "health": int(doc.get("health", 3)),
+        "family_relationship": family_relationship,
+        "free_time": free_time,
+        "go_out": go_out,
+        "health": health,
         "absences": absences,
         "attendance_percentage": attendance_percentage,
         "assignment_completion_rate": assignment_completion_rate,
@@ -197,10 +333,58 @@ def validate_record_for_export(doc: Dict[str, Any]) -> Tuple[bool, Optional[str]
     return True, None, normalized
 
 
+# ==============================================================================
+# Bounded-Memory Batch Stream Generator
+# ==============================================================================
+
+def _generate_record_batches(
+    cursor,
+    batch_size: int,
+    metrics: Dict[str, Any],
+) -> Iterator[pa.RecordBatch]:
+    """
+    Consumes cursor records incrementally, validates each record, and yields PyArrow RecordBatches
+    of size <= batch_size. Memory consumption is strictly bounded by batch_size.
+    """
+    current_batch: List[Dict[str, Any]] = []
+
+    try:
+        for doc in cursor:
+            metrics["total_read"] += 1
+            is_valid, reason, normalized = validate_record_for_export(doc)
+            if is_valid and normalized:
+                metrics["valid_count"] += 1
+                key = (normalized["subject"], normalized["academic_year"])
+                metrics["partition_counts"][key] = metrics["partition_counts"].get(key, 0) + 1
+                current_batch.append(normalized)
+
+                if len(current_batch) >= batch_size:
+                    # Deterministic ordering within batch
+                    current_batch.sort(key=lambda r: (r["subject"], r["academic_year"], r["student_code"]))
+                    yield pa.RecordBatch.from_pylist(current_batch, schema=ACADEMIC_LAKEHOUSE_SCHEMA)
+                    current_batch = []
+            else:
+                metrics["rejected_records"].append({
+                    "row_index": metrics["total_read"],
+                    "student_code": doc.get("student_code") if isinstance(doc, dict) else None,
+                    "reason": reason,
+                })
+                logger.debug("Rejected record #%d: %s", metrics["total_read"], reason)
+    except PyMongoError as pe:
+        logger.error("MongoDB iteration error while reading records: %s", str(pe))
+        raise LakehouseExportError(f"MongoDB iteration failure: {str(pe)}") from pe
+
+    # Flush final partial batch
+    if current_batch:
+        current_batch.sort(key=lambda r: (r["subject"], r["academic_year"], r["student_code"]))
+        yield pa.RecordBatch.from_pylist(current_batch, schema=ACADEMIC_LAKEHOUSE_SCHEMA)
+        current_batch = []
+
+
 class ParquetLakehouseExporter:
     """
     Exports academic records from MongoDB to partitioned Apache Parquet lakehouse files.
-    Enforces Snappy compression, partition pruning layout, and deterministic execution.
+    Enforces Snappy compression, bounded-memory batching, and safe dataset replacement with rollback.
     """
 
     def __init__(
@@ -211,8 +395,12 @@ class ParquetLakehouseExporter:
     ):
         self.db = db
         cfg = get_config()
-        self.export_dir = Path(export_dir or getattr(cfg, "LAKEHOUSE_PARQUET_DIR", "data/lakehouse/student_academic_records")).resolve()
+        self.export_dir = Path(
+            export_dir or getattr(cfg, "LAKEHOUSE_PARQUET_DIR", "data/lakehouse/student_academic_records")
+        ).resolve()
         self.batch_size = int(batch_size or getattr(cfg, "LAKEHOUSE_EXPORT_BATCH_SIZE", 500))
+        if self.batch_size <= 0:
+            raise ValueError(f"Batch size must be a positive integer, got {self.batch_size}.")
 
     def export_academic_records(
         self,
@@ -222,11 +410,11 @@ class ParquetLakehouseExporter:
     ) -> Dict[str, Any]:
         """
         Execute export from MongoDB to partitioned Parquet lakehouse.
-        
+
         Args:
             collection_name: Name of MongoDB collection to extract from.
             overwrite: If False, raises FileExistsError when output directory already contains Parquet files.
-                       If True, safely replaces existing Parquet files using staging directory.
+                       If True, uses a safe same-filesystem backup/rollback replacement workflow.
             query: Optional MongoDB query filter.
 
         Returns:
@@ -235,8 +423,9 @@ class ParquetLakehouseExporter:
         if self.db is None:
             raise ValueError("MongoDB database instance cannot be None.")
 
-        # 1. Guard against accidental duplicates / silent overwrites
         export_path = self.export_dir
+
+        # 1. Guard against accidental duplicates / silent overwrites
         if export_path.exists():
             existing_parquet_files = list(export_path.glob("**/*.parquet"))
             if existing_parquet_files and not overwrite:
@@ -245,152 +434,177 @@ class ParquetLakehouseExporter:
                     "Parquet file(s). Set overwrite=True to replace existing lakehouse export."
                 )
 
-        # 2. Extract records from MongoDB
+        # 2. Query MongoDB collection with deterministic index sort if available
         coll = self.db[collection_name]
         try:
             cursor = coll.find(query or {}, batch_size=self.batch_size)
+            if hasattr(cursor, "sort"):
+                cursor = cursor.sort([("subject", 1), ("academic_year", 1), ("student_code", 1)])
         except PyMongoError as pe:
             logger.error("Failed to query MongoDB collection '%s': %s", collection_name, str(pe))
             raise LakehouseExportError(f"MongoDB read failure in collection '{collection_name}': {str(pe)}") from pe
 
-        total_read = 0
-        valid_records: List[Dict[str, Any]] = []
-        rejected_records: List[Dict[str, Any]] = []
+        # 3. Stream cursor in bounded-memory batches into isolated staging directory
+        metrics: Dict[str, Any] = {
+            "total_read": 0,
+            "valid_count": 0,
+            "rejected_records": [],
+            "partition_counts": {},
+        }
 
-        try:
-            for doc in cursor:
-                total_read += 1
-                is_valid, reason, normalized = validate_record_for_export(doc)
-                if is_valid and normalized:
-                    valid_records.append(normalized)
-                else:
-                    rejected_records.append({
-                        "row_index": total_read,
-                        "student_code": doc.get("student_code") if isinstance(doc, dict) else None,
-                        "reason": reason,
-                    })
-                    logger.debug("Rejected record #%d: %s", total_read, reason)
-        except PyMongoError as pe:
-            logger.error("MongoDB iteration error while reading records: %s", str(pe))
-            raise LakehouseExportError(f"MongoDB iteration failure: {str(pe)}") from pe
-
+        staging_dir = export_path.parent / f".tmp_{export_path.name}_{uuid4().hex}"
+        backup_dir = export_path.parent / f".backup_{export_path.name}_{uuid4().hex}"
         timestamp_iso = datetime.now(timezone.utc).isoformat()
 
-        # 3. Handle empty collection or no valid records
-        if total_read == 0:
-            logger.warning("No records found in collection '%s'. Export skipped.", collection_name)
-            return {
-                "source_collection": collection_name,
-                "total_records_read": 0,
-                "valid_records_exported": 0,
-                "rejected_records": 0,
-                "partition_count": 0,
-                "partitions": [],
-                "output_location": str(export_path),
-                "export_timestamp": timestamp_iso,
-                "compression": "SNAPPY",
-                "file_format": "PARQUET",
-                "status": "EMPTY_DATASET",
-            }
-
-        if len(valid_records) == 0:
-            logger.warning("All %d records from collection '%s' failed validation.", total_read, collection_name)
-            return {
-                "source_collection": collection_name,
-                "total_records_read": total_read,
-                "valid_records_exported": 0,
-                "rejected_records": len(rejected_records),
-                "partition_count": 0,
-                "partitions": [],
-                "output_location": str(export_path),
-                "export_timestamp": timestamp_iso,
-                "compression": "SNAPPY",
-                "file_format": "PARQUET",
-                "status": "NO_VALID_RECORDS",
-            }
-
-        # 4. Deterministic record ordering before writing
-        valid_records.sort(key=lambda r: (r["student_code"], r["subject"], r["academic_year"]))
-
-        # 5. Build PyArrow Table strictly typed against ACADEMIC_LAKEHOUSE_SCHEMA
-        table = pa.Table.from_pylist(valid_records, schema=ACADEMIC_LAKEHOUSE_SCHEMA)
-
-        # 6. Safe atomic export using temporary staging directory
-        staging_dir = export_path.parent / f".tmp_lakehouse_{uuid4().hex}"
         try:
             staging_dir.mkdir(parents=True, exist_ok=True)
 
-            pq.write_to_dataset(
-                table,
-                root_path=str(staging_dir),
-                partition_cols=PARTITION_COLS,
-                compression="snappy",
+            partitioning = ds.partitioning(
+                pa.schema([("subject", pa.string()), ("academic_year", pa.string())]),
+                flavor="hive",
+            )
+            file_options = ds.ParquetFileFormat().make_write_options(compression="snappy")
+
+            reader = pa.RecordBatchReader.from_batches(
+                ACADEMIC_LAKEHOUSE_SCHEMA,
+                _generate_record_batches(cursor, self.batch_size, metrics),
             )
 
-            # Analyze partition counts from generated subdirectories
-            partition_meta = []
-            for sub_path in staging_dir.glob("subject=*"):
-                subject_name = sub_path.name.split("subject=", 1)[1]
-                for yr_path in sub_path.glob("academic_year=*"):
-                    year_name = yr_path.name.split("academic_year=", 1)[1]
-                    part_files = list(yr_path.glob("*.parquet"))
-                    # Count records in this partition
-                    part_count = 0
-                    for pf in part_files:
-                        with pq.ParquetFile(pf) as pfile:
-                            part_count += pfile.metadata.num_rows
-                    partition_meta.append({
-                        "subject": subject_name,
-                        "academic_year": year_name,
-                        "record_count": part_count,
-                        "files": len(part_files),
-                    })
+            ds.write_dataset(
+                reader,
+                base_dir=str(staging_dir),
+                format="parquet",
+                partitioning=partitioning,
+                file_options=file_options,
+                existing_data_behavior="overwrite_or_ignore",
+            )
 
-            # Atomic swap / replace into final export_path
+            # 4. Handle empty collection or no valid records
+            if metrics["total_read"] == 0:
+                logger.warning("No records found in collection '%s'. Export skipped.", collection_name)
+                shutil.rmtree(staging_dir, ignore_errors=True)
+                return {
+                    "source_collection": collection_name,
+                    "total_records_read": 0,
+                    "valid_records_exported": 0,
+                    "rejected_records": 0,
+                    "partition_count": 0,
+                    "partitions": [],
+                    "output_location": str(export_path),
+                    "export_timestamp": timestamp_iso,
+                    "compression": "SNAPPY",
+                    "file_format": "PARQUET",
+                    "status": "EMPTY_DATASET",
+                }
+
+            if metrics["valid_count"] == 0:
+                logger.warning("All %d records from collection '%s' failed validation.", metrics["total_read"], collection_name)
+                shutil.rmtree(staging_dir, ignore_errors=True)
+                return {
+                    "source_collection": collection_name,
+                    "total_records_read": metrics["total_read"],
+                    "valid_records_exported": 0,
+                    "rejected_records": len(metrics["rejected_records"]),
+                    "partition_count": 0,
+                    "partitions": [],
+                    "output_location": str(export_path),
+                    "export_timestamp": timestamp_iso,
+                    "compression": "SNAPPY",
+                    "file_format": "PARQUET",
+                    "status": "NO_VALID_RECORDS",
+                }
+
+            # 5. Assemble partition metadata from partition counts
+            partition_meta = []
+            for (sub, yr), count in sorted(metrics["partition_counts"].items()):
+                files_found = [
+                    f for f in staging_dir.glob("**/*.parquet")
+                    if sub in str(f.parent.parent) and yr in str(f.parent)
+                ]
+                partition_meta.append({
+                    "subject": sub,
+                    "academic_year": yr,
+                    "record_count": count,
+                    "files": len(files_found) if files_found else 1,
+                })
+
+            summary = {
+                "source_collection": collection_name,
+                "total_records_read": metrics["total_read"],
+                "valid_records_exported": metrics["valid_count"],
+                "rejected_records": len(metrics["rejected_records"]),
+                "partition_count": len(partition_meta),
+                "partitions": partition_meta,
+                "output_location": str(export_path),
+                "export_timestamp": timestamp_iso,
+                "compression": "SNAPPY",
+                "file_format": "PARQUET",
+                "status": "COMPLETED_SUCCESSFULLY",
+            }
+
+            # 6. Write metadata manifest into staging directory
+            manifest_path = staging_dir / "_export_summary.json"
+            success_marker = staging_dir / "_SUCCESS"
+            try:
+                with open(manifest_path, "w", encoding="utf-8") as mf:
+                    json.dump(summary, mf, indent=2)
+                with open(success_marker, "w", encoding="utf-8") as sf:
+                    sf.write(f"EXPORT COMPLETED AT {timestamp_iso}\n")
+            except OSError as oe:
+                logger.warning("Could not write _export_summary.json: %s", str(oe))
+
+            # 7. Safe Dataset Replacement Transaction with Rollback
+            # Preserves previous valid dataset until the new export is fully validated.
             if export_path.exists():
-                shutil.rmtree(export_path)
-            staging_dir.rename(export_path)
+                try:
+                    export_path.rename(backup_dir)
+                except OSError as be:
+                    logger.error("Failed to backup existing dataset at '%s': %s", export_path, str(be))
+                    raise LakehouseExportError(f"Backup failure for existing dataset: {str(be)}") from be
+
+            try:
+                staging_dir.rename(export_path)
+            except Exception as promote_err:
+                logger.error(
+                    "Failed to promote staging dataset to '%s': %s. Rolling back from backup...",
+                    export_path,
+                    str(promote_err),
+                )
+                # Rollback to restore previous dataset
+                if backup_dir.exists():
+                    if export_path.exists():
+                        shutil.rmtree(export_path, ignore_errors=True)
+                    backup_dir.rename(export_path)
+                    logger.info("Rollback complete: previous dataset at '%s' successfully restored.", export_path)
+                raise LakehouseExportError(
+                    f"Dataset replacement failed: {str(promote_err)}. Previous dataset was restored from backup."
+                ) from promote_err
+
+            # Replacement succeeded: safely remove backup
+            if backup_dir.exists():
+                shutil.rmtree(backup_dir, ignore_errors=True)
+
+            logger.info(
+                "Export successfully replaced at '%s': %d valid records across %d partitions.",
+                export_path,
+                metrics["valid_count"],
+                len(partition_meta),
+            )
+
+            return summary
 
         except Exception as exc:
+            if not isinstance(exc, (LakehouseExportError, FileExistsError)):
+                logger.error("Unexpected export failure: %s", str(exc))
+                raise LakehouseExportError(f"Parquet export failed: {str(exc)}") from exc
+            raise
+
+        finally:
+            # Guarantee cleanup of staging and backup directories
             if staging_dir.exists():
                 shutil.rmtree(staging_dir, ignore_errors=True)
-            logger.error("Failed to write partitioned Parquet dataset: %s", str(exc))
-            raise LakehouseExportError(f"Parquet serialization failure: {str(exc)}") from exc
-
-        # 7. Generate export summary and metadata manifest
-        summary = {
-            "source_collection": collection_name,
-            "total_records_read": total_read,
-            "valid_records_exported": len(valid_records),
-            "rejected_records": len(rejected_records),
-            "partition_count": len(partition_meta),
-            "partitions": sorted(partition_meta, key=lambda p: (p["subject"], p["academic_year"])),
-            "output_location": str(export_path),
-            "export_timestamp": timestamp_iso,
-            "compression": "SNAPPY",
-            "file_format": "PARQUET",
-            "status": "COMPLETED_SUCCESSFULLY",
-        }
-
-        # Write metadata manifest into lakehouse directory using Hive metadata prefix (_)
-        manifest_path = export_path / "_export_summary.json"
-        success_marker = export_path / "_SUCCESS"
-        try:
-            with open(manifest_path, "w", encoding="utf-8") as mf:
-                json.dump(summary, mf, indent=2)
-            with open(success_marker, "w", encoding="utf-8") as sf:
-                sf.write(f"EXPORT COMPLETED AT {timestamp_iso}\n")
-        except OSError as oe:
-            logger.warning("Could not write _export_summary.json to '%s': %s", manifest_path, str(oe))
-
-        logger.info(
-            "Export completed: %d valid records exported across %d partitions to '%s'.",
-            len(valid_records),
-            len(partition_meta),
-            export_path,
-        )
-
-        return summary
+            if backup_dir.exists():
+                shutil.rmtree(backup_dir, ignore_errors=True)
 
 
 def export_mongodb_to_parquet(

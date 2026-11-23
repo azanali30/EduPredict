@@ -12,14 +12,14 @@
       "files": 1
     },
     {
-      "subject": "Portuguese%20Language",
+      "subject": "Portuguese Language",
       "academic_year": "2025-2026",
       "record_count": 649,
       "files": 1
     }
   ],
   "output_location": "C:\\Users\\Azan's PC\\Documents\\EduPredict\\data\\lakehouse\\student_academic_records",
-  "export_timestamp": "2026-11-23T12:29:24.439806+00:00",
+  "export_timestamp": "2026-11-23T12:45:19.019966+00:00",
   "compression": "SNAPPY",
   "file_format": "PARQUET",
   "status": "COMPLETED_SUCCESSFULLY"

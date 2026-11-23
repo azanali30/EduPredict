@@ -1,6 +1,6 @@
 # EduPredict — Analytical Lakehouse Parquet Export Bridge (Phase 7E.1)
 
-The **Parquet Lakehouse Export Bridge** provides reliable, deterministic serialization of academic records from MongoDB 6.x into partitioned Apache Parquet files for the EduPredict Analytical Lakehouse.
+The **Parquet Lakehouse Export Bridge** provides reliable, memory-bounded, and recoverable serialization of academic records from MongoDB 6.x into partitioned Apache Parquet files for the EduPredict Analytical Lakehouse.
 
 ---
 
@@ -26,44 +26,92 @@ data/lakehouse/student_academic_records/
 ├── _export_summary.json
 ├── subject=Mathematics/
 │   ├── academic_year=2024-2025/
-│   │   └── <uuid>.parquet
+│   │   └── part-0.parquet
 │   └── academic_year=2025-2026/
-│       └── <uuid>.parquet
+│       └── part-0.parquet
 └── subject=Portuguese Language/
     └── academic_year=2025-2026/
-        └── <uuid>.parquet
+        └── part-0.parquet
 ```
 
 Internal MongoDB identifiers (`_id`) are excluded during extraction to ensure clean relational and columnar interoperability.
 
 ---
 
-## 2. Configuration Options
+## 2. Bounded-Memory Incremental Streaming
+
+To prevent memory exhaustion when processing large institutional datasets:
+- The exporter processes MongoDB cursor records incrementally in batches bounded by the configured `batch_size` (default: 500).
+- Records are validated, normalized, and yielded as PyArrow `RecordBatch` objects via `pyarrow.RecordBatchReader`.
+- `pyarrow.dataset.write_dataset()` consumes batches directly from the reader stream, writing them to disk without loading the full collection into RAM.
+- Memory consumption remains strictly bounded by `batch_size` records throughout the export lifecycle.
+
+---
+
+## 3. Strict Numeric Validation & Integrity Rules
+
+Every record is evaluated through strict validation rules prior to inclusion:
+1. **NaN and Infinity Rejection**:
+   - Floating-point fields (`attendance_percentage`, `previous_exam_marks`, `quiz_scores`, `final_exam_marks`, `study_hours_per_week`, `assignment_completion_rate`) strictly reject `NaN`, `+Infinity`, and `-Infinity`.
+2. **Fractional Value Rejection for Integer Fields**:
+   - Integer schema fields (`age`, `failures`, `absences`, `mother_education`, `father_education`, `family_relationship`, `free_time`, `go_out`, `health`) strictly reject fractional values (e.g. `16.5`, `3.14`).
+   - Whole numbers represented as integer floats (`16.0`) or strings (`"16"`) are safely converted to 32-bit signed integers.
+3. **Domain Bounds**:
+   - Examination marks and attendance percentages are enforced within $[0.0, 100.0]$.
+   - Study hours, failures, absences, and age cannot be negative.
+   - `academic_status` must be one of `"High Risk"`, `"Moderate Risk"`, `"Low Risk / On Track"`.
+
+---
+
+## 4. Safe Dataset Replacement & Rollback Guarantees
+
+### Filesystem Semantics & Replacement Strategy
+On POSIX systems, directory renames within the same filesystem mount are atomic. On Windows NTFS, directory renames cannot overwrite an existing destination folder. To ensure non-destructive updates and disaster recovery across all platforms, the exporter employs a **same-filesystem transactional workflow**:
+
+```mermaid
+flowchart TD
+    S1["1. Stream export into staging directory<br/>(.tmp_student_academic_records_UUID)"] --> S2["2. Validate staged Parquet files and write manifest (_export_summary.json)"]
+    S2 --> S3{"Target exists?"}
+    S3 -- Yes --> S4["3. Move target to same-filesystem backup<br/>(.backup_student_academic_records_UUID)"]
+    S3 -- No --> S5["4. Promote staging to target"]
+    S4 --> S5
+    S5 -- Success --> S6["5. Remove backup directory safely"]
+    S5 -- Failure --> S7["Rollback: Move backup directory back to target"]
+    S7 --> S8["Clean staging and raise LakehouseExportError"]
+```
+
+### Guarantees Provided:
+- **No Premature Deletion**: The previous valid dataset is preserved intact in backup until the new dataset is fully validated and promoted.
+- **Automatic Rollback**: If staging promotion fails (e.g., due to filesystem locks), the backup is immediately restored to the target path.
+- **Fail-Safe Cleanup**: Temporary staging (`.tmp_*`) and backup (`.backup_*`) directories are unconditionally purged in `finally` blocks.
+- **Repeatability Guard**: If `overwrite=False` and the target directory already contains Parquet files, `FileExistsError` is raised to prevent accidental overwrites.
+
+---
+
+## 5. Configuration Options
 
 Configured in `backend/config.py` with environment variable overrides:
 
 | Configuration Variable | Environment Variable | Default Value | Description |
 | :--- | :--- | :--- | :--- |
 | `LAKEHOUSE_PARQUET_DIR` | `LAKEHOUSE_PARQUET_DIR` | `data/lakehouse/student_academic_records` | Root destination directory for partitioned Parquet output. |
-| `LAKEHOUSE_EXPORT_BATCH_SIZE` | `LAKEHOUSE_EXPORT_BATCH_SIZE` | `500` | Cursor batch size for reading records from MongoDB. |
+| `LAKEHOUSE_EXPORT_BATCH_SIZE` | `LAKEHOUSE_EXPORT_BATCH_SIZE` | `500` | Maximum in-memory record batch size during cursor streaming. |
 
 ---
 
-## 3. How to Run the Export
+## 6. How to Run the Export
 
 ### A. Via Command-Line Interface (CLI)
 
-Run the module directly using Python within the virtual environment:
-
 ```powershell
-# Standard export using default configuration
-.\.venv\Scripts\python.exe -m backend.data_engineering.parquet_exporter
+# Standard export with safe overwrite
+.\.venv\Scripts\python.exe -m backend.data_engineering.parquet_exporter --overwrite
 
-# Export with explicit overwrite and custom directory
-.\.venv\Scripts\python.exe -m backend.data_engineering.parquet_exporter --output-dir data/lakehouse/student_academic_records --overwrite
-
-# Custom batch size
+# Custom batch size (bounded memory)
 .\.venv\Scripts\python.exe -m backend.data_engineering.parquet_exporter --batch-size 250 --overwrite
+
+# Custom target directory
+.\.venv\Scripts\python.exe -m backend.data_engineering.parquet_exporter --output-dir data/lakehouse/custom_export --overwrite
 ```
 
 ### B. Programmatically via Python API
@@ -77,6 +125,7 @@ app = create_app("development")
 with app.app_context():
     summary = export_mongodb_to_parquet(
         db=mongo.db,
+        batch_size=500,
         overwrite=True,
     )
     print(f"Exported {summary['valid_records_exported']} records across {summary['partition_count']} partitions.")
@@ -90,51 +139,3 @@ from backend.services.lakehouse_service import LakehouseService
 service = LakehouseService(db=mongo.db)
 summary = service.export_academic_lakehouse(overwrite=True)
 ```
-
----
-
-## 4. Export Telemetry & Manifest
-
-Every completed export produces an `export_summary.json` file inside the lakehouse directory containing comprehensive audit telemetry:
-
-```json
-{
-  "source_collection": "analytical_academic_records",
-  "total_records_read": 1044,
-  "valid_records_exported": 1044,
-  "rejected_records": 0,
-  "partition_count": 2,
-  "partitions": [
-    {
-      "subject": "Mathematics",
-      "academic_year": "2025-2026",
-      "record_count": 395,
-      "files": 1
-    },
-    {
-      "subject": "Portuguese Language",
-      "academic_year": "2025-2026",
-      "record_count": 649,
-      "files": 1
-    }
-  ],
-  "output_location": "C:\\Users\\Azan's PC\\Documents\\EduPredict\\data\\lakehouse\\student_academic_records",
-  "export_timestamp": "2026-11-23T17:28:00+00:00",
-  "compression": "SNAPPY",
-  "file_format": "PARQUET",
-  "status": "COMPLETED_SUCCESSFULLY"
-}
-```
-
----
-
-## 5. Error Handling & Safety Guarantees
-
-1. **Duplicate & Overwrite Guard**:
-   - `overwrite=False` raises `FileExistsError` if the output directory already contains Parquet files.
-   - `overwrite=True` writes to an isolated temporary staging directory (`.tmp_lakehouse_<uuid>`) and atomically replaces the target path on success. This guarantees that failed exports never leave partially written or corrupted data.
-2. **Schema & Boundary Validation**:
-   - Out-of-bounds percentages ($< 0\%$ or $> 100\%$), invalid risk categories, or missing required keys are safely filtered and recorded in `rejected_records`.
-3. **MongoDB Resilience**:
-   - Connection timeouts or query errors raise `LakehouseExportError` with diagnostic context.
-   - Empty collections produce a valid summary with `status: "EMPTY_DATASET"` and zero generated files.
