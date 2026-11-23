@@ -320,7 +320,7 @@ def test_teacher_subject_authorization_enforced(client, test_teacher, test_stude
     """
     SubjectService.ensure_canonical_subjects(clean_db)
     math_subj = SubjectService.get_subject_by_canonical_key(clean_db, "mathematics")
-    por_subj = SubjectService.get_subject_by_canonical_key(clean_db, "portuguese_language")
+    por_subj = SubjectService.get_subject_by_canonical_key(clean_db, "portuguese")
 
     # Assign teacher strictly to Mathematics
     AssignmentService.assign_teacher_to_subject(clean_db, test_teacher.id, math_subj.id, "2025-2026-T1", test_admin.id)
@@ -496,11 +496,162 @@ def test_analyst_complementary_cell_suppression_prevents_subtraction(client, tes
     assert por_anom["count"] is None
     assert por_anom["display"] == "<5"
 
-    # Total anomalies and evaluated records
-    assert data["total_evaluated_records"]["suppressed"] is False
-    assert data["total_evaluated_records"]["count"] == 8
-    assert data["total_anomalies"]["suppressed"] is False
-    assert data["total_anomalies"]["count"] == 8
+    # In a 2-element partition, Total Anomalies is also suppressed to prevent interval bounding / subtraction
+    assert data["total_anomalies"]["suppressed"] is True
+    assert data["total_anomalies"]["count"] is None
+    assert data["total_anomalies"]["display"] == "<5"
+
+    assert data["total_evaluated_records"]["suppressed"] is True
+    assert data["total_evaluated_records"]["count"] is None
+    assert data["total_evaluated_records"]["display"] == "<5"
+
+
+def test_analyst_cross_dimension_disclosure_safeguards(client, test_analyst, test_admin, clean_db, sample_valid_features):
+    """
+    Test realistic multi-distribution cross-dimension disclosure scenarios:
+    - Case A: Overall institution records N < 5 (all dimensions suppressed)
+    - Case B: High anomaly & moderate anomaly suppressed when total anomalies is suppressed
+    - Case C: Zero-valued companion cells in multi-element partitions
+    """
+    client.post("/auth/login", json={"email": test_analyst.email, "password": "AnalystPassword123!"})
+
+    # Case A: Tiny cohort of N = 3 records
+    clean_db.anomaly_records.delete_many({})
+    for i in range(3):
+        AnomalyService.evaluate_and_store_record(
+            clean_db, sample_valid_features, "Mathematics", test_admin, f"STU-TINY-{i}"
+        )
+
+    res_tiny = client.get("/api/analyst/anomalies/stats")
+    assert res_tiny.status_code == 200
+    data_tiny = res_tiny.get_json()
+
+    # Total evaluated records must be suppressed (<5)
+    assert data_tiny["total_evaluated_records"]["suppressed"] is True
+    assert data_tiny["total_evaluated_records"]["display"] == "<5"
+    assert data_tiny["total_anomalies"]["suppressed"] is True
+
+    # Case B: Cross-dimension coupling (Total anomalies suppressed -> High/Moderate severity suppressed)
+    clean_db.anomaly_records.delete_many({})
+    # Insert 2 anomalies and 20 normal records in Mathematics
+    for i in range(2):
+        rec, _ = AnomalyService.evaluate_and_store_record(
+            clean_db, sample_valid_features, "Mathematics", test_admin, f"STU-ANOM-{i}"
+        )
+        clean_db.anomaly_records.update_one({"_id": rec.id}, {"$set": {"is_anomaly": True, "anomaly_severity": "High Anomaly"}})
+
+    for i in range(20):
+        rec, _ = AnomalyService.evaluate_and_store_record(
+            clean_db, sample_valid_features, "Mathematics", test_admin, f"STU-NORM-{i}"
+        )
+        clean_db.anomaly_records.update_one({"_id": rec.id}, {"$set": {"is_anomaly": False, "anomaly_severity": "Low / Typical"}})
+
+    res_cross = client.get("/api/analyst/anomalies/stats")
+    assert res_cross.status_code == 200
+    data_cross = res_cross.get_json()
+
+    # Total anomalies is 2 (<5), so it must be suppressed
+    assert data_cross["total_anomalies"]["suppressed"] is True
+    assert data_cross["total_anomalies"]["display"] == "<5"
+
+    # Cross-dimension safeguard: High Anomaly MUST be suppressed even though evaluated against 22 records
+    assert data_cross["severity_breakdown"]["High Anomaly"]["suppressed"] is True
+    assert data_cross["severity_breakdown"]["High Anomaly"]["display"] == "<5"
+
+
+def test_teacher_pagination_and_term_alignment(client, test_teacher, test_student, test_admin, clean_db, sample_valid_features):
+    """
+    Verify Teacher Pagination and Authorization Consistency:
+    - Same student, same subject, different academic terms.
+    - Teacher assigned to Math T1 and Portuguese T2.
+    - Unauthorized Math T2 records for the same student MUST NOT contribute to total_count.
+    - Pagination total_count, total_pages, and sliced results must be 100% consistent.
+    """
+    clean_db.anomaly_records.delete_many({})
+    SubjectService.ensure_canonical_subjects(clean_db)
+    math_subj = SubjectService.get_subject_by_canonical_key(clean_db, "mathematics")
+    por_subj = SubjectService.get_subject_by_canonical_key(clean_db, "portuguese")
+
+    # Teacher assigned to Math in 2025-2026-T1
+    AssignmentService.assign_teacher_to_subject(clean_db, test_teacher.id, math_subj.id, "2025-2026-T1", test_admin.id)
+    # Teacher assigned to Portuguese in 2025-2026-T2
+    AssignmentService.assign_teacher_to_subject(clean_db, test_teacher.id, por_subj.id, "2025-2026-T2", test_admin.id)
+
+    # Student enrolled in Math T1
+    EnrollmentService.enroll_student(clean_db, test_student.id, math_subj.id, "2025-2026-T1", test_admin.id)
+    # Student enrolled in Portuguese T2
+    EnrollmentService.enroll_student(clean_db, test_student.id, por_subj.id, "2025-2026-T2", test_admin.id)
+
+    # 1. Insert 15 Math T1 records (AUTHORIZED)
+    for i in range(15):
+        AnomalyService.evaluate_and_store_record(
+            clean_db, sample_valid_features, "Mathematics", test_admin, f"REC-M-T1-{i}",
+            student_id=test_student.id, academic_term="2025-2026-T1"
+        )
+
+    # 2. Insert 10 Math T2 records (UNAUTHORIZED for this teacher because teacher only teaches Math in T1!)
+    for i in range(10):
+        AnomalyService.evaluate_and_store_record(
+            clean_db, sample_valid_features, "Mathematics", test_admin, f"REC-M-T2-{i}",
+            student_id=test_student.id, academic_term="2025-2026-T2"
+        )
+
+    # 3. Insert 8 Portuguese T2 records (AUTHORIZED)
+    for i in range(8):
+        AnomalyService.evaluate_and_store_record(
+            clean_db, sample_valid_features, "Portuguese Language", test_admin, f"REC-P-T2-{i}",
+            student_id=test_student.id, academic_term="2025-2026-T2"
+        )
+
+    # 4. Insert 5 records for an unrelated student (UNAUTHORIZED)
+    other_student, _ = UserService.create_user(
+        clean_db, email="unrelated.stu@edupredict.edu", plain_password="OtherPassword123!",
+        full_name="Unrelated Student", role="student"
+    )
+    for i in range(5):
+        AnomalyService.evaluate_and_store_record(
+            clean_db, sample_valid_features, "Mathematics", test_admin, f"REC-OTHER-{i}",
+            student_id=other_student.id, academic_term="2025-2026-T1"
+        )
+
+    client.post("/auth/login", json={"email": test_teacher.email, "password": "TeacherPassword123!"})
+
+    # A. Subject Filter: Mathematics
+    # Teacher is only authorized for Math in T1 (15 records). The 10 Math T2 and 5 Other records must NOT be counted!
+    res_m_p1 = client.get("/api/anomalies?subject=Mathematics&page=1&limit=10")
+    assert res_m_p1.status_code == 200
+    data_m_p1 = res_m_p1.get_json()
+
+    assert data_m_p1["total_count"] == 15, f"Expected total_count 15, got {data_m_p1['total_count']}"
+    assert data_m_p1["total_pages"] == 2
+    assert len(data_m_p1["anomalies"]) == 10
+    for a in data_m_p1["anomalies"]:
+        assert a["subject"] == "Mathematics"
+        assert a["academic_term"] == "2025-2026-T1"
+        assert a["student_id"] == str(test_student.id)
+
+    res_m_p2 = client.get("/api/anomalies?subject=Mathematics&page=2&limit=10")
+    assert res_m_p2.status_code == 200
+    data_m_p2 = res_m_p2.get_json()
+    assert len(data_m_p2["anomalies"]) == 5
+    for a in data_m_p2["anomalies"]:
+        assert a["subject"] == "Mathematics"
+        assert a["academic_term"] == "2025-2026-T1"
+
+    # B. Multi-Subject Scope (No subject filter)
+    # Authorized records = 15 (Math T1) + 8 (Portuguese T2) = 23 total records
+    res_all_p1 = client.get("/api/anomalies?page=1&limit=10")
+    assert res_all_p1.status_code == 200
+    data_all_p1 = res_all_p1.get_json()
+
+    assert data_all_p1["total_count"] == 23, f"Expected total_count 23, got {data_all_p1['total_count']}"
+    assert data_all_p1["total_pages"] == 3
+    assert len(data_all_p1["anomalies"]) == 10
+
+    res_all_p3 = client.get("/api/anomalies?page=3&limit=10")
+    assert res_all_p3.status_code == 200
+    data_all_p3 = res_all_p3.get_json()
+    assert len(data_all_p3["anomalies"]) == 3
 
 
 def test_severity_values_consistent_across_models():

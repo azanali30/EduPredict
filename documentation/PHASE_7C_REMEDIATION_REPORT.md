@@ -210,6 +210,38 @@ Zero TypeScript compiler errors (`tsc -b` returned code 0) and Vite production b
 
 ## 10. Conclusion & Next Steps
 
-All five remediation items have been implemented, tested, and verified against the live backend and frontend builds. 
+All five initial remediation items have been implemented, tested, and verified against the live backend and frontend builds.
 
-**STRICT SCOPE NOTICE**: Phase 7C remediation is complete. Phase 7D has **NOT** been started, and no work beyond the approved remediation has been executed. The system is ready for user review and commit staging.
+---
+
+## 11. Final Privacy & Authorization Verification (Commit Follow-up)
+
+A comprehensive final verification audit was executed covering:
+
+### 11.1 Analyst Cross-Dimension Disclosure Findings & Hardening
+1. **2-Element Partition Differencing Elimination**:
+   - In any two-category partition ($A + B = \text{Total}$), such as Mathematics vs. Portuguese Language anomalies or totals:
+   - If either cell is primary suppressed ($1 \le x < 5$), exposing the exact marginal total would narrow the companion cell to an interval of at most 3, or exactly if the other cell is 0.
+   - **Remediation**: In `apply_complementary_partition_suppression()`, whenever ANY cell in a 2-element partition is suppressed or the total is below threshold, both cells AND the partition marginal total are suppressed (`count = None`, `display = "<5"`). Subtraction differencing is strictly impossible.
+2. **Cross-Dimension Severity & Status Coupling**:
+   - If `total_anomalies` is suppressed, anomaly-bearing categories in the severity breakdown (`High Anomaly` and `Moderate Anomaly`) are automatically suppressed (`suppression_type = "cross_dimension"`) to prevent an adversary from summing severity counts to discover the hidden `total_anomalies`.
+   - Non-pending review statuses (`Confirmed Anomaly`, `Dismissed (Benign)`) are similarly coupled and suppressed when `total_anomalies` is suppressed.
+   - If the entire evaluated institution count is $< 5$, every dimension across all breakdowns is completely suppressed.
+
+### 11.2 Teacher Pagination and Authorization Consistency Findings & Hardening
+1. **The Vulnerability**:
+   - In `list_anomalies()`, `db.anomaly_records.count_documents(query)` was previously executed against a query that lacked `academic_term` constraints, while individual items were subsequently filtered by `can_access_student_subject_data(..., academic_term=rec.academic_term)`.
+   - When a student held anomaly records across multiple academic terms (e.g., T1 with Teacher A, and T2 with Teacher B), `count_documents` included the unauthorized T2 records in `total_count`, producing misaligned `total_pages`, empty trailing pages, and pagination information disclosure.
+2. **Remediation**:
+   - `list_anomalies()` now maps each of the teacher's active assignments to its exact `(subject, academic_term)` pair and fetches student enrollments for that exact term.
+   - The MongoDB query is constructed with exact term-aligned clauses (`{"subject": subj_name, "student_id": {"$in": enrolled}, "$or": [{"academic_term": a_term}, {"academic_term": None}, ...]}`).
+   - As a result, `count_documents` and `find()` match **only** authorized records. Post-cursor defensive checks verify 100% of retrieved documents, ensuring `total_count`, `total_pages`, and page item counts are completely consistent without leaking record counts from other terms.
+
+### 11.3 Verification Results
+- **Pytest**: 197 / 197 passed (100%) in 189.30s.
+  - New tests added: `test_analyst_cross_dimension_disclosure_safeguards` and `test_teacher_pagination_and_term_alignment`.
+- **Vitest**: 25 / 25 passed (100%) in 10.64s.
+- **TypeScript (`tsc -b`)**: 0 errors.
+- **Vite Build**: Production bundle cleanly compiled in 25.91s.
+
+**STRICT SCOPE NOTICE**: Phase 7C final verification is complete. Phase 7D has **NOT** been started. Awaiting user instructions.
