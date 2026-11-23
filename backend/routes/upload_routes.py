@@ -1,37 +1,125 @@
 """
 EduPredict - Upload & Document Management Routes
 Secure endpoints for photo and document uploads, file validation, and authenticated asset serving.
+Enforces multi-layer security: file extension allowlist, MIME validation, magic byte verification,
+Pillow image re-encoding, and strict path-traversal prevention.
 """
 
 import os
+import io
 import uuid
+from typing import Tuple, Optional
 from flask import Blueprint, request, jsonify, send_from_directory, current_app
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
+from PIL import Image, UnidentifiedImageError
 from backend.extensions import mongo
 from backend.utils.decorators import admin_required
 
 upload_bp = Blueprint("uploads", __name__, url_prefix="/api")
 
 ALLOWED_AVATAR_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
-ALLOWED_DOCUMENT_EXTENSIONS = {"pdf", "doc", "docx", "png", "jpg", "jpeg"}
+ALLOWED_DOCUMENT_EXTENSIONS = {"pdf", "png", "jpg", "jpeg"}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
+MAX_IMAGE_DIMENSION = 4096  # Max allowed width/height in pixels
+
+VALID_MIMETYPES = {
+    "png": {"image/png"},
+    "jpg": {"image/jpeg", "image/pjpeg", "image/jpg"},
+    "jpeg": {"image/jpeg", "image/pjpeg", "image/jpg"},
+    "webp": {"image/webp"},
+    "pdf": {"application/pdf"},
+}
 
 
 def get_extension(filename: str) -> str:
+    """Extract lowercased extension without leading dot."""
     if "." in filename:
         return filename.rsplit(".", 1)[1].lower()
     return ""
+
+
+def validate_magic_bytes(data: bytes, ext: str) -> bool:
+    """
+    Verify actual file content signature (magic bytes).
+    Guarantees executable, script, or disguised files cannot bypass extension checks.
+    """
+    if len(data) < 4:
+        return False
+
+    if ext in ("jpg", "jpeg"):
+        return data.startswith(b"\xff\xd8\xff")
+    elif ext == "png":
+        return data.startswith(b"\x89PNG\r\n\x1a\n")
+    elif ext == "webp":
+        return len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP"
+    elif ext == "pdf":
+        return data.startswith(b"%PDF-")
+    return False
+
+
+def validate_mimetype(declared_mime: Optional[str], ext: str) -> bool:
+    """Validate client-supplied MIME type against allowlist for the declared extension."""
+    if not declared_mime or declared_mime.lower() in ("application/octet-stream", "binary/octet-stream"):
+        return True  # Fall back to server-side magic byte and Pillow inspection
+    clean_mime = declared_mime.lower().split(";")[0].strip()
+    allowed_for_ext = VALID_MIMETYPES.get(ext, set())
+    return clean_mime in allowed_for_ext
+
+
+def process_and_sanitize_image(image_bytes: bytes, ext: str, dest_path: str) -> Tuple[bool, Optional[str]]:
+    """
+    Safely decode, inspect, and re-encode image uploads using Pillow.
+    - Strips malicious embedded polyglots, EXIF tags, and arbitrary scripts.
+    - Enforces max dimension limits to protect against decompression bomb attacks.
+    - Saves clean, re-encoded binary to dest_path.
+    """
+    try:
+        # Pass 1: Verify image structural integrity
+        img_verify = Image.open(io.BytesIO(image_bytes))
+        img_verify.verify()
+    except Exception:
+        return False, "Malformed, corrupted, or disguised image file."
+
+    try:
+        # Pass 2: Load and re-encode clean raster data
+        img = Image.open(io.BytesIO(image_bytes))
+        fmt = img.format
+        expected_fmts = {
+            "png": "PNG",
+            "jpg": "JPEG",
+            "jpeg": "JPEG",
+            "webp": "WEBP",
+        }
+        if fmt != expected_fmts.get(ext):
+            return False, f"Internal image format '{fmt}' does not match file extension '.{ext}'."
+
+        if img.width > MAX_IMAGE_DIMENSION or img.height > MAX_IMAGE_DIMENSION:
+            return False, f"Image dimensions ({img.width}x{img.height}) exceed maximum allowed limit of {MAX_IMAGE_DIMENSION}px."
+
+        # Convert transparency modes to RGB when re-encoding to JPEG
+        save_fmt = expected_fmts[ext]
+        if save_fmt == "JPEG" and img.mode in ("RGBA", "P", "LA"):
+            clean_img = img.convert("RGB")
+        else:
+            clean_img = img.copy()
+
+        clean_img.save(dest_path, format=save_fmt)
+        return True, None
+    except Exception as e:
+        return False, f"Failed to sanitize and re-encode image: {str(e)}"
 
 
 @upload_bp.route("/upload", methods=["POST"])
 @login_required
 def upload_file():
     """
-    Upload a profile photo or academic document.
-    Expects multipart/form-data:
-      - file: binary file payload
-      - category: 'avatar' | 'document' (default: 'document')
+    Upload a profile photo or academic document with strict validation:
+    - Extension allowlist (scripts & SVGs rejected)
+    - Magic byte verification
+    - MIME type verification
+    - Pillow image decoding & re-encoding
+    - Server-generated UUID filenames (path traversal immune)
     """
     if "file" not in request.files:
         return jsonify({
@@ -55,7 +143,7 @@ def upload_file():
     ext = get_extension(file.filename)
     allowed_exts = ALLOWED_AVATAR_EXTENSIONS if category == "avatar" else ALLOWED_DOCUMENT_EXTENSIONS
 
-    if ext not in allowed_exts:
+    if not ext or ext not in allowed_exts:
         allowed_list = ", ".join(sorted(allowed_exts))
         return jsonify({
             "error": "Unsupported Media Type",
@@ -63,17 +151,9 @@ def upload_file():
             "status_code": 415,
         }), 415
 
-    # Validate file size (<= 5 MB)
-    file.seek(0, os.SEEK_END)
-    size = file.tell()
-    file.seek(0)
-
-    if size > MAX_FILE_SIZE:
-        return jsonify({
-            "error": "Payload Too Large",
-            "message": f"File size exceeds the 5 MB limit (Current size: {size / (1024 * 1024):.2f} MB).",
-            "status_code": 413,
-        }), 413
+    # Read binary payload
+    file_bytes = file.read()
+    size = len(file_bytes)
 
     if size == 0:
         return jsonify({
@@ -82,15 +162,59 @@ def upload_file():
             "status_code": 400,
         }), 400
 
-    # Ensure target directory exists
-    upload_root = current_app.config.get("UPLOAD_FOLDER", os.path.join(current_app.root_path, "uploads"))
-    target_dir = os.path.join(upload_root, category + "s")  # avatars or documents
+    if size > MAX_FILE_SIZE:
+        return jsonify({
+            "error": "Payload Too Large",
+            "message": f"File size exceeds the 5 MB limit (Current size: {size / (1024 * 1024):.2f} MB).",
+            "status_code": 413,
+        }), 413
+
+    # Validate MIME type if provided
+    if file.mimetype and not validate_mimetype(file.mimetype, ext):
+        return jsonify({
+            "error": "Bad Request",
+            "message": f"Declared MIME type '{file.mimetype}' does not match expected signature for '.{ext}'.",
+            "status_code": 400,
+        }), 400
+
+    # Validate actual file signature (magic bytes)
+    if not validate_magic_bytes(file_bytes, ext):
+        return jsonify({
+            "error": "Bad Request",
+            "message": f"File signature (magic bytes) does not match declared extension '.{ext}'.",
+            "status_code": 400,
+        }), 400
+
+    # Target directory setup
+    upload_root = os.path.abspath(current_app.config.get("UPLOAD_FOLDER", os.path.join(current_app.root_path, "uploads")))
+    target_dir = os.path.abspath(os.path.join(upload_root, category + "s"))
     os.makedirs(target_dir, exist_ok=True)
 
-    safe_original = secure_filename(file.filename)
-    safe_name = f"{uuid.uuid4().hex}_{safe_original}"
-    dest_path = os.path.join(target_dir, safe_name)
-    file.save(dest_path)
+    # Generate safe UUID-based random filename
+    safe_name = f"{uuid.uuid4().hex}.{ext}"
+    dest_path = os.path.abspath(os.path.join(target_dir, safe_name))
+
+    # Defensive path traversal check
+    if not dest_path.startswith(target_dir + os.sep):
+        return jsonify({
+            "error": "Forbidden",
+            "message": "Path traversal attempt detected.",
+            "status_code": 403,
+        }), 403
+
+    # Process based on file type
+    if ext in ("png", "jpg", "jpeg", "webp"):
+        success, err = process_and_sanitize_image(file_bytes, ext, dest_path)
+        if not success:
+            return jsonify({
+                "error": "Bad Request",
+                "message": err or "Failed to process image file.",
+                "status_code": 400,
+            }), 400
+    elif ext == "pdf":
+        # Save validated PDF directly
+        with open(dest_path, "wb") as f:
+            f.write(file_bytes)
 
     relative_url = f"/api/uploads/{category}s/{safe_name}"
 
@@ -98,7 +222,7 @@ def upload_file():
         "message": f"{category.capitalize()} uploaded successfully.",
         "file_url": relative_url,
         "filename": safe_name,
-        "original_name": file.filename,
+        "original_name": secure_filename(file.filename),
         "file_type": ext,
         "size": size,
         "category": category,
@@ -113,7 +237,7 @@ def serve_upload(folder: str, filename: str):
     Serve uploaded assets with role and ownership access control.
     - Avatars: Accessible to authenticated users.
     - Documents: Accessible to administrators or the owning user (student/teacher).
-    Prevents directory traversal and unauthenticated data leaks.
+    Strictly prevents directory traversal and unauthenticated data leaks.
     """
     clean_folder = secure_filename(folder)
     clean_file = secure_filename(filename)
@@ -125,9 +249,17 @@ def serve_upload(folder: str, filename: str):
             "status_code": 404,
         }), 404
 
-    upload_root = current_app.config.get("UPLOAD_FOLDER", os.path.join(current_app.root_path, "uploads"))
-    folder_path = os.path.join(upload_root, clean_folder)
-    target_file = os.path.join(folder_path, clean_file)
+    upload_root = os.path.abspath(current_app.config.get("UPLOAD_FOLDER", os.path.join(current_app.root_path, "uploads")))
+    folder_path = os.path.abspath(os.path.join(upload_root, clean_folder))
+    target_file = os.path.abspath(os.path.join(folder_path, clean_file))
+
+    # Strict path traversal validation
+    if not target_file.startswith(folder_path + os.sep):
+        return jsonify({
+            "error": "Forbidden",
+            "message": "Path traversal attempt detected.",
+            "status_code": 403,
+        }), 403
 
     if not os.path.isfile(target_file):
         return jsonify({
@@ -138,7 +270,6 @@ def serve_upload(folder: str, filename: str):
 
     # Enforce authorization for private documents
     if clean_folder == "documents" and current_user.role != "admin":
-        # Check if the document belongs to current_user
         has_access = False
         user_docs = getattr(current_user, "documents", []) or []
         for doc in user_docs:
@@ -154,3 +285,4 @@ def serve_upload(folder: str, filename: str):
             }), 403
 
     return send_from_directory(folder_path, clean_file)
+

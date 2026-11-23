@@ -27,7 +27,7 @@ EduPredict is a standalone AI/ML-powered Educational Performance Prediction and 
 - **Big Data & OLAP**: HDFS WebHDFS REST API client, Apache Impala MPP SQL query catalog, Apache Parquet
 - **Statistical Computing**: Native R 4.6.2 (ANOVA, Welch t-test, Kruskal-Wallis, Pearson correlation)
 - **Machine Learning & EDA**: Scikit-learn 1.9.1, NumPy 2.5.5, Pandas 3.1.1, Joblib 1.6.0, Matplotlib, Seaborn, Jupyter Notebook
-- **Testing**: Pytest (86 automated tests, 100% passing), pytest-flask, TypeScript compiler (`tsc -b`), Vite production bundler
+- **Testing**: Pytest (227 automated tests, 100% passing across auth, RBAC, ML predictions, SDC anomaly detection, upload security, and production hardening), pytest-flask, Vitest (25 frontend tests passing), TypeScript compiler (`tsc -b`), Vite production bundler
 
 ---
 
@@ -105,15 +105,23 @@ Ensure your local `.env` file exists:
 ```env
 FLASK_APP=backend.app
 FLASK_ENV=development
-FLASK_DEBUG=1
-SECRET_KEY=your_secret_key_here
+SECRET_KEY=your_development_secret_key_min_32_characters_long
 PORT=5000
 HOST=127.0.0.1
 MONGO_URI=mongodb://localhost:27017/edupredict
 MONGO_DB_NAME=edupredict
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:5000,http://127.0.0.1:5000
+UPLOAD_FOLDER=backend/uploads
 ```
 
-### 3. Run Data Engineering & Big Data Ingestion (Phase 4)
+### 3. Production Security & Hardening (Phase 7D)
+- **Production Secret Validation**: In production (`FLASK_ENV=production`), `create_app()` strictly validates `SECRET_KEY`. It must be set via environment variable, cannot match known default/test keys, and must be at least 32 characters in length; missing or weak keys abort startup.
+- **Session & Cookie Protection**: Session cookies enforce `HttpOnly=True`, `SameSite="Lax"`, `Secure=True` in production, with 8-hour lifetime and Flask-Login strong session protection.
+- **Upload Security**: Multi-tier file inspection on `/api/upload` enforces extension allowlists, MIME verification, magic byte signature inspection, Pillow raster decoding and re-encoding (stripping polyglots and EXIF), 4096px dimension caps, 5 MB payload limits, server-generated UUID filenames, and path traversal protection.
+- **CORS & CSRF**: State-changing requests enforce CSRF tokens via `X-CSRFToken` headers. CORS origins are explicitly allowlisted with credentials; wildcard origins are strictly prohibited.
+- **Audit Logging**: Credential scrubbing automatically redacts passwords, tokens, cookies, and secrets from `system_logs`, with CRLF sanitization to prevent log injection.
+
+### 4. Run Data Engineering & Big Data Ingestion (Phase 4)
 Clean and standardize the UCI raw datasets:
 ```powershell
 $env:PYTHONPATH="."
@@ -138,14 +146,14 @@ Execute Native R 4.6.2 Statistical Hypothesis Testing:
 & "C:\Program Files\R\R-4.6.2\bin\x64\Rscript.exe" analytics/r/statistical_validation.R
 ```
 
-### 4. Train Machine Learning Models (Phase 5A)
+### 5. Train Machine Learning Models (Phase 5A)
 Train all 54 candidate pipelines across Mathematics and Portuguese cohorts and export serialized champions:
 ```powershell
 $env:PYTHONPATH="."
 .\.venv\Scripts\python.exe backend/ml/train_models.py
 ```
 
-### 5. Start Application Servers
+### 6. Start Application Servers
 Start Flask Backend (Windows CMD / PowerShell):
 ```cmd
 .\.venv\Scripts\python.exe -m backend.app
@@ -159,16 +167,18 @@ npm run dev
 ```
 Vite runs at `http://localhost:5173/` and proxies `/auth` and `/api` requests to `http://127.0.0.1:5000`.
 
-### 6. Run Automated Tests
-Execute full backend, data pipeline, and machine learning pytest suite:
+### 7. Run Automated Tests
+Execute full backend, data pipeline, ML, and Phase 7D security hardening test suite:
 ```powershell
 $env:PYTHONPATH="."
 .\.venv\Scripts\pytest.exe -v
 ```
-*(All 86 tests passing)*
+*(All 227 tests passing)*
 
-Execute frontend type-checking and production build:
+Execute frontend test suite, type-checking, and production build:
 ```cmd
 cd frontend
+npx vitest run
 npm run build
 ```
+*(All 25 vitest tests passing, 0 TypeScript errors, clean production bundle)*

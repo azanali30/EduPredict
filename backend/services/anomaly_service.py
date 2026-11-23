@@ -667,7 +667,7 @@ class AnomalyService:
             "status_breakdown": supp_status,
             "privacy_notice": (
                 "Statistical Disclosure Control (SDC) with primary (N < 5) and complementary cell suppression is active. "
-                "Marginal totals and small-cohort frequencies are protected against subtraction and differencing attacks."
+                "Marginal totals and small-cohort frequencies are protected against tested subtraction and differencing attacks within these reported aggregate tables."
             ),
             "generated_at": datetime.now(timezone.utc).isoformat(),
         }

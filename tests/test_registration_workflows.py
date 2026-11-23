@@ -159,8 +159,11 @@ def test_upload_avatar_and_validation(client, test_admin):
         "password": "AdminPassword123!",
     })
 
-    # 1. Valid image upload
-    img_data = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR" + b"\x00" * 20
+    # 1. Valid image upload (authentic 1x1 PNG bytes)
+    img_data = (
+        b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde"
+        b"\x00\x00\x00\x0cIDATx\x9cc\xf8\xcf\xc0\x00\x00\x03\x01\x01\x00\xc9\xfe\x92\xef\x00\x00\x00\x00IEND\xaeB`\x82"
+    )
     data = {
         "file": (io.BytesIO(img_data), "profile.png"),
         "category": "avatar",

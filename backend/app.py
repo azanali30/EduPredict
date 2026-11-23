@@ -5,8 +5,8 @@ Creates and configures the Flask application instance.
 
 import os
 import logging
-from flask import Flask, jsonify
-from backend.config import get_config
+from flask import Flask, jsonify, request
+from backend.config import get_config, validate_secret_key
 from backend.extensions import csrf, login_manager, mongo
 from backend.routes.health_routes import health_bp
 from backend.routes.auth_routes import auth_bp
@@ -42,9 +42,18 @@ def create_app(config_name=None):
         template_folder="../frontend/templates",
     )
 
-    # 1. Load Configuration
+    # 1. Load Configuration & Validate Production Invariants
     config_obj = get_config(config_name)
     app.config.from_object(config_obj)
+
+    is_prod = (app.config.get("ENV") == "production" or config_name == "production")
+    validate_secret_key(app.config.get("SECRET_KEY"), is_production=is_prod)
+
+    if is_prod:
+        # Enforce strict production safety invariants
+        app.config["DEBUG"] = False
+        app.config["TESTING"] = False
+        app.config["SESSION_COOKIE_SECURE"] = True
 
     logger.info("Initializing EduPredict in '%s' mode", app.config.get("ENV", "development"))
 
@@ -53,10 +62,24 @@ def create_app(config_name=None):
     login_manager.init_app(app)
     mongo.init_app(app)
 
-    # Configure LoginManager
+    # Configure LoginManager with strong session protection
     login_manager.login_view = "auth.login"
     login_manager.login_message = "Please log in to access this page."
     login_manager.login_message_category = "info"
+    login_manager.session_protection = "strong"
+
+    from flask_wtf.csrf import CSRFError
+
+    @app.errorhandler(CSRFError)
+    def handle_csrf_error(e):
+        """Custom structured JSON handler for CSRF validation failures."""
+        reason = getattr(e, "description", str(e))
+        logger.warning("CSRF validation failed: %s (IP: %s)", reason, request.remote_addr)
+        return jsonify({
+            "error": "Bad Request",
+            "message": f"CSRF validation failed: {reason}",
+            "status_code": 400,
+        }), 400
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -94,7 +117,61 @@ def create_app(config_name=None):
             except Exception as e:
                 logger.warning("Could not auto-initialize indexes on startup: %s", str(e))
 
-    # 6. Global Error Handlers
+    # 6. CORS & Security Headers
+    @app.before_request
+    def handle_cors_preflight():
+        """Handle CORS OPTIONS preflight requests for allowed origins."""
+        if request.method == "OPTIONS":
+            origin = request.headers.get("Origin")
+            allowed_origins = app.config.get("CORS_ALLOWED_ORIGINS", [])
+            if origin and origin in allowed_origins:
+                response = app.make_default_options_response()
+                response.headers["Access-Control-Allow-Origin"] = origin
+                response.headers["Access-Control-Allow-Credentials"] = "true"
+                response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+                response.headers["Access-Control-Allow-Headers"] = (
+                    "Content-Type, X-CSRFToken, X-CSRF-Token, X-Requested-With, Authorization"
+                )
+                response.headers["Access-Control-Max-Age"] = "3600"
+                return response
+
+    @app.after_request
+    def set_security_headers(response):
+        """Set explicit CORS and hardening security headers on responses."""
+        origin = request.headers.get("Origin")
+        allowed_origins = app.config.get("CORS_ALLOWED_ORIGINS", [])
+        if origin and origin in allowed_origins:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = (
+                "Content-Type, X-CSRFToken, X-CSRF-Token, X-Requested-With, Authorization"
+            )
+
+        # Baseline Security Hardening Headers
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
+
+    # 7. Global Error Handlers (Consistent JSON Responses)
+    @app.errorhandler(400)
+    def handle_bad_request(e):
+        return jsonify({
+            "error": "Bad Request",
+            "message": str(e.description) if hasattr(e, "description") else "Bad request syntax or invalid parameters.",
+            "status_code": 400,
+        }), 400
+
+    @app.errorhandler(403)
+    def handle_forbidden(e):
+        return jsonify({
+            "error": "Forbidden",
+            "message": str(e.description) if hasattr(e, "description") and e.description != "403 Forbidden" else "You do not have permission to access this resource.",
+            "status_code": 403,
+        }), 403
+
     @app.errorhandler(404)
     def handle_not_found(e):
         return jsonify({
@@ -103,38 +180,38 @@ def create_app(config_name=None):
             "status_code": 404,
         }), 404
 
+    @app.errorhandler(405)
+    def handle_method_not_allowed(e):
+        return jsonify({
+            "error": "Method Not Allowed",
+            "message": "The requested HTTP method is not supported for this endpoint.",
+            "status_code": 405,
+        }), 405
+
+    @app.errorhandler(413)
+    def handle_payload_too_large(e):
+        return jsonify({
+            "error": "Payload Too Large",
+            "message": "The request payload size exceeds the maximum allowed server limit.",
+            "status_code": 413,
+        }), 413
+
+    @app.errorhandler(415)
+    def handle_unsupported_media_type(e):
+        return jsonify({
+            "error": "Unsupported Media Type",
+            "message": "The request payload format or media type is not supported.",
+            "status_code": 415,
+        }), 415
+
     @app.errorhandler(500)
     def handle_server_error(e):
-        logger.error("Internal Server Error: %s", str(e))
+        logger.error("Internal Server Error: %s", str(e), exc_info=True)
         return jsonify({
             "error": "Internal Server Error",
             "message": "An unexpected error occurred on the server.",
             "status_code": 500,
         }), 500
-
-    @app.errorhandler(400)
-    def handle_bad_request(e):
-        return jsonify({
-            "error": "Bad Request",
-            "message": str(e.description) if hasattr(e, "description") else "Bad request.",
-            "status_code": 400,
-        }), 400
-
-    @app.errorhandler(403)
-    def handle_forbidden(e):
-        return jsonify({
-            "error": "Forbidden",
-            "message": "You do not have permission to access this resource.",
-            "status_code": 403,
-        }), 403
-    
-    @app.errorhandler(403)
-    def handle_forbidden(e):
-        return jsonify({
-            "error": "Forbidden",
-            "message": "You do not have permission to access this resource.",
-            "status_code": 403,
-        }), 403
 
     return app
 
@@ -143,6 +220,9 @@ if __name__ == "__main__":
     flask_app = create_app()
     host = flask_app.config.get("HOST", "127.0.0.1")
     port = flask_app.config.get("PORT", 5000)
-    debug = flask_app.config.get("DEBUG", True)
-    logger.info("Starting EduPredict Flask server at http://%s:%s", host, port)
+    debug = flask_app.config.get("DEBUG", False)
+    # Strictly forbid debug mode when in production environment
+    if flask_app.config.get("ENV") == "production":
+        debug = False
+    logger.info("Starting EduPredict Flask server at http://%s:%s (debug=%s)", host, port, debug)
     flask_app.run(host=host, port=port, debug=debug)
