@@ -60,7 +60,7 @@ To prevent any dependency on heavy external JVM services or container runtimes, 
 - **Directory Creation Topology**: Verifies that all 5 required directories are created with `op=MKDIRS` and `permission=755` over PUT requests.
 - **Two-Step Upload & HTTP 307 Redirect**: Verifies that the NameNode's `Location` header in Step 1 is strictly extracted and used for Step 2 payload delivery.
 - **Upload Failures**: Verifies failure handling if NameNode rejects Step 1 (e.g. 403), DataNode rejects Step 2 (e.g. 500 disk full), or DataNode stream times out.
-- **Credential Protection**: Confirms that sensitive credentials or secret keys are not leaked in exception diagnostics.
+- **Credential Protection & Diagnostics Sanitization**: Confirms that configured `hdfs_user` values and sensitive query parameters (such as `token`, `password`, `key`, `secret`, `delegation`, `access_token`, etc.) are stripped and replaced with `[REDACTED]` or `[REDACTED_USER]`. Deliberate injection regression tests verify that even when credentials and sensitive query parameters are injected into NameNode or DataNode exception strings, neither the username nor secret values appear in returned diagnostics or captured application logs, while status codes and general failure explanations remain visible.
 
 ---
 

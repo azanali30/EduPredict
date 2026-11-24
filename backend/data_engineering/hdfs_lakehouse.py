@@ -7,6 +7,7 @@ academic dataset files across the EduPredict analytical lakehouse.
 import os
 import hashlib
 import logging
+import re
 from typing import Dict, Any, List, Optional
 import urllib.request
 import urllib.error
@@ -25,6 +26,34 @@ HDFS_DIRS = [
     f"{HDFS_ROOT}/analytics/student_progress",
 ]
 
+SENSITIVE_PARAM_PATTERN = re.compile(
+    r"(?i)\b(user\.name|username|password|token|delegation(?:_token)?|secret|key|api_key|secret_key|access_token|refresh_token|bearer)=([^\s&'\"<>;\)]+)"
+)
+
+
+def sanitize_webhdfs_error(error_message: Any, hdfs_user: Optional[str] = None) -> str:
+    """
+    Sanitizes error messages, exception strings, and diagnostics to prevent
+    leakage of credentials, sensitive URL query parameters, or configured usernames.
+    Preserves HTTP status codes, standard reason phrases, and general diagnostics.
+    """
+    if error_message is None:
+        return ""
+    msg = str(error_message)
+
+    # 1. Redact sensitive URL query parameters (e.g., user.name=..., token=..., key=...)
+    msg = SENSITIVE_PARAM_PATTERN.sub(r"\1=[REDACTED]", msg)
+
+    # 2. Redact configured hdfs_user literal occurrences if provided
+    if hdfs_user and isinstance(hdfs_user, str):
+        trimmed_user = hdfs_user.strip()
+        if len(trimmed_user) >= 2:
+            pattern = r"(?<![a-zA-Z0-9_])" + re.escape(trimmed_user) + r"(?![a-zA-Z0-9_])"
+            flags = 0 if trimmed_user.lower() == "hdfs" else re.IGNORECASE
+            msg = re.sub(pattern, "[REDACTED_USER]", msg, flags=flags)
+
+    return msg
+
 
 class HDFSLakehouseManager:
     """
@@ -41,6 +70,10 @@ class HDFSLakehouseManager:
         self.namenode_url = namenode_url or os.getenv("HDFS_NAMENODE_URL", "http://localhost:9870/webhdfs/v1")
         self.hdfs_user = hdfs_user or os.getenv("HDFS_USER", "edupredict")
         self.enabled = enabled if enabled is not None else os.getenv("HDFS_ENABLED", "false").lower() == "true"
+
+    def _sanitize_error(self, message: Any) -> str:
+        """Helper to sanitize errors using the manager's configured hdfs_user."""
+        return sanitize_webhdfs_error(message, self.hdfs_user)
 
     def probe_connection(self) -> Dict[str, Any]:
         """
@@ -60,20 +93,25 @@ class HDFSLakehouseManager:
                     "error": None,
                 }
         except urllib.error.URLError as e:
+            raw_err = f"HDFS NameNode Unreachable: {e.reason}"
+            sanitized = self._sanitize_error(raw_err)
+            logger.warning(f"HDFS probe connection failed: {sanitized}")
             return {
                 "connected": False,
                 "namenode_url": self.namenode_url,
                 "status_code": None,
                 "response": None,
-                "error": f"HDFS NameNode Unreachable: {e.reason}",
+                "error": sanitized,
             }
         except Exception as e:
+            sanitized = self._sanitize_error(str(e))
+            logger.warning(f"HDFS probe connection failed: {sanitized}")
             return {
                 "connected": False,
                 "namenode_url": self.namenode_url,
                 "status_code": None,
                 "response": None,
-                "error": str(e),
+                "error": sanitized,
             }
 
     def ensure_lakehouse_directories(self) -> Dict[str, Any]:
@@ -94,10 +132,15 @@ class HDFSLakehouseManager:
         for directory in HDFS_DIRS:
             url = f"{self.namenode_url}{directory}?op=MKDIRS&user.name={self.hdfs_user}&permission=755"
             req = urllib.request.Request(url, method="PUT")
-            with urllib.request.urlopen(req, timeout=5.0) as resp:
-                if resp.status in (200, 201):
-                    created.append(directory)
-                    logger.info(f"HDFS directory created/verified: {directory}")
+            try:
+                with urllib.request.urlopen(req, timeout=5.0) as resp:
+                    if resp.status in (200, 201):
+                        created.append(directory)
+                        logger.info(f"HDFS directory created/verified: {directory}")
+            except Exception as e:
+                sanitized = self._sanitize_error(str(e))
+                logger.error(f"Failed to create HDFS directory {directory}: {sanitized}")
+                raise
 
         return {"success": True, "created_directories": created}
 
@@ -112,9 +155,10 @@ class HDFSLakehouseManager:
 
         probe = self.probe_connection()
         if not probe["connected"]:
+            err_msg = f"HDFS Unavailable: {probe['error']}"
             return {
                 "success": False,
-                "error": f"HDFS Unavailable: {probe['error']}",
+                "error": err_msg,
                 "local_path": local_path,
                 "hdfs_path": hdfs_path,
             }
@@ -148,10 +192,11 @@ class HDFSLakehouseManager:
                 "error": None,
             }
         except Exception as e:
-            logger.error(f"Failed to upload to HDFS {hdfs_path}: {str(e)}")
+            sanitized = self._sanitize_error(str(e))
+            logger.error(f"Failed to upload to HDFS {hdfs_path}: {sanitized}")
             return {
                 "success": False,
-                "error": str(e),
+                "error": sanitized,
                 "local_path": local_path,
                 "hdfs_path": hdfs_path,
             }

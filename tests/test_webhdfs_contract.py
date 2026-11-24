@@ -20,6 +20,7 @@ from backend.data_engineering.hdfs_lakehouse import (
     HDFSLakehouseManager,
     HDFS_ROOT,
     HDFS_DIRS,
+    sanitize_webhdfs_error,
 )
 
 
@@ -480,3 +481,197 @@ def test_credentials_not_leaked_in_exceptions_or_diagnostics():
     assert "Generic internal socket connection error" in probe["error"]
     assert "password" not in str(probe).lower()
     assert "secret_key" not in str(probe).lower()
+
+
+def test_probe_connection_credential_sanitization_injected_diagnostics_and_logs(caplog):
+    """
+    Deliberately inject configured hdfs_user and sensitive query parameters (token, password, delegation)
+    into mocked NameNode exceptions and assert that neither the configured username nor the sensitive
+    parameter values appear in returned diagnostics or captured application logs.
+    """
+    configured_user = "secret_audit_user_99"
+    secret_token = "super_secret_token_abc123"
+    secret_pass = "top_secret_pass_xyz789"
+    secret_dt = "delegation_token_val_456"
+
+    mgr = HDFSLakehouseManager(
+        namenode_url="http://namenode:9870/webhdfs/v1",
+        hdfs_user=configured_user,
+    )
+
+    # 1. HTTPError with injected URL containing credentials and user in message
+    http_msg = (
+        f"HTTP Error 401: Unauthorized for user {configured_user} at "
+        f"http://namenode:9870/webhdfs/v1/?op=LISTSTATUS&user.name={configured_user}&token={secret_token}&password={secret_pass}"
+    )
+    mock_http_err = urllib.error.HTTPError(
+        url=f"http://namenode:9870/webhdfs/v1/?op=LISTSTATUS&user.name={configured_user}&token={secret_token}&password={secret_pass}",
+        code=401,
+        msg=http_msg,
+        hdrs={},
+        fp=io.BytesIO(b'{"RemoteException":{"message":"Unauthorized"}}'),
+    )
+
+    with caplog.at_level("WARNING"):
+        caplog.clear()
+        with patch("urllib.request.urlopen", side_effect=mock_http_err):
+            probe = mgr.probe_connection()
+
+    assert probe["connected"] is False
+    assert probe["error"] is not None
+    # Verify useful error diagnostic is preserved
+    assert "401" in probe["error"] or "Unauthorized" in probe["error"]
+    # Verify strict sanitization: neither username nor secret values appear in error
+    assert configured_user not in probe["error"]
+    assert secret_token not in probe["error"]
+    assert secret_pass not in probe["error"]
+    assert "[REDACTED]" in probe["error"] or "[REDACTED_USER]" in probe["error"]
+    # Verify captured application logs are also sanitized
+    assert configured_user not in caplog.text
+    assert secret_token not in caplog.text
+    assert secret_pass not in caplog.text
+
+    # 2. URLError with injected user and delegation token
+    url_err_msg = (
+        f"Connection refused: http://namenode:9870/?user.name={configured_user}&delegation={secret_dt} "
+        f"for user {configured_user}"
+    )
+    mock_url_err = urllib.error.URLError(reason=url_err_msg)
+
+    with caplog.at_level("WARNING"):
+        caplog.clear()
+        with patch("urllib.request.urlopen", side_effect=mock_url_err):
+            probe2 = mgr.probe_connection()
+
+    assert probe2["connected"] is False
+    assert "Unreachable" in probe2["error"]
+    assert configured_user not in probe2["error"]
+    assert secret_dt not in probe2["error"]
+    assert configured_user not in caplog.text
+    assert secret_dt not in caplog.text
+
+    # 3. Generic Exception with injected credentials
+    gen_err = Exception(f"Socket timeout for {configured_user}: token={secret_token}")
+    with caplog.at_level("WARNING"):
+        caplog.clear()
+        with patch("urllib.request.urlopen", side_effect=gen_err):
+            probe3 = mgr.probe_connection()
+
+    assert probe3["connected"] is False
+    assert "Socket timeout" in probe3["error"]
+    assert configured_user not in probe3["error"]
+    assert secret_token not in probe3["error"]
+    assert configured_user not in caplog.text
+    assert secret_token not in caplog.text
+
+
+def test_upload_file_credential_sanitization_injected_diagnostics_and_logs(caplog):
+    """
+    Deliberately inject configured hdfs_user and sensitive query parameters into
+    upload exceptions (Step 1 and Step 2) and assert that neither the configured
+    username nor the sensitive parameter values appear in returned diagnostics or logs.
+    """
+    configured_user = "upload_audit_agent"
+    secret_key = "secret_api_key_8888"
+    secret_token = "token_bearer_xyz999"
+
+    mgr = HDFSLakehouseManager(
+        namenode_url="http://namenode:9870/webhdfs/v1",
+        hdfs_user=configured_user,
+    )
+
+    with tempfile.NamedTemporaryFile(delete=False) as tf:
+        tf.write(b"contract test data payload")
+        temp_file = tf.name
+
+    try:
+        # Mock probe_connection to simulate healthy NameNode
+        with patch.object(mgr, "probe_connection", return_value={"connected": True, "error": None}):
+            # Simulate Step 1 failure with injected credentials in exception
+            injected_exc = Exception(
+                f"Failed to initiate upload for user {configured_user} at "
+                f"http://namenode:9870/webhdfs/v1/edupredict/data.csv?op=CREATE&user.name={configured_user}&key={secret_key}&token={secret_token}"
+            )
+
+            with caplog.at_level("ERROR"):
+                caplog.clear()
+                with patch("urllib.request.urlopen", side_effect=injected_exc):
+                    res = mgr.upload_file(temp_file, "/edupredict/data.csv")
+
+            assert res["success"] is False
+            assert res["error"] is not None
+            assert res["hdfs_path"] == "/edupredict/data.csv"
+            # Verify useful failure message preserved
+            assert "Failed to initiate upload" in res["error"]
+            # Assert credentials and username are redacted from returned diagnostic
+            assert configured_user not in res["error"]
+            assert secret_key not in res["error"]
+            assert secret_token not in res["error"]
+            assert "[REDACTED]" in res["error"] or "[REDACTED_USER]" in res["error"]
+            # Assert credentials and username are redacted from application logs
+            assert configured_user not in caplog.text
+            assert secret_key not in caplog.text
+            assert secret_token not in caplog.text
+
+            # Simulate Step 2 failure with injected DataNode token
+            step1_resp = MockHTTPResponse(
+                body=b"",
+                status=307,
+                headers={"Location": f"http://datanode01:9864/webhdfs/v1/write?token={secret_token}"},
+            )
+            step2_exc = Exception(f"DataNode rejected transfer for {configured_user}: token={secret_token}")
+
+            calls = []
+            def mock_two_step(req, timeout=None):
+                calls.append(req)
+                if len(calls) == 1:
+                    return step1_resp
+                raise step2_exc
+
+            with caplog.at_level("ERROR"):
+                caplog.clear()
+                with patch("urllib.request.urlopen", side_effect=mock_two_step):
+                    res2 = mgr.upload_file(temp_file, "/edupredict/data.csv")
+
+            assert res2["success"] is False
+            assert "DataNode rejected transfer" in res2["error"]
+            assert configured_user not in res2["error"]
+            assert secret_token not in res2["error"]
+            assert configured_user not in caplog.text
+            assert secret_token not in caplog.text
+
+    finally:
+        if os.path.exists(temp_file):
+            os.remove(temp_file)
+
+
+def test_standalone_sanitize_webhdfs_error_parameter_matrix():
+    """Verify that sanitize_webhdfs_error properly redacts all sensitive query parameters."""
+    test_user = "audit_user_2026"
+    test_matrix = [
+        ("user.name=audit_user_2026", "user.name=[REDACTED]"),
+        ("username=admin", "username=[REDACTED]"),
+        ("password=SuperSecret123!", "password=[REDACTED]"),
+        ("token=jwt_token_value_abc", "token=[REDACTED]"),
+        ("delegation=dt_token_val", "delegation=[REDACTED]"),
+        ("delegation_token=dt_token_val2", "delegation_token=[REDACTED]"),
+        ("secret=s3cr3t_val", "secret=[REDACTED]"),
+        ("key=api_key_val", "key=[REDACTED]"),
+        ("api_key=api_key_val2", "api_key=[REDACTED]"),
+        ("secret_key=secret_key_val", "secret_key=[REDACTED]"),
+        ("access_token=bearer_123", "access_token=[REDACTED]"),
+        ("refresh_token=refresh_123", "refresh_token=[REDACTED]"),
+        ("bearer=bearer_token_abc", "bearer=[REDACTED]"),
+    ]
+
+    for param_pair, expected_replacement in test_matrix:
+        raw_url = f"http://localhost:9870/webhdfs/v1/?op=OPEN&{param_pair}&other=safe_val"
+        sanitized = sanitize_webhdfs_error(raw_url, hdfs_user=test_user)
+        assert expected_replacement in sanitized
+        assert "other=safe_val" in sanitized
+
+    # Direct username appearance
+    user_msg = f"User {test_user} failed authentication against NameNode"
+    sanitized_user = sanitize_webhdfs_error(user_msg, hdfs_user=test_user)
+    assert test_user not in sanitized_user
+    assert "[REDACTED_USER]" in sanitized_user
