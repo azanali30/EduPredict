@@ -85,6 +85,7 @@ REQUIRED_FIELDS = {
 }
 
 VALID_RISK_STATUSES = {"High Risk", "Moderate Risk", "Low Risk / On Track"}
+MAX_REJECTED_SAMPLES = 20
 
 
 class LakehouseExportError(Exception):
@@ -364,11 +365,13 @@ def _generate_record_batches(
                     yield pa.RecordBatch.from_pylist(current_batch, schema=ACADEMIC_LAKEHOUSE_SCHEMA)
                     current_batch = []
             else:
-                metrics["rejected_records"].append({
-                    "row_index": metrics["total_read"],
-                    "student_code": doc.get("student_code") if isinstance(doc, dict) else None,
-                    "reason": reason,
-                })
+                metrics["rejected_count"] += 1
+                if len(metrics["rejected_samples"]) < MAX_REJECTED_SAMPLES:
+                    metrics["rejected_samples"].append({
+                        "row_index": metrics["total_read"],
+                        "student_code": str(doc.get("student_code", "")).strip()[:50] if isinstance(doc, dict) else None,
+                        "reason": reason,
+                    })
                 logger.debug("Rejected record #%d: %s", metrics["total_read"], reason)
     except PyMongoError as pe:
         logger.error("MongoDB iteration error while reading records: %s", str(pe))
@@ -448,7 +451,8 @@ class ParquetLakehouseExporter:
         metrics: Dict[str, Any] = {
             "total_read": 0,
             "valid_count": 0,
-            "rejected_records": [],
+            "rejected_count": 0,
+            "rejected_samples": [],
             "partition_counts": {},
         }
 
@@ -500,11 +504,11 @@ class ParquetLakehouseExporter:
             if metrics["valid_count"] == 0:
                 logger.warning("All %d records from collection '%s' failed validation.", metrics["total_read"], collection_name)
                 shutil.rmtree(staging_dir, ignore_errors=True)
-                return {
+                no_valid_summary: Dict[str, Any] = {
                     "source_collection": collection_name,
                     "total_records_read": metrics["total_read"],
                     "valid_records_exported": 0,
-                    "rejected_records": len(metrics["rejected_records"]),
+                    "rejected_records": metrics["rejected_count"],
                     "partition_count": 0,
                     "partitions": [],
                     "output_location": str(export_path),
@@ -513,6 +517,9 @@ class ParquetLakehouseExporter:
                     "file_format": "PARQUET",
                     "status": "NO_VALID_RECORDS",
                 }
+                if metrics["rejected_samples"]:
+                    no_valid_summary["rejected_samples"] = metrics["rejected_samples"]
+                return no_valid_summary
 
             # 5. Assemble partition metadata from partition counts
             partition_meta = []
@@ -528,11 +535,11 @@ class ParquetLakehouseExporter:
                     "files": len(files_found) if files_found else 1,
                 })
 
-            summary = {
+            summary: Dict[str, Any] = {
                 "source_collection": collection_name,
                 "total_records_read": metrics["total_read"],
                 "valid_records_exported": metrics["valid_count"],
-                "rejected_records": len(metrics["rejected_records"]),
+                "rejected_records": metrics["rejected_count"],
                 "partition_count": len(partition_meta),
                 "partitions": partition_meta,
                 "output_location": str(export_path),
@@ -541,6 +548,8 @@ class ParquetLakehouseExporter:
                 "file_format": "PARQUET",
                 "status": "COMPLETED_SUCCESSFULLY",
             }
+            if metrics["rejected_samples"]:
+                summary["rejected_samples"] = metrics["rejected_samples"]
 
             # 6. Write metadata manifest into staging directory
             manifest_path = staging_dir / "_export_summary.json"
@@ -555,9 +564,11 @@ class ParquetLakehouseExporter:
 
             # 7. Safe Dataset Replacement Transaction with Rollback
             # Preserves previous valid dataset until the new export is fully validated.
+            backup_performed = False
             if export_path.exists():
                 try:
                     export_path.rename(backup_dir)
+                    backup_performed = True
                 except OSError as be:
                     logger.error("Failed to backup existing dataset at '%s': %s", export_path, str(be))
                     raise LakehouseExportError(f"Backup failure for existing dataset: {str(be)}") from be
@@ -570,18 +581,41 @@ class ParquetLakehouseExporter:
                     export_path,
                     str(promote_err),
                 )
-                # Rollback to restore previous dataset
-                if backup_dir.exists():
-                    if export_path.exists():
-                        shutil.rmtree(export_path, ignore_errors=True)
-                    backup_dir.rename(export_path)
-                    logger.info("Rollback complete: previous dataset at '%s' successfully restored.", export_path)
-                raise LakehouseExportError(
-                    f"Dataset replacement failed: {str(promote_err)}. Previous dataset was restored from backup."
-                ) from promote_err
+                # Attempt rollback to restore previous dataset if backup was created
+                if backup_performed and backup_dir.exists():
+                    try:
+                        if export_path.exists():
+                            shutil.rmtree(export_path, ignore_errors=True)
+                        backup_dir.rename(export_path)
+                        logger.info("Rollback complete: previous dataset at '%s' successfully restored.", export_path)
+                        raise LakehouseExportError(
+                            f"Dataset replacement failed: {str(promote_err)}. "
+                            "Previous dataset was successfully restored from backup."
+                        ) from promote_err
+                    except Exception as rollback_err:
+                        # If rollback_err is already our LakehouseExportError from above, let it propagate
+                        if isinstance(rollback_err, LakehouseExportError):
+                            raise
+                        logger.critical(
+                            "CRITICAL: Rollback restoration failed! Could not restore previous dataset from '%s' to '%s': %s. "
+                            "The previous valid dataset has been preserved at '%s' for manual operator recovery.",
+                            backup_dir,
+                            export_path,
+                            str(rollback_err),
+                            backup_dir,
+                        )
+                        raise LakehouseExportError(
+                            f"Dataset replacement failed ({str(promote_err)}) AND rollback restoration failed ({str(rollback_err)}). "
+                            f"CRITICAL: The previous valid dataset is preserved at '{backup_dir}'. "
+                            "Manual recovery required: move this backup folder to restore the dataset."
+                        ) from rollback_err
+                else:
+                    raise LakehouseExportError(
+                        f"Dataset replacement failed: {str(promote_err)}."
+                    ) from promote_err
 
-            # Replacement succeeded: safely remove backup
-            if backup_dir.exists():
+            # Promotion succeeded: safely remove backup
+            if backup_performed and backup_dir.exists():
                 shutil.rmtree(backup_dir, ignore_errors=True)
 
             logger.info(
@@ -600,11 +634,11 @@ class ParquetLakehouseExporter:
             raise
 
         finally:
-            # Guarantee cleanup of staging and backup directories
+            # Guarantee cleanup of temporary staging data ONLY.
+            # NEVER delete backup_dir here if rollback failed or was not restored,
+            # ensuring previous valid data is preserved for manual recovery.
             if staging_dir.exists():
                 shutil.rmtree(staging_dir, ignore_errors=True)
-            if backup_dir.exists():
-                shutil.rmtree(backup_dir, ignore_errors=True)
 
 
 def export_mongodb_to_parquet(

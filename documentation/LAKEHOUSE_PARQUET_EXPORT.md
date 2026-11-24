@@ -45,6 +45,7 @@ To prevent memory exhaustion when processing large institutional datasets:
 - Records are validated, normalized, and yielded as PyArrow `RecordBatch` objects via `pyarrow.RecordBatchReader`.
 - `pyarrow.dataset.write_dataset()` consumes batches directly from the reader stream, writing them to disk without loading the full collection into RAM.
 - Memory consumption remains strictly bounded by `batch_size` records throughout the export lifecycle.
+- **Bounded Rejected Records**: Rejected/invalid documents are counted using an integer counter (`rejected_records`) without accumulating entire documents in memory. A small, fixed diagnostic sample (`MAX_REJECTED_SAMPLES = 20`) is retained for operator triage, ensuring memory usage is strictly $O(1)$ with respect to invalid records.
 
 ---
 
@@ -83,7 +84,8 @@ flowchart TD
 ### Guarantees Provided:
 - **No Premature Deletion**: The previous valid dataset is preserved intact in backup until the new dataset is fully validated and promoted.
 - **Automatic Rollback**: If staging promotion fails (e.g., due to filesystem locks), the backup is immediately restored to the target path.
-- **Fail-Safe Cleanup**: Temporary staging (`.tmp_*`) and backup (`.backup_*`) directories are unconditionally purged in `finally` blocks.
+- **Non-Destructive Rollback Failure**: If rollback restoration also fails, the backup directory is **NEVER deleted**. It remains intact on disk, a CRITICAL-level error is logged, and the exact backup path is reported in `LakehouseExportError` for manual operator recovery.
+- **Fail-Safe Cleanup**: Temporary staging (`.tmp_*`) directories are unconditionally purged in `finally` blocks, while un-restored backup directories are strictly preserved.
 - **Repeatability Guard**: If `overwrite=False` and the target directory already contains Parquet files, `FileExistsError` is raised to prevent accidental overwrites.
 
 ---

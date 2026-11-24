@@ -19,7 +19,7 @@
     }
   ],
   "output_location": "C:\\Users\\Azan's PC\\Documents\\EduPredict\\data\\lakehouse\\student_academic_records",
-  "export_timestamp": "2026-11-23T12:45:19.019966+00:00",
+  "export_timestamp": "2026-11-24T11:37:30.601795+00:00",
   "compression": "SNAPPY",
   "file_format": "PARQUET",
   "status": "COMPLETED_SUCCESSFULLY"

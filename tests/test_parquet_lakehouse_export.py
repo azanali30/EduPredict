@@ -370,6 +370,64 @@ def test_records_across_multiple_partitions_in_batches():
         assert read_t.num_rows == 30
 
 
+def test_bounded_memory_rejected_records_cap_and_counting():
+    """Verify that rejected records memory is strictly bounded and exact count is maintained."""
+    # Create 150 invalid records (NaN marks, out of bounds, missing fields)
+    records = []
+    for i in range(150):
+        records.append({
+            "student_code": f"STU_INVALID_{i:04d}",
+            "subject": "Mathematics",
+            "academic_year": "2025-2026",
+            "term": "Term 1",
+            "attendance_percentage": float("nan") if i % 2 == 0 else 150.0,
+            "study_hours_per_week": 2.0,
+            "previous_exam_marks": 50.0,
+            "quiz_scores": 50.0,
+            "final_exam_marks": 50.0,
+            "academic_status": "Low Risk / On Track",
+        })
+
+    # Add 15 valid records
+    for i in range(15):
+        records.append({
+            "student_code": f"STU_VALID_{i:04d}",
+            "subject": "Mathematics",
+            "academic_year": "2025-2026",
+            "term": "Term 1",
+            "attendance_percentage": 90.0,
+            "study_hours_per_week": 2.0,
+            "previous_exam_marks": 50.0,
+            "quiz_scores": 50.0,
+            "final_exam_marks": 50.0,
+            "academic_status": "Low Risk / On Track",
+        })
+
+    mock_db = MagicMock()
+    mock_coll = MagicMock()
+    mock_coll.find.return_value = iter(records)
+    mock_db.__getitem__.return_value = mock_coll
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        export_target = os.path.join(tmpdir, "lakehouse_bounded_rejected")
+        exporter = ParquetLakehouseExporter(db=mock_db, export_dir=export_target, batch_size=20)
+        summary = exporter.export_academic_records(overwrite=True)
+
+        assert summary["status"] == "COMPLETED_SUCCESSFULLY"
+        assert summary["total_records_read"] == 165
+        assert summary["rejected_records"] == 150
+        assert summary["valid_records_exported"] == 15
+
+        # Verify diagnostic sample cap
+        rejected_samples = summary.get("rejected_samples", [])
+        assert len(rejected_samples) == 20
+        assert len(rejected_samples) <= 20
+
+        # Read back table and verify only valid records were exported
+        read_t = pq.read_table(export_target)
+        assert read_t.num_rows == 15
+
+
 # ==============================================================================
 # 3. Safe Dataset Replacement & Rollback Tests
 # ==============================================================================
@@ -461,7 +519,7 @@ def test_promotion_failure_triggers_rollback(sample_valid_records):
         with patch.object(Path, "rename", mock_rename_fail):
             with pytest.raises(LakehouseExportError) as exc_info:
                 exporter.export_academic_records(overwrite=True)
-            assert "Previous dataset was restored from backup" in str(exc_info.value)
+            assert "restored from backup" in str(exc_info.value)
 
         # Verify rollback restored the original dataset and marker
         assert export_target.exists()
@@ -471,6 +529,65 @@ def test_promotion_failure_triggers_rollback(sample_valid_records):
         # Verify no backup or temporary directories remain
         parent_items = [p.name for p in export_target.parent.iterdir()]
         assert not any(name.startswith(".backup_") or name.startswith(".tmp_") for name in parent_items)
+
+
+def test_promotion_failure_and_rollback_failure_preserves_backup_directory(sample_valid_records):
+    """
+    Verify that if promotion fails AND rollback restoration fails:
+    1. The backup directory is NEVER deleted.
+    2. The backup directory retains the original dataset and marker.
+    3. The raised error reports the exact recovery path for manual operator intervention.
+    """
+    mock_db = MagicMock()
+    mock_coll = MagicMock()
+    mock_coll.find.return_value = iter(sample_valid_records)
+    mock_db.__getitem__.return_value = mock_coll
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        export_target = (Path(tmpdir) / "lakehouse_double_fail").resolve()
+        exporter = ParquetLakehouseExporter(db=mock_db, export_dir=str(export_target))
+
+        # Establish original dataset with marker
+        exporter.export_academic_records(overwrite=True)
+        marker_file = export_target / "original_marker.txt"
+        marker_file.write_text("CRITICAL_ORIGINAL_DATA")
+
+        # Simulate promotion failure AND rollback failure
+        real_rename = Path.rename
+        discovered_backup_dir = []
+
+        def mock_rename_double_fail(self, target):
+            # Capture the backup directory when moving export_target -> .backup_...
+            if ".backup_" in getattr(target, "name", str(target)):
+                discovered_backup_dir.append(target if isinstance(target, Path) else Path(target))
+                return real_rename(self, target)
+            # Fail on promoting staging to export_target
+            if ".tmp_" in self.name and (target == export_target or target.name == export_target.name):
+                raise OSError("Simulated promotion permission denied")
+            # Fail on rollback (restoring backup_dir to export_target)
+            if ".backup_" in self.name and (target == export_target or target.name == export_target.name):
+                raise OSError("Simulated rollback filesystem failure")
+            return real_rename(self, target)
+
+        mock_coll.find.return_value = iter(sample_valid_records)
+        with patch.object(Path, "rename", mock_rename_double_fail):
+            with pytest.raises(LakehouseExportError) as exc_info:
+                exporter.export_academic_records(overwrite=True)
+
+            err_msg = str(exc_info.value)
+            assert "CRITICAL" in err_msg
+            assert "Manual recovery required" in err_msg
+            assert str(discovered_backup_dir[0]) in err_msg
+
+        # Verify that the backup directory still exists and was NOT deleted!
+        backup_path = discovered_backup_dir[0]
+        assert backup_path.exists()
+        assert (backup_path / "original_marker.txt").exists()
+        assert (backup_path / "original_marker.txt").read_text() == "CRITICAL_ORIGINAL_DATA"
+
+        # Verify staging directory was cleaned up
+        parent_items = [p.name for p in export_target.parent.iterdir()]
+        assert not any(name.startswith(".tmp_") for name in parent_items)
 
 
 # ==============================================================================
