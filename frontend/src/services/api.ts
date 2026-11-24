@@ -14,6 +14,9 @@ import {
   AnomalyListResponse,
   AnomalyReviewStatus,
   AnalystAnomalyStats,
+  DropoutRecord,
+  AdminDropoutOverviewResponse,
+  AnalystDropoutOverviewResponse,
 } from '../types';
 
 let cachedCsrfToken: string | null = null;
@@ -466,3 +469,43 @@ export const api = {
   getAnalystAnomalyStats: () =>
     apiRequest<AnalystAnomalyStats>('/api/analyst/anomalies/stats'),
 };
+
+export const dropoutApi = {
+  getStudentDropoutRisk: (studentId: string) =>
+    apiRequest<{ status_code: number; assessment: DropoutRecord }>(
+      `/api/dropout/student/${studentId}`
+    ),
+
+  getTeacherDropoutRoster: (page = 1, limit = 50) =>
+    apiRequest<{
+      status_code: number;
+      students: DropoutRecord[];
+      total: number;
+      page: number;
+      limit: number;
+    }>(`/api/dropout/teacher/roster?page=${page}&limit=${limit}`),
+
+  getAdminDropoutOverview: () =>
+    apiRequest<AdminDropoutOverviewResponse>('/api/dropout/admin/overview'),
+
+  getAnalystDropoutOverview: () =>
+    apiRequest<AnalystDropoutOverviewResponse>('/api/dropout/analyst/overview'),
+
+  getModelMetadata: () =>
+    apiRequest<{ status_code: number; metadata: any }>('/api/dropout/model-metadata'),
+
+  predictStudentDropout: (payload: {
+    student_id: string;
+    features?: Record<string, any>;
+    academic_term?: string;
+    student_name?: string;
+  }) =>
+    apiRequest<{ status_code: number; assessment: DropoutRecord }>(
+      '/api/dropout/predict',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    ),
+};
+

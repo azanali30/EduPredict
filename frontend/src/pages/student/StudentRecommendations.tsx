@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '../../services/api';
-import { PredictionRecord } from '../../types';
+import { api, dropoutApi } from '../../services/api';
+import { PredictionRecord, DropoutRecord } from '../../types';
+import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatCard } from '../../components/common/StatCard';
 import { SectionCard } from '../../components/common/SectionCard';
@@ -14,28 +15,40 @@ import {
   AlertTriangle,
   Sparkles,
   ArrowRight,
+  GraduationCap,
+  Info,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/forms/Button';
 
 export const StudentRecommendations: React.FC = () => {
+  const { user } = useAuth();
   const [predictions, setPredictions] = useState<PredictionRecord[]>([]);
+  const [dropoutRecord, setDropoutRecord] = useState<DropoutRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchPredictions = async () => {
+    const fetchData = async () => {
       try {
-        const res = await api.listPredictions();
-        setPredictions(res.predictions || []);
+        const [predsRes, dropoutRes] = await Promise.all([
+          api.listPredictions().catch(() => ({ predictions: [] })),
+          user?.id
+            ? dropoutApi.getStudentDropoutRisk(user.id).catch(() => null)
+            : Promise.resolve(null),
+        ]);
+        setPredictions(predsRes?.predictions || []);
+        if (dropoutRes?.assessment) {
+          setDropoutRecord(dropoutRes.assessment);
+        }
       } catch (err: any) {
         setError(err?.message || 'Failed to generate recommendations.');
       } finally {
         setLoading(false);
       }
     };
-    fetchPredictions();
-  }, []);
+    fetchData();
+  }, [user?.id]);
 
   if (loading) {
     return <LoadingState title="Synthesizing AI Improvement Recommendations..." description="Analyzing your predictive feature weights." />;
@@ -119,6 +132,109 @@ export const StudentRecommendations: React.FC = () => {
           icon={<AlertTriangle size={20} className="text-rose-500" />}
         />
       </div>
+
+      {/* Academic Retention & Supportive Intervention (Phase 8A) */}
+      {dropoutRecord && (
+        <SectionCard
+          title="Academic Retention & Degree Progression Support"
+          subtitle="Supportive insights and customized resources designed to help you stay on track toward graduation."
+          icon={<GraduationCap size={20} className="text-brand-royal" />}
+        >
+          <div className="space-y-4">
+            <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+              dropoutRecord.risk_tier === 'High'
+                ? 'bg-rose-50/50 border-rose-200 text-rose-900'
+                : dropoutRecord.risk_tier === 'Moderate'
+                ? 'bg-amber-50/50 border-amber-200 text-amber-900'
+                : 'bg-emerald-50/50 border-emerald-200 text-emerald-900'
+            }`}>
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 ${
+                  dropoutRecord.risk_tier === 'High'
+                    ? 'bg-rose-100 text-rose-700'
+                    : dropoutRecord.risk_tier === 'Moderate'
+                    ? 'bg-amber-100 text-amber-700'
+                    : 'bg-emerald-100 text-emerald-700'
+                }`}>
+                  {dropoutRecord.risk_tier === 'High' ? (
+                    <AlertTriangle size={20} />
+                  ) : (
+                    <CheckCircle2 size={20} />
+                  )}
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold">
+                    {dropoutRecord.risk_tier === 'High'
+                      ? 'Proactive Support Recommended'
+                      : dropoutRecord.risk_tier === 'Moderate'
+                      ? 'Skill Building Opportunity'
+                      : 'Degree Progress On Track'}
+                  </h4>
+                  <p className="text-xs opacity-80 pt-0.5">
+                    {dropoutRecord.risk_tier === 'High'
+                      ? 'Early warning indicator suggests connecting with learning resources can significantly boost term outcomes.'
+                      : dropoutRecord.risk_tier === 'Moderate'
+                      ? 'Consolidating study routines and reviewing core coursework will reinforce your trajectory.'
+                      : 'Your current academic momentum and course completion indicators are strong.'}
+                  </p>
+                </div>
+              </div>
+              <span className={`px-2.5 py-1 rounded-full text-xs font-bold self-start sm:self-auto ${
+                dropoutRecord.risk_tier === 'High'
+                  ? 'bg-rose-200 text-rose-800'
+                  : dropoutRecord.risk_tier === 'Moderate'
+                  ? 'bg-amber-200 text-amber-800'
+                  : 'bg-emerald-200 text-emerald-800'
+              }`}>
+                {dropoutRecord.risk_tier} Risk Tier
+              </span>
+            </div>
+
+            {/* Protective Factors */}
+            {dropoutRecord.protective_factors && dropoutRecord.protective_factors.length > 0 && (
+              <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80">
+                <p className="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
+                  <Sparkles size={14} className="text-brand-royal" />
+                  Demonstrated Academic Strengths:
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  {dropoutRecord.protective_factors.map((pf, idx) => (
+                    <div key={idx} className="bg-white p-2.5 rounded-lg border border-slate-100 flex items-start gap-2">
+                      <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-semibold text-slate-800">{pf.factor}: </span>
+                        <span className="text-slate-600">{pf.detail}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Recommendations */}
+            {dropoutRecord.recommendations && dropoutRecord.recommendations.length > 0 && (
+              <div className="space-y-2 pt-1">
+                <p className="text-xs font-bold text-slate-700">Recommended Next Steps for Support:</p>
+                <div className="grid grid-cols-1 gap-2">
+                  {dropoutRecord.recommendations.map((recStr, idx) => (
+                    <div key={idx} className="p-3 bg-white rounded-xl border border-slate-200 flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                        {idx + 1}
+                      </div>
+                      <p className="text-xs text-slate-700 leading-relaxed font-medium">{recStr}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="p-3 bg-slate-50 rounded-lg text-[11px] text-slate-500 border border-slate-200 flex items-start gap-2">
+              <Info size={14} className="text-slate-400 shrink-0 mt-0.5" />
+              <span>{dropoutRecord.disclaimer}</span>
+            </div>
+          </div>
+        </SectionCard>
+      )}
 
       {/* Recommendations Cards */}
       <SectionCard

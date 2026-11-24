@@ -392,4 +392,65 @@ export interface AnalystAnomalyStats {
   generated_at: string;
 }
 
+// Student Dropout Prediction Types (Phase 8A)
+export interface DropoutRecord {
+  id: string;
+  student_id: string;
+  student_name?: string;
+  risk_probability: number;
+  risk_tier: 'Low' | 'Moderate' | 'High';
+  model_version: string;
+  key_risk_factors: Array<{ factor: string; detail: string; importance?: string }>;
+  protective_factors: Array<{ factor: string; detail: string }>;
+  recommendations: string[];
+  academic_term: string;
+  requires_human_review: boolean;
+  disclaimer: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface AdminDropoutOverviewResponse {
+  status_code: number;
+  total_assessed: number;
+  risk_distribution: {
+    Low: number;
+    Moderate: number;
+    High: number;
+  };
+  recent_high_risk: DropoutRecord[];
+  model_metadata: {
+    model_version: string;
+    base_estimator: string;
+    calibration: string;
+    test_metrics: Record<string, any>;
+  };
+}
+
+export interface AnalystDropoutOverviewResponse {
+  status_code: number;
+  total_assessed: {
+    count: number | null;
+    display: string;
+    suppressed: boolean;
+  };
+  risk_distribution: Record<
+    string,
+    {
+      count: number | null;
+      display: string;
+      suppressed: boolean;
+    }
+  >;
+  model_summary: {
+    model_version: string;
+    roc_auc: number;
+    pr_auc: number;
+    brier_score: number;
+    calibration: string;
+  };
+  privacy_notice: string;
+}
+
+
 

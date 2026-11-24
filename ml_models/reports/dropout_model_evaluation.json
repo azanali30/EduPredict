@@ -1,0 +1,185 @@
+{
+  "title": "EduPredict Phase 8A - Student Dropout Model Comparison & Evaluation Report",
+  "generated_at": "2026-11-24T13:18:03.515343+00:00",
+  "champion_model": "LogisticRegression",
+  "champion_model_version": "Dropout_LogisticRegression_v1.0.0",
+  "dataset": {
+    "dataset_source": "UCI Machine Learning Repository ID 697 (Valentim Real et al., 2021)",
+    "license": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+    "initial_samples": 4424,
+    "loaded_samples": 4424,
+    "target_distribution_raw": {
+      "Graduate": 2209,
+      "Dropout": 1421,
+      "Enrolled": 794
+    },
+    "target_formulation": "Binary: 1=Dropout, 0=Non-Dropout",
+    "exclude_enrolled": false,
+    "feature_count": 36,
+    "features": [
+      "Marital status",
+      "Application mode",
+      "Application order",
+      "Course",
+      "Previous qualification",
+      "Nacionality",
+      "Mother's qualification",
+      "Father's qualification",
+      "Mother's occupation",
+      "Father's occupation",
+      "Daytime/evening attendance",
+      "Displaced",
+      "Educational special needs",
+      "Debtor",
+      "Tuition fees up to date",
+      "Gender",
+      "Scholarship holder",
+      "International",
+      "Previous qualification (grade)",
+      "Admission grade",
+      "Age at enrollment",
+      "Curricular units 1st sem (credited)",
+      "Curricular units 1st sem (enrolled)",
+      "Curricular units 1st sem (evaluations)",
+      "Curricular units 1st sem (approved)",
+      "Curricular units 1st sem (grade)",
+      "Curricular units 1st sem (without evaluations)",
+      "Curricular units 2nd sem (credited)",
+      "Curricular units 2nd sem (enrolled)",
+      "Curricular units 2nd sem (evaluations)",
+      "Curricular units 2nd sem (approved)",
+      "Curricular units 2nd sem (grade)",
+      "Curricular units 2nd sem (without evaluations)",
+      "Unemployment rate",
+      "Inflation rate",
+      "GDP"
+    ]
+  },
+  "candidate_comparisons": {
+    "LogisticRegression": {
+      "cv_mean_roc_auc": 0.9199,
+      "cv_std_roc_auc": 0.0083,
+      "cv_mean_f1": 0.7846,
+      "cv_mean_recall": 0.8039,
+      "cv_mean_precision": 0.7667,
+      "test_metrics": {
+        "precision": 0.7914,
+        "recall": 0.8415,
+        "f1": 0.8157,
+        "roc_auc": 0.9315,
+        "pr_auc": 0.9018,
+        "brier_score": 0.0932,
+        "confusion_matrix": [
+          [
+            538,
+            63
+          ],
+          [
+            45,
+            239
+          ]
+        ],
+        "true_negatives": 538,
+        "false_positives": 63,
+        "false_negatives": 45,
+        "true_positives": 239,
+        "specificity": 0.8952,
+        "false_positive_rate": 0.1048,
+        "test_samples": 885
+      }
+    },
+    "RandomForest": {
+      "cv_mean_roc_auc": 0.9099,
+      "cv_std_roc_auc": 0.0101,
+      "cv_mean_f1": 0.7763,
+      "cv_mean_recall": 0.7828,
+      "cv_mean_precision": 0.7706,
+      "test_metrics": {
+        "precision": 0.7909,
+        "recall": 0.7993,
+        "f1": 0.7951,
+        "roc_auc": 0.9233,
+        "pr_auc": 0.891,
+        "brier_score": 0.1085,
+        "confusion_matrix": [
+          [
+            541,
+            60
+          ],
+          [
+            57,
+            227
+          ]
+        ],
+        "true_negatives": 541,
+        "false_positives": 60,
+        "false_negatives": 57,
+        "true_positives": 227,
+        "specificity": 0.9002,
+        "false_positive_rate": 0.0998,
+        "test_samples": 885
+      }
+    },
+    "HistGradientBoosting": {
+      "cv_mean_roc_auc": 0.9129,
+      "cv_std_roc_auc": 0.0076,
+      "cv_mean_f1": 0.7862,
+      "cv_mean_recall": 0.7713,
+      "cv_mean_precision": 0.8019,
+      "test_metrics": {
+        "precision": 0.8292,
+        "recall": 0.8204,
+        "f1": 0.8248,
+        "roc_auc": 0.9329,
+        "pr_auc": 0.9041,
+        "brier_score": 0.0879,
+        "confusion_matrix": [
+          [
+            553,
+            48
+          ],
+          [
+            51,
+            233
+          ]
+        ],
+        "true_negatives": 553,
+        "false_positives": 48,
+        "false_negatives": 51,
+        "true_positives": 233,
+        "specificity": 0.9201,
+        "false_positive_rate": 0.0799,
+        "test_samples": 885
+      }
+    }
+  },
+  "calibrated_champion_performance": {
+    "precision": 0.8954,
+    "recall": 0.7535,
+    "f1": 0.8184,
+    "roc_auc": 0.9317,
+    "pr_auc": 0.9024,
+    "brier_score": 0.0851,
+    "confusion_matrix": [
+      [
+        576,
+        25
+      ],
+      [
+        70,
+        214
+      ]
+    ],
+    "true_negatives": 576,
+    "false_positives": 25,
+    "false_negatives": 70,
+    "true_positives": 214,
+    "specificity": 0.9584,
+    "false_positive_rate": 0.0416,
+    "test_samples": 885
+  },
+  "risk_tradeoffs": {
+    "false_positives_implication": "False alarms may trigger benign advisory check-ins; supportive, non-punitive messaging ensures no stigma or penalty.",
+    "false_negatives_implication": "Missed dropouts risk student departure without proactive academic assistance; balanced weights prioritize recall (~80%+)."
+  }
+}

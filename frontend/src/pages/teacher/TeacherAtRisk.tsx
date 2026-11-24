@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { api } from '../../services/api';
-import { User, PredictionRecord } from '../../types';
+import { api, dropoutApi } from '../../services/api';
+import { User, PredictionRecord, DropoutRecord } from '../../types';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatCard } from '../../components/common/StatCard';
 import { SectionCard } from '../../components/common/SectionCard';
@@ -33,6 +33,7 @@ export const TeacherAtRisk: React.FC = () => {
   const { assignedSubjects, selectedSubject, selectedSubjectId, hasNoAssignments, loading: subjectsLoading } = useTeacherSubject();
   const [students, setStudents] = useState<User[]>([]);
   const [predictions, setPredictions] = useState<PredictionRecord[]>([]);
+  const [dropoutRoster, setDropoutRoster] = useState<DropoutRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,12 +64,14 @@ export const TeacherAtRisk: React.FC = () => {
     setPredictingStudent(null);
     setInspectingPrediction(null);
     try {
-      const [studentsRes, predsRes] = await Promise.all([
+      const [studentsRes, predsRes, dropoutRes] = await Promise.all([
         api.getTeacherStudents({ subject_id: selectedSubjectId }),
         api.listPredictions({ subject: selectedSubject?.name, limit: 100 }),
+        dropoutApi.getTeacherDropoutRoster(1, 100).catch(() => ({ students: [] })),
       ]);
       setStudents(studentsRes.students || []);
       setPredictions(predsRes.predictions || []);
+      setDropoutRoster(dropoutRes?.students || []);
     } catch (err: any) {
       console.error('Failed to load at-risk intervention telemetry:', err);
       setError(err?.message || 'Failed to retrieve at-risk student records from server.');
@@ -96,6 +99,15 @@ export const TeacherAtRisk: React.FC = () => {
     });
     return map;
   }, [predictions]);
+
+  // Map studentId -> DropoutRecord (Phase 8A)
+  const dropoutMap = useMemo(() => {
+    const map = new Map<string, DropoutRecord>();
+    dropoutRoster.forEach((d) => {
+      map.set(d.student_id, d);
+    });
+    return map;
+  }, [dropoutRoster]);
 
   // Telemetry KPIs
   const { highRiskCount, modRiskCount, unscreenedCount, urgentAttentionCount } = useMemo(() => {
@@ -528,6 +540,7 @@ export const TeacherAtRisk: React.FC = () => {
           <div className="grid grid-cols-1 gap-4">
             {filteredList.map((student) => {
               const pred = latestPredMap.get(student.id);
+              const dropout = dropoutMap.get(student.id);
               const isUnscreened = !pred;
 
               return (
@@ -575,6 +588,20 @@ export const TeacherAtRisk: React.FC = () => {
                             </span>
                           ) : (
                             <StatusBadge status={pred.predicted_status} />
+                          )}
+                          {dropout && (
+                            <span
+                              className={`badge text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                dropout.risk_tier === 'High'
+                                  ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                                  : dropout.risk_tier === 'Moderate'
+                                  ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                                  : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                              }`}
+                              title={`Dropout Early Warning: ${dropout.risk_tier} Risk (${(dropout.risk_probability * 100).toFixed(1)}%). Requires advisor review.`}
+                            >
+                              Dropout: {dropout.risk_tier} ({(dropout.risk_probability * 100).toFixed(0)}%)
+                            </span>
                           )}
                         </div>
                         <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">

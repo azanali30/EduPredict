@@ -174,6 +174,18 @@ def init_db_indexes(db: Database) -> dict[str, list[str]]:
         ]
         created_indexes["anomaly_records"] = anomaly_idx
 
+        # 11. Dropout Records collection indexes (Phase 8A)
+        dropout_idx = [
+            db.dropout_records.create_index([("student_id", ASCENDING)], name="idx_dropout_student_id"),
+            db.dropout_records.create_index([("risk_tier", ASCENDING)], name="idx_dropout_risk_tier"),
+            db.dropout_records.create_index([("created_at", DESCENDING)], name="idx_dropout_created_at"),
+            db.dropout_records.create_index(
+                [("student_id", ASCENDING), ("created_at", DESCENDING)],
+                name="idx_dropout_student_created",
+            ),
+        ]
+        created_indexes["dropout_records"] = dropout_idx
+
         logger.info("MongoDB 6.x indexes successfully initialized.")
         return created_indexes
 
