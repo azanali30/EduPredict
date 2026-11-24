@@ -27,7 +27,11 @@ HDFS_DIRS = [
 ]
 
 SENSITIVE_PARAM_PATTERN = re.compile(
-    r"(?i)\b(user\.name|username|password|token|delegation(?:_token)?|secret|key|api_key|secret_key|access_token|refresh_token|bearer)=([^\s&'\"<>;\)]+)"
+    r"(?i)\b(user\.name|username|password|token|delegation(?:_token)?|secret|key|api_key|secret_key|access_token|refresh_token|bearer)\s*([:=])\s*([^\s&'\"<>;\)]+)"
+)
+
+SENSITIVE_TOKEN_VALUE_PATTERN = re.compile(
+    r"(?i)\b(token|password|secret|key|api_key|secret_key|delegation)\s+(?:is\s+)?['\"]?([a-zA-Z0-9_\-\.]{5,})['\"]?"
 )
 
 
@@ -41,8 +45,9 @@ def sanitize_webhdfs_error(error_message: Any, hdfs_user: Optional[str] = None) 
         return ""
     msg = str(error_message)
 
-    # 1. Redact sensitive URL query parameters (e.g., user.name=..., token=..., key=...)
-    msg = SENSITIVE_PARAM_PATTERN.sub(r"\1=[REDACTED]", msg)
+    # 1. Redact sensitive URL query parameters and phrases (e.g., user.name=..., token=..., with token ...)
+    msg = SENSITIVE_PARAM_PATTERN.sub(r"\1\2[REDACTED]", msg)
+    msg = SENSITIVE_TOKEN_VALUE_PATTERN.sub(r"\1 [REDACTED]", msg)
 
     # 2. Redact configured hdfs_user literal occurrences if provided
     if hdfs_user and isinstance(hdfs_user, str):
@@ -132,15 +137,33 @@ class HDFSLakehouseManager:
         for directory in HDFS_DIRS:
             url = f"{self.namenode_url}{directory}?op=MKDIRS&user.name={self.hdfs_user}&permission=755"
             req = urllib.request.Request(url, method="PUT")
+            exc_to_raise = None
             try:
                 with urllib.request.urlopen(req, timeout=5.0) as resp:
                     if resp.status in (200, 201):
                         created.append(directory)
                         logger.info(f"HDFS directory created/verified: {directory}")
             except Exception as e:
-                sanitized = self._sanitize_error(str(e))
-                logger.error(f"Failed to create HDFS directory {directory}: {sanitized}")
-                raise
+                sanitized_msg = self._sanitize_error(str(e))
+                logger.error(f"Failed to create HDFS directory {directory}: {sanitized_msg}")
+
+                if isinstance(e, urllib.error.HTTPError):
+                    sanitized_url = self._sanitize_error(getattr(e, "url", "") or getattr(e, "filename", ""))
+                    exc_to_raise = urllib.error.HTTPError(
+                        url=sanitized_url,
+                        code=e.code,
+                        msg=self._sanitize_error(getattr(e, "msg", str(e))),
+                        hdrs=getattr(e, "hdrs", {}),
+                        fp=None,
+                    )
+                elif isinstance(e, urllib.error.URLError):
+                    sanitized_reason = self._sanitize_error(getattr(e, "reason", str(e)))
+                    exc_to_raise = urllib.error.URLError(reason=sanitized_reason)
+                else:
+                    exc_to_raise = RuntimeError(sanitized_msg)
+
+            if exc_to_raise is not None:
+                raise exc_to_raise from None
 
         return {"success": True, "created_directories": created}
 

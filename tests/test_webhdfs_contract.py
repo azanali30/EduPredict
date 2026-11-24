@@ -675,3 +675,68 @@ def test_standalone_sanitize_webhdfs_error_parameter_matrix():
     sanitized_user = sanitize_webhdfs_error(user_msg, hdfs_user=test_user)
     assert test_user not in sanitized_user
     assert "[REDACTED_USER]" in sanitized_user
+
+
+def test_ensure_lakehouse_directories_credential_sanitization_injected_exception_and_logs(caplog):
+    """
+    Deliberately inject configured hdfs_user and sensitive query parameters (token, user.name)
+    into a directory-creation exception and assert that neither the configured username nor
+    the secret token appears in the raised exception (including attributes, string representations,
+    and exception context) nor in captured application logs.
+    """
+    configured_user = "secret_mkdir_admin"
+    secret_token = "mkdir_secret_token_777"
+
+    mgr = HDFSLakehouseManager(
+        namenode_url="http://namenode:9870/webhdfs/v1",
+        hdfs_user=configured_user,
+    )
+
+    injected_url = (
+        f"http://namenode:9870/webhdfs/v1/edupredict/raw/academic"
+        f"?op=MKDIRS&user.name={configured_user}&token={secret_token}&permission=755"
+    )
+    injected_msg = f"HTTP Error 403: Forbidden for user {configured_user} with token {secret_token}"
+    http_err = urllib.error.HTTPError(
+        url=injected_url,
+        code=403,
+        msg=injected_msg,
+        hdrs={},
+        fp=io.BytesIO(b""),
+    )
+
+    with patch.object(mgr, "probe_connection", return_value={"connected": True, "error": None}):
+        with patch("urllib.request.urlopen", side_effect=http_err):
+            with caplog.at_level("ERROR"):
+                caplog.clear()
+                with pytest.raises(Exception) as exc_info:
+                    mgr.ensure_lakehouse_directories()
+
+    exc = exc_info.value
+    exc_str = str(exc)
+    exc_repr = repr(exc)
+    exc_url = getattr(exc, "url", "")
+    exc_cause = getattr(exc, "__cause__", None)
+    exc_context = getattr(exc, "__context__", None)
+
+    # 1. Assert neither the configured username nor secret token appears anywhere in the exception
+    assert configured_user not in exc_str
+    assert secret_token not in exc_str
+    assert configured_user not in exc_repr
+    assert secret_token not in exc_repr
+    assert configured_user not in str(exc_url)
+    assert secret_token not in str(exc_url)
+
+    # 2. Assert no chained context leaking raw exception
+    assert exc_cause is None
+    assert exc_context is None
+
+    # 3. Assert HTTP status code and diagnostic preserved
+    assert hasattr(exc, "code")
+    assert exc.code == 403
+    assert "403" in exc_str or "Forbidden" in exc_str
+
+    # 4. Assert application logs are sanitized
+    assert configured_user not in caplog.text
+    assert secret_token not in caplog.text
+    assert "Failed to create HDFS directory" in caplog.text
