@@ -7,6 +7,7 @@ and privacy-preserving analytics.
 """
 
 import os
+import re
 import json
 import logging
 from datetime import datetime, timezone
@@ -1073,15 +1074,17 @@ class DropoutService:
 
         query: Dict[str, Any] = {}
         admin_org = getattr(admin_user, "organization_id", None)
-        if admin_org:
-            query["organization_id"] = admin_org
+        if not admin_org or not str(admin_org).strip():
+            return None, "Organization context required. Admin must belong to a valid organization.", 403
+        query["organization_id"] = str(admin_org).strip()
 
         if risk_tier and risk_tier.strip() in {"Low", "Moderate", "High"}:
             query["risk_tier"] = risk_tier.strip()
         if academic_term and academic_term.strip():
             query["academic_term"] = academic_term.strip()
         if search and search.strip():
-            term_rx = {"$regex": search.strip(), "$options": "i"}
+            escaped_search = re.escape(search.strip())
+            term_rx = {"$regex": escaped_search, "$options": "i"}
             query["$or"] = [
                 {"student_name": term_rx},
                 {"academic_term": term_rx},
@@ -1124,8 +1127,9 @@ class DropoutService:
 
         base_filter: Dict[str, Any] = {}
         analyst_org = getattr(analyst_user, "organization_id", None)
-        if analyst_org:
-            base_filter["organization_id"] = analyst_org
+        if not analyst_org or not str(analyst_org).strip():
+            return None, "Organization context required. Analyst must belong to a valid organization.", 403
+        base_filter["organization_id"] = str(analyst_org).strip()
 
         docs = list(db.dropout_records.find(base_filter))
         term_buckets: Dict[str, Dict[str, int]] = {}

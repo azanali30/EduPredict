@@ -566,8 +566,12 @@ class ModelEvaluationService:
             return None, "Model registry entry not found.", 404
 
         doc_org = doc.get("organization_id")
-        if doc_org is not None and str(doc_org) != org_id:
-            return None, "Access denied. Cross-organization model registry access is prohibited.", 403
+        if doc_org is None or str(doc_org) != org_id:
+            return (
+                None,
+                "Access denied. Organization administrators cannot mutate global or cross-organization model registry entries.",
+                403,
+            )
 
         if doc.get("model_status") == "insufficient_data" or not doc.get("evaluation_metrics"):
             return None, "Cannot activate model: evaluation metrics are incomplete or data is insufficient.", 422
@@ -641,8 +645,12 @@ class ModelEvaluationService:
             return None, "Model registry entry not found.", 404
 
         doc_org = doc.get("organization_id")
-        if doc_org is not None and str(doc_org) != org_id:
-            return None, "Access denied. Cross-organization model registry access is prohibited.", 403
+        if doc_org is None or str(doc_org) != org_id:
+            return (
+                None,
+                "Access denied. Organization administrators cannot mutate global or cross-organization model registry entries.",
+                403,
+            )
 
         now = datetime.now(timezone.utc)
         db.model_registry.update_one(

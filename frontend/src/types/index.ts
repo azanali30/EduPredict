@@ -556,40 +556,50 @@ export interface DropoutEvaluationResponse {
   };
   dataset_fingerprint?: string | null;
   calibrated_champion_metrics: {
-    accuracy: number;
-    precision: number;
-    recall: number;
-    f1_score: number;
-    roc_auc: number;
-    pr_auc: number;
-    brier_score: number;
-    confusion_matrix: { tn: number; fp: number; fn: number; tp: number };
+    accuracy: number | null;
+    precision: number | null;
+    recall: number | null;
+    f1: number | null;
+    roc_auc: number | null;
+    pr_auc: number | null;
+    brier_score: number | null;
+    true_negatives: number;
+    false_positives: number;
+    false_negatives: number;
+    true_positives: number;
+    confusion_matrix: number[][];
   };
   candidate_comparison: Array<{
     model_name: string;
-    accuracy: number;
-    precision: number;
-    recall: number;
-    f1_score: number;
-    roc_auc: number;
-    pr_auc: number;
-    brier_score: number;
     is_champion: boolean;
-    confusion_matrix?: { tn: number; fp: number; fn: number; tp: number };
+    cv_mean_roc_auc?: number | null;
+    cv_std_roc_auc?: number | null;
+    cv_mean_f1?: number | null;
+    test_accuracy: number | null;
+    test_precision: number | null;
+    test_recall: number | null;
+    test_f1: number | null;
+    test_roc_auc: number | null;
+    test_pr_auc: number | null;
+    test_brier_score: number | null;
+    confusion_matrix?: number[][];
+    true_positives?: number;
+    true_negatives?: number;
+    false_positives?: number;
+    false_negatives?: number;
   }>;
   roc_curve: Array<{ fpr: number; tpr: number }>;
   pr_curve: Array<{ recall: number; precision: number }>;
   calibration_curve: Array<{
-    mean_predicted_probability: number;
-    fraction_of_positives: number;
-    count?: number;
+    mean_predicted: number;
+    fraction_positive: number;
   }>;
-  expected_calibration_error: number;
+  expected_calibration_error: number | null;
   feature_contributions: Array<{
     feature: string;
-    importance: number;
+    weight: number;
+    abs_weight: number;
     direction: string;
-    note?: string;
   }>;
   risk_tradeoffs?: Record<string, any>;
   risk_thresholds?: Record<string, any>;
@@ -603,13 +613,11 @@ export interface DemandEvaluationResponse {
   validation_methodology: string;
   model_comparison: Array<{
     model_name: string;
-    evaluated_subjects: number;
-    mae: number | null;
-    rmse: number | null;
-    mape: number | null;
-    smape: number | null;
-    forecast_bias: number | null;
-    directional_accuracy: number | null;
+    subjects_evaluated: number;
+    total_validation_splits?: number;
+    mean_mae: number | null;
+    mean_rmse: number | null;
+    mean_mape: number | null;
     status: string;
   }>;
   subject_evaluations: Array<{
@@ -628,12 +636,10 @@ export interface DemandEvaluationResponse {
     forecast_bias: number | null;
   }>;
   actual_vs_predicted: Array<{
-    subject_code: string;
-    subject_name: string;
-    latest_actual: number | null;
-    predicted_enrollment: number;
-    residual: number | null;
-    data_sufficiency: string;
+    subject: string;
+    actual: number | null;
+    predicted: number;
+    mae: number | null;
   }>;
   insufficient_data_notice?: string | null;
 }

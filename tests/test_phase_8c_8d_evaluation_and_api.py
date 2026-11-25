@@ -73,7 +73,10 @@ def test_evaluation_endpoints_rbac_and_metrics(client, test_admin, test_analyst,
 
 
 def test_model_registry_admin_lifecycle_and_org_isolation(client, test_admin, clean_db):
-    """Admin can activate (with mandatory approval notes) and deactivate models within their org only."""
+    """
+    Admin can activate (with mandatory approval notes) and deactivate models within their org only.
+    Cross-org and global (organization_id=None) registry mutations must be rejected with 403.
+    """
     _set_org(clean_db, test_admin, "org-reg-a")
     other_res = UserService.create_user(
         clean_db, "other.admin@test.com", "AdminPass123!", "Other Admin", "admin"
@@ -85,28 +88,39 @@ def test_model_registry_admin_lifecycle_and_org_isolation(client, test_admin, cl
     reg_res = client.get("/api/models/registry")
     assert reg_res.status_code == 200
     models = reg_res.get_json()["models"]
-    candidate = next((m for m in models if m.get("organization_id") == "org-reg-a"), models[0])
+    org_a_model = next(m for m in models if m.get("organization_id") == "org-reg-a")
+    global_model = next(m for m in models if m.get("organization_id") is None)
+
+    # Organization Admin cannot mutate a global (organization_id=None) model -> 403
+    assert client.post(
+        f"/api/models/registry/{global_model['id']}/activate",
+        json={"approval_notes": "Attempt global mutate"},
+    ).status_code == 403
+    assert client.post(f"/api/models/registry/{global_model['id']}/deactivate").status_code == 403
 
     # Missing approval_notes -> 400
-    bad_act = client.post(f"/api/models/registry/{candidate['id']}/activate", json={"approval_notes": "  "})
+    bad_act = client.post(f"/api/models/registry/{org_a_model['id']}/activate", json={"approval_notes": "  "})
     assert bad_act.status_code == 400
 
-    # Valid activation -> 200
+    # Valid activation on own org's model -> 200
     ok_act = client.post(
-        f"/api/models/registry/{candidate['id']}/activate",
+        f"/api/models/registry/{org_a_model['id']}/activate",
         json={"approval_notes": "Approved after UCI holdout & calibration review."},
     )
     assert ok_act.status_code == 200
     assert ok_act.get_json()["model"]["is_active"] is True
 
-    # Cross-org admin cannot deactivate org-reg-a's model
+    # Cross-org admin (Org B) cannot activate or deactivate Org A's model -> 403
     client.post("/auth/login", json={"email": other_admin.email, "password": "AdminPass123!"})
-    cross_deact = client.post(f"/api/models/registry/{candidate['id']}/deactivate")
-    assert cross_deact.status_code == 403
+    assert client.post(
+        f"/api/models/registry/{org_a_model['id']}/activate",
+        json={"approval_notes": "Cross-tenant hijack"},
+    ).status_code == 403
+    assert client.post(f"/api/models/registry/{org_a_model['id']}/deactivate").status_code == 403
 
-    # Owning admin can deactivate
+    # Owning admin (Org A) can deactivate own org's model -> 200
     client.post("/auth/login", json={"email": test_admin.email, "password": "AdminPassword123!"})
-    ok_deact = client.post(f"/api/models/registry/{candidate['id']}/deactivate")
+    ok_deact = client.post(f"/api/models/registry/{org_a_model['id']}/deactivate")
     assert ok_deact.status_code == 200
     assert ok_deact.get_json()["model"]["is_active"] is False
 
@@ -197,3 +211,161 @@ def test_rate_limiter_enforces_429_when_enabled(app, client, test_admin, test_st
     finally:
         app.config["ENFORCE_RATE_LIMIT_IN_TESTS"] = False
         reset_rate_limits()
+
+
+def test_fail_closed_org_isolation_and_regex_escaping(client, test_admin, test_analyst, clean_db):
+    """
+    Verify fail-closed 403 when organization_id is missing on Admin/Analyst, cross-org isolation,
+    and safe re.escape() handling of special/invalid regex characters in search.
+    """
+    # 1. Admin without organization_id -> 403
+    client.post("/auth/login", json={"email": test_admin.email, "password": "AdminPassword123!"})
+    assert client.get("/api/dropout/admin/records").status_code == 403
+
+    # 2. Analyst without organization_id -> 403
+    client.post("/auth/login", json={"email": test_analyst.email, "password": "AnalystPassword123!"})
+    assert client.get("/api/dropout/analyst/trends").status_code == 403
+
+    # Seed records in org-iso-a and org-iso-b
+    _set_org(clean_db, test_admin, "org-iso-a")
+    _set_org(clean_db, test_analyst, "org-iso-a")
+    clean_db.dropout_records.insert_many([
+        {
+            "_id": ObjectId(),
+            "student_id": ObjectId(),
+            "student_name": "Alice [Special.*]",
+            "risk_probability": 0.25,
+            "risk_tier": "Low",
+            "model_version": "v1",
+            "academic_term": "2026-Fall",
+            "organization_id": "org-iso-a",
+        },
+        {
+            "_id": ObjectId(),
+            "student_id": ObjectId(),
+            "student_name": "Bob OrgB",
+            "risk_probability": 0.85,
+            "risk_tier": "High",
+            "model_version": "v1",
+            "academic_term": "2026-Fall",
+            "organization_id": "org-iso-b",
+        },
+    ])
+
+    client.post("/auth/login", json={"email": test_admin.email, "password": "AdminPassword123!"})
+    # Admin A sees only org-iso-a records
+    res_all = client.get("/api/dropout/admin/records")
+    assert res_all.status_code == 200
+    assert res_all.get_json()["total"] == 1
+    assert res_all.get_json()["records"][0]["student_name"] == "Alice [Special.*]"
+
+    # Special regex '.*' must NOT match 'Alice' unless literal '.*' is in the name;
+    # Test with '.*+' which is NOT in Alice's name -> 0 results (proving no regex injection)
+    res_rx = client.get("/api/dropout/admin/records?search=.*%2B")
+    assert res_rx.status_code == 200
+    assert res_rx.get_json()["total"] == 0
+
+    # Invalid-looking unclosed regex '[' must not crash MongoDB -> matches literal '[' in Alice's name
+    res_unclosed = client.get("/api/dropout/admin/records?search=[Special")
+    assert res_unclosed.status_code == 200
+    assert res_unclosed.get_json()["total"] == 1
+
+    # Normal literal search & empty search
+    assert client.get("/api/dropout/admin/records?search=Alice").get_json()["total"] == 1
+    assert client.get("/api/dropout/admin/records?search=").get_json()["total"] == 1
+
+
+def test_statistical_privacy_complementary_suppression(client, test_analyst, clean_db):
+    """
+    Verify N < 5 primary and complementary suppression across analyst overview & trends,
+    and verify org-b records are excluded from org-a analyst totals.
+    """
+    _set_org(clean_db, test_analyst, "org-sdc-a")
+
+    # Insert 6 Low, 5 Moderate, 1 High in org-sdc-a (total=12 >= 5; High=1 < 5 -> Moderate=5 also suppressed!)
+    docs = [
+        {
+            "_id": ObjectId(),
+            "student_id": ObjectId(),
+            "student_name": f"Low Student {i}",
+            "risk_probability": 0.1,
+            "risk_tier": "Low",
+            "model_version": "v1",
+            "academic_term": "2026-Fall",
+            "organization_id": "org-sdc-a",
+        }
+        for i in range(6)
+    ]
+    for i in range(5):
+        docs.append({
+            "_id": ObjectId(),
+            "student_id": ObjectId(),
+            "student_name": f"Mod Student {i}",
+            "risk_probability": 0.45,
+            "risk_tier": "Moderate",
+            "model_version": "v1",
+            "academic_term": "2026-Fall",
+            "organization_id": "org-sdc-a",
+        })
+    docs.append({
+        "_id": ObjectId(),
+        "student_id": ObjectId(),
+        "student_name": "High Student 1",
+        "risk_probability": 0.85,
+        "risk_tier": "High",
+        "model_version": "v1",
+        "academic_term": "2026-Fall",
+        "organization_id": "org-sdc-a",
+    })
+    # Insert a 2026-Spring cohort where all cells >= 5 (total=15 in org-sdc-a) to verify org isolation on totals
+    for tier in ["Low", "Moderate", "High"]:
+        for i in range(5):
+            docs.append({
+                "_id": ObjectId(),
+                "student_id": ObjectId(),
+                "student_name": f"Spring {tier} {i}",
+                "risk_probability": 0.2,
+                "risk_tier": tier,
+                "model_version": "v1",
+                "academic_term": "2026-Spring",
+                "organization_id": "org-sdc-a",
+            })
+    # Org B records in 2026-Spring (must never leak into org-sdc-a)
+    for i in range(5):
+        docs.append({
+            "_id": ObjectId(),
+            "student_id": ObjectId(),
+            "student_name": f"OrgB Student {i}",
+            "risk_probability": 0.9,
+            "risk_tier": "High",
+            "model_version": "v1",
+            "academic_term": "2026-Spring",
+            "organization_id": "org-sdc-b",
+        })
+    clean_db.dropout_records.insert_many(docs)
+
+    client.post("/auth/login", json={"email": test_analyst.email, "password": "AnalystPassword123!"})
+
+    # 1. Overview: total=27 (org-sdc-a only; org-sdc-b excluded), High=6, Moderate=10, Low=11 -> all >= 5
+    ov_res = client.get("/api/dropout/analyst/overview")
+    assert ov_res.status_code == 200
+    ov = ov_res.get_json()
+    assert ov["total_assessed"]["count"] == 27
+    assert ov["total_assessed"]["suppressed"] is False
+
+    # 2. Trends: 2026-Fall has High=1 (< 5) -> primary + conservative complementary suppression on all non-zero cells & total
+    tr_res = client.get("/api/dropout/analyst/trends")
+    assert tr_res.status_code == 200
+    trends = {t["academic_term"]: t for t in tr_res.get_json()["trends"]}
+
+    fall = trends["2026-Fall"]
+    assert fall["total_assessed"]["suppressed"] is True
+    assert fall["total_assessed"]["count"] is None
+    assert fall["risk_distribution"]["High"]["suppressed"] is True
+    assert fall["risk_distribution"]["Moderate"]["suppressed"] is True
+    assert fall["risk_distribution"]["Low"]["suppressed"] is True
+
+    # 2026-Spring has 5/5/5 (total=15, org-sdc-b excluded) -> unsuppressed
+    spring = trends["2026-Spring"]
+    assert spring["total_assessed"]["suppressed"] is False
+    assert spring["total_assessed"]["count"] == 15

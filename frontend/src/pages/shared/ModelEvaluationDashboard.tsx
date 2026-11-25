@@ -216,7 +216,7 @@ export const ModelEvaluationDashboard: React.FC = () => {
             />
             <StatCard
               title="F1 Score"
-              value={fmtNum(dropoutEval.calibrated_champion_metrics.f1_score)}
+              value={fmtNum(dropoutEval.calibrated_champion_metrics.f1)}
               subtitle={`Acc: ${fmtPct(dropoutEval.calibrated_champion_metrics.accuracy)}`}
               icon={<CheckCircle2 size={18} />}
             />
@@ -263,13 +263,13 @@ export const ModelEvaluationDashboard: React.FC = () => {
                           </span>
                         )}
                       </td>
-                      <td className="py-2.5 px-3">{fmtPct(c.accuracy)}</td>
-                      <td className="py-2.5 px-3">{fmtPct(c.precision)}</td>
-                      <td className="py-2.5 px-3">{fmtPct(c.recall)}</td>
-                      <td className="py-2.5 px-3">{fmtNum(c.f1_score)}</td>
-                      <td className="py-2.5 px-3 font-semibold">{fmtNum(c.roc_auc)}</td>
-                      <td className="py-2.5 px-3">{fmtNum(c.pr_auc)}</td>
-                      <td className="py-2.5 px-3">{fmtNum(c.brier_score, 4)}</td>
+                      <td className="py-2.5 px-3">{fmtPct(c.test_accuracy)}</td>
+                      <td className="py-2.5 px-3">{fmtPct(c.test_precision)}</td>
+                      <td className="py-2.5 px-3">{fmtPct(c.test_recall)}</td>
+                      <td className="py-2.5 px-3">{fmtNum(c.test_f1)}</td>
+                      <td className="py-2.5 px-3 font-semibold">{fmtNum(c.test_roc_auc)}</td>
+                      <td className="py-2.5 px-3">{fmtNum(c.test_pr_auc)}</td>
+                      <td className="py-2.5 px-3">{fmtNum(c.test_brier_score, 4)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -311,12 +311,12 @@ export const ModelEvaluationDashboard: React.FC = () => {
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={dropoutEval.calibration_curve}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="mean_predicted_probability" type="number" domain={[0, 1]} />
+                    <XAxis dataKey="mean_predicted" type="number" domain={[0, 1]} />
                     <YAxis domain={[0, 1]} />
                     <Tooltip />
                     <Legend />
-                    <Line type="monotone" dataKey="fraction_of_positives" name="Observed Fraction" stroke="#7c3aed" strokeWidth={2} />
-                    <Line type="monotone" dataKey="mean_predicted_probability" name="Ideal Diagonal" stroke="#94a3b8" strokeDasharray="4 4" dot={false} />
+                    <Line type="monotone" dataKey="fraction_positive" name="Observed Fraction" stroke="#7c3aed" strokeWidth={2} />
+                    <Line type="monotone" dataKey="mean_predicted" name="Ideal Diagonal" stroke="#94a3b8" strokeDasharray="4 4" dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -327,25 +327,33 @@ export const ModelEvaluationDashboard: React.FC = () => {
                 <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
                   <p className="text-xs uppercase text-emerald-700 font-semibold">True Negative (TN)</p>
                   <p className="text-2xl font-bold text-emerald-900 mt-1">
-                    {dropoutEval.calibrated_champion_metrics.confusion_matrix.tn}
+                    {dropoutEval.calibrated_champion_metrics.confusion_matrix?.[0]?.[0] ??
+                      dropoutEval.calibrated_champion_metrics.true_negatives ??
+                      0}
                   </p>
                 </div>
                 <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-center">
                   <p className="text-xs uppercase text-amber-700 font-semibold">False Positive (FP)</p>
                   <p className="text-2xl font-bold text-amber-900 mt-1">
-                    {dropoutEval.calibrated_champion_metrics.confusion_matrix.fp}
+                    {dropoutEval.calibrated_champion_metrics.confusion_matrix?.[0]?.[1] ??
+                      dropoutEval.calibrated_champion_metrics.false_positives ??
+                      0}
                   </p>
                 </div>
                 <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-center">
                   <p className="text-xs uppercase text-rose-700 font-semibold">False Negative (FN)</p>
                   <p className="text-2xl font-bold text-rose-900 mt-1">
-                    {dropoutEval.calibrated_champion_metrics.confusion_matrix.fn}
+                    {dropoutEval.calibrated_champion_metrics.confusion_matrix?.[1]?.[0] ??
+                      dropoutEval.calibrated_champion_metrics.false_negatives ??
+                      0}
                   </p>
                 </div>
                 <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-center">
                   <p className="text-xs uppercase text-blue-700 font-semibold">True Positive (TP)</p>
                   <p className="text-2xl font-bold text-blue-900 mt-1">
-                    {dropoutEval.calibrated_champion_metrics.confusion_matrix.tp}
+                    {dropoutEval.calibrated_champion_metrics.confusion_matrix?.[1]?.[1] ??
+                      dropoutEval.calibrated_champion_metrics.true_positives ??
+                      0}
                   </p>
                 </div>
               </div>
@@ -361,20 +369,19 @@ export const ModelEvaluationDashboard: React.FC = () => {
                 <div key={fc.feature} className="flex items-center justify-between text-sm border-b border-slate-100 pb-2">
                   <div>
                     <span className="font-medium text-slate-800">{fc.feature}</span>
-                    {fc.note && <span className="ml-2 text-xs text-slate-500">({fc.note})</span>}
                   </div>
                   <div className="flex items-center gap-3">
                     <span
                       className={`px-2 py-0.5 text-xs rounded-full ${
-                        fc.direction === 'increases_risk'
+                        fc.direction.toLowerCase().includes('increase')
                           ? 'bg-rose-100 text-rose-700'
                           : 'bg-emerald-100 text-emerald-700'
                       }`}
                     >
-                      {fc.direction === 'increases_risk' ? 'Increases Risk' : 'Protective'}
+                      {fc.direction}
                     </span>
                     <span className="font-mono text-xs text-slate-700 w-16 text-right">
-                      {fc.importance.toFixed(4)}
+                      {fmtNum(fc.abs_weight, 4)}
                     </span>
                   </div>
                 </div>
@@ -411,11 +418,9 @@ export const ModelEvaluationDashboard: React.FC = () => {
                   <tr className="border-b border-slate-200 text-slate-500 text-xs uppercase">
                     <th className="py-2.5 pr-4">Model</th>
                     <th className="py-2.5 px-3">Subjects</th>
-                    <th className="py-2.5 px-3">MAE</th>
-                    <th className="py-2.5 px-3">RMSE</th>
-                    <th className="py-2.5 px-3">MAPE</th>
-                    <th className="py-2.5 px-3">sMAPE</th>
-                    <th className="py-2.5 px-3">Forecast Bias</th>
+                    <th className="py-2.5 px-3">Mean MAE</th>
+                    <th className="py-2.5 px-3">Mean RMSE</th>
+                    <th className="py-2.5 px-3">Mean MAPE</th>
                     <th className="py-2.5 px-3">Status</th>
                   </tr>
                 </thead>
@@ -423,12 +428,14 @@ export const ModelEvaluationDashboard: React.FC = () => {
                   {demandEval.model_comparison.map((m) => (
                     <tr key={m.model_name}>
                       <td className="py-2.5 pr-4 font-medium text-slate-900">{m.model_name}</td>
-                      <td className="py-2.5 px-3">{m.evaluated_subjects}</td>
-                      <td className="py-2.5 px-3">{fmtNum(m.mae, 2)}</td>
-                      <td className="py-2.5 px-3">{fmtNum(m.rmse, 2)}</td>
-                      <td className="py-2.5 px-3">{m.mape !== null ? `${m.mape.toFixed(1)}%` : 'N/A'}</td>
-                      <td className="py-2.5 px-3">{m.smape !== null ? `${m.smape.toFixed(1)}%` : 'N/A'}</td>
-                      <td className="py-2.5 px-3">{fmtNum(m.forecast_bias, 2)}</td>
+                      <td className="py-2.5 px-3">{m.subjects_evaluated}</td>
+                      <td className="py-2.5 px-3">{fmtNum(m.mean_mae, 2)}</td>
+                      <td className="py-2.5 px-3">{fmtNum(m.mean_rmse, 2)}</td>
+                      <td className="py-2.5 px-3">
+                        {m.mean_mape !== undefined && m.mean_mape !== null
+                          ? `${m.mean_mape.toFixed(1)}%`
+                          : 'N/A'}
+                      </td>
                       <td className="py-2.5 px-3">
                         <span className="px-2 py-0.5 text-xs rounded-full bg-slate-100 text-slate-700">
                           {m.status}
@@ -447,12 +454,12 @@ export const ModelEvaluationDashboard: React.FC = () => {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={demandEval.actual_vs_predicted}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="subject_code" />
+                    <XAxis dataKey="subject" />
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="latest_actual" name="Latest Actual" fill="#64748b" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="predicted_enrollment" name="Predicted (+1T)" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="actual" name="Latest Actual" fill="#64748b" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="predicted" name="Predicted (+1T)" fill="#2563eb" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
