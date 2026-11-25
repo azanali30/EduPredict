@@ -452,5 +452,82 @@ export interface AnalystDropoutOverviewResponse {
   privacy_notice: string;
 }
 
+// Course Demand Forecasting Types (Phase 8B)
+export interface HistoricalEnrollmentPoint {
+  academic_term: string;
+  active_count: number;
+  completed_count: number;
+  dropped_count: number;
+  total_count: number;
+}
+
+export interface CourseDemandForecastItem {
+  id?: string;
+  subject_id: string;
+  subject_code: string;
+  subject_name: string;
+  department: string;
+  capacity?: number | null;
+  historical_series: HistoricalEnrollmentPoint[];
+  terms_observed: number;
+  forecast_period: string;
+  periods_ahead: number;
+  latest_actual_enrollment: number | null;
+  predicted_enrollment: number;
+  confidence_lower: number | null;
+  confidence_upper: number | null;
+  confidence_level: string;
+  growth_rate_pct: number | null;
+  trend_direction: string;
+  demand_tier: string;
+  utilization_pct: number | null;
+  model_used: string;
+  validation_status: 'validated' | 'experimental' | 'baseline' | 'insufficient_data';
+  data_sufficiency: 'sufficient' | 'baseline_only' | 'insufficient';
+  evaluation_metrics: {
+    mae?: number | null;
+    rmse?: number | null;
+    mape?: number | null;
+    directional_accuracy?: number | null;
+    validation_splits?: number;
+  };
+  multi_step_forecasts?: Array<{ period: string; predicted_enrollment: number }>;
+  disclaimer: string;
+  created_at?: string;
+}
+
+export interface DemandOverviewResponse {
+  status_code: number;
+  summary: {
+    total_subjects_analyzed: number;
+    total_latest_actual_enrollment: number;
+    total_predicted_enrollment: number;
+    high_demand_count: number;
+    low_demand_count: number;
+    periods_ahead: number;
+    overall_data_sufficiency: 'sufficient' | 'baseline_only' | 'insufficient';
+    sufficiency_breakdown: Record<string, number>;
+    average_walk_forward_mae: number | null;
+    models_used: Record<string, number>;
+  };
+  forecasts: CourseDemandForecastItem[];
+  high_demand_courses: CourseDemandForecastItem[];
+  low_demand_courses: CourseDemandForecastItem[];
+  department_summary: Array<{
+    department: string;
+    subject_count: number;
+    latest_actual: number;
+    predicted_enrollment: number;
+    growth_rate_pct: number | null;
+  }>;
+  historical_timeline: Array<{
+    academic_term: string;
+    total_enrollment: number;
+  }>;
+  disclaimer: string;
+  generated_at: string;
+}
+
+
 
 

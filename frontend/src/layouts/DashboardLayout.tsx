@@ -34,6 +34,7 @@ export const DashboardLayout: React.FC = () => {
     if (path === '/teacher/predictions') return 'AI Performance Predictions Hub';
     if (path === '/teacher/at-risk') return 'At-Risk Students Early-Warning Triage';
     if (path === '/teacher/anomalies') return 'Classroom Anomaly & Discrepancy Monitor';
+    if (path === '/teacher/demand-forecasting') return 'Assigned Subject Demand Forecasting';
     if (path === '/teacher/attendance') return 'Attendance Records & Velocity Proxy';
     if (path === '/teacher/reports') return 'Academic Reports & Roster Exports';
     if (path === '/teacher/notifications') return 'Teacher Classroom Notifications';
@@ -53,6 +54,7 @@ export const DashboardLayout: React.FC = () => {
     if (path === '/admin/analytics') return 'Executive Performance Analytics';
     if (path === '/admin/predictions') return 'Global AI Predictions Intelligence';
     if (path === '/admin/risk-monitoring') return 'Institutional Risk & Anomaly Monitoring';
+    if (path === '/admin/demand-forecasting') return 'Course & Subject Demand Forecasting';
     if (path === '/admin/reports') return 'Administrative Reports & Exports';
     if (path === '/admin/data-management') return 'Data Management & Import Pipeline';
     if (path === '/admin/notifications') return 'Administrative Notifications & Broadcasts';
@@ -65,6 +67,7 @@ export const DashboardLayout: React.FC = () => {
     if (path === '/analyst/institutional') return 'Institutional Analytics & Demographic Distribution';
     if (path === '/analyst/curriculum') return 'Subject & Curriculum Analytics (SDC Compliant)';
     if (path === '/analyst/trends') return 'Performance Trends & Term Trajectories';
+    if (path === '/analyst/demand-forecasting') return 'Course Demand Forecasting Analytics';
     if (path === '/analyst/risk') return 'Academic Risk & Vulnerability Analytics';
     if (path === '/analyst/anomalies') return 'Model Anomaly Analysis & Diagnostics';
     if (path === '/analyst/data-quality') return 'Data Quality, Completeness & Provenance';

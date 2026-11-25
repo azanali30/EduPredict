@@ -96,6 +96,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               { to: '/admin/academic-records', label: 'Academic Records', icon: <BookMarked size={18} /> },
               { to: '/admin/analytics', label: 'Performance Analytics', icon: <BarChart3 size={18} /> },
               { to: '/admin/predictions', label: 'AI Predictions Hub', icon: <Sparkles size={18} />, badge: 'AI' },
+              { to: '/admin/demand-forecasting', label: 'Demand Forecasting', icon: <TrendingUp size={18} />, badge: '8B' },
               { to: '/admin/risk-monitoring', label: 'Risk & Anomaly Monitor', icon: <AlertTriangle size={18} /> },
             ],
           },
@@ -130,6 +131,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               { to: '/teacher/predictions', label: 'AI Predictions', icon: <Sparkles size={18} />, badge: 'AI' },
               { to: '/teacher/at-risk', label: 'At-Risk Students', icon: <AlertTriangle size={18} /> },
               { to: '/teacher/anomalies', label: 'Anomaly Monitoring', icon: <Activity size={18} /> },
+              { to: '/teacher/demand-forecasting', label: 'Demand Forecasting', icon: <TrendingUp size={18} /> },
               { to: '/teacher/attendance', label: 'Attendance Records', icon: <Clock size={18} /> },
             ],
           },
@@ -190,6 +192,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             title: 'Trends & Diagnostics',
             items: [
               { to: '/analyst/trends', label: 'Performance Trends', icon: <LineChart size={18} /> },
+              { to: '/analyst/demand-forecasting', label: 'Demand Forecasting', icon: <TrendingUp size={18} /> },
               { to: '/analyst/risk', label: 'Academic Risk Analytics', icon: <AlertTriangle size={18} /> },
               { to: '/analyst/anomalies', label: 'Anomaly Analysis', icon: <Activity size={18} /> },
               { to: '/analyst/data-quality', label: 'Data Quality & Insights', icon: <Database size={18} /> },

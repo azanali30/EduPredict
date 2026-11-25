@@ -17,6 +17,8 @@ import {
   DropoutRecord,
   AdminDropoutOverviewResponse,
   AnalystDropoutOverviewResponse,
+  DemandOverviewResponse,
+  CourseDemandForecastItem,
 } from '../types';
 
 let cachedCsrfToken: string | null = null;
@@ -508,4 +510,48 @@ export const dropoutApi = {
       }
     ),
 };
+
+export const demandApi = {
+  getOverview: (params?: { periods_ahead?: number; forecast_period?: string; department?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.periods_ahead) query.set('periods_ahead', String(params.periods_ahead));
+    if (params?.forecast_period) query.set('forecast_period', params.forecast_period);
+    if (params?.department) query.set('department', params.department);
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest<DemandOverviewResponse>(`/api/demand/overview${qs}`);
+  },
+
+  generateForecast: (payload: {
+    periods_ahead?: number;
+    forecast_period?: string;
+    subject_ids?: string[];
+  }) =>
+    apiRequest<{
+      status_code: number;
+      message: string;
+      forecasts: CourseDemandForecastItem[];
+      metadata: any;
+    }>('/api/demand/forecast', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  getHistory: (page = 1, limit = 20) =>
+    apiRequest<{
+      status_code: number;
+      history: CourseDemandForecastItem[];
+      total: number;
+      page: number;
+      limit: number;
+    }>(`/api/demand/history?page=${page}&limit=${limit}`),
+
+  getSubjectForecast: (subjectId: string, periodsAhead = 1) =>
+    apiRequest<{ status_code: number; forecast: CourseDemandForecastItem }>(
+      `/api/demand/subject/${subjectId}?periods_ahead=${periodsAhead}`
+    ),
+
+  getModelMetadata: () =>
+    apiRequest<{ status_code: number; methodology: any; latest_run: any }>('/api/demand/model-metadata'),
+};
+
 

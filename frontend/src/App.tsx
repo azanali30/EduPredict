@@ -142,6 +142,9 @@ const AdminPredictions = React.lazy(() =>
 const AdminRiskMonitoring = React.lazy(() =>
   import('./pages/admin/AdminRiskMonitoring').then((m) => ({ default: m.AdminRiskMonitoring }))
 );
+const CourseDemandForecasting = React.lazy(() =>
+  import('./pages/shared/CourseDemandForecasting').then((m) => ({ default: m.CourseDemandForecasting }))
+);
 const AdminReports = React.lazy(() =>
   import('./pages/admin/AdminReports').then((m) => ({ default: m.AdminReports }))
 );
@@ -270,6 +273,7 @@ export const App: React.FC = () => {
               <Route path="/teacher/predictions" element={<TeacherPredictions />} />
               <Route path="/teacher/at-risk" element={<TeacherAtRisk />} />
               <Route path="/teacher/anomalies" element={<TeacherAnomalies />} />
+              <Route path="/teacher/demand-forecasting" element={<CourseDemandForecasting />} />
               <Route path="/teacher/attendance" element={<TeacherAttendance />} />
               <Route path="/teacher/reports" element={<TeacherReports />} />
               <Route path="/teacher/notifications" element={<TeacherNotifications />} />
@@ -297,6 +301,7 @@ export const App: React.FC = () => {
               <Route path="/admin/analytics" element={<AdminAnalytics />} />
               <Route path="/admin/predictions" element={<AdminPredictions />} />
               <Route path="/admin/risk-monitoring" element={<AdminRiskMonitoring />} />
+              <Route path="/admin/demand-forecasting" element={<CourseDemandForecasting />} />
               <Route path="/admin/reports" element={<AdminReports />} />
               <Route path="/admin/data-management" element={<AdminDataManagement />} />
               <Route path="/admin/notifications" element={<AdminNotifications />} />
@@ -317,6 +322,7 @@ export const App: React.FC = () => {
               <Route path="/analyst/institutional" element={<AnalystInstitutional />} />
               <Route path="/analyst/curriculum" element={<AnalystCurriculum />} />
               <Route path="/analyst/trends" element={<AnalystTrends />} />
+              <Route path="/analyst/demand-forecasting" element={<CourseDemandForecasting />} />
               <Route path="/analyst/risk" element={<AnalystRisk />} />
               <Route path="/analyst/anomalies" element={<AnalystAnomalies />} />
               <Route path="/analyst/data-quality" element={<AnalystDataQuality />} />

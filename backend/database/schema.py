@@ -186,6 +186,28 @@ def init_db_indexes(db: Database) -> dict[str, list[str]]:
         ]
         created_indexes["dropout_records"] = dropout_idx
 
+        # 12. Course Demand Forecasts & Metadata indexes (Phase 8B)
+        demand_idx = [
+            db.demand_forecasts.create_index(
+                [("organization_id", ASCENDING), ("forecast_period", ASCENDING), ("created_at", DESCENDING)],
+                name="idx_demand_org_period_created",
+            ),
+            db.demand_forecasts.create_index(
+                [("subject_id", ASCENDING), ("forecast_period", ASCENDING)],
+                name="idx_demand_subject_period",
+            ),
+            db.demand_forecasts.create_index([("created_at", DESCENDING)], name="idx_demand_created_at"),
+        ]
+        created_indexes["demand_forecasts"] = demand_idx
+
+        demand_meta_idx = [
+            db.demand_model_metadata.create_index(
+                [("organization_id", ASCENDING), ("created_at", DESCENDING)],
+                name="idx_demand_meta_org_created",
+            ),
+        ]
+        created_indexes["demand_model_metadata"] = demand_meta_idx
+
         logger.info("MongoDB 6.x indexes successfully initialized.")
         return created_indexes
 
