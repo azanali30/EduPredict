@@ -21,8 +21,9 @@ from backend.database.schema import init_db_indexes
     help="Administrator password (min 8 chars, 1 letter, 1 digit).",
 )
 @click.option("--name", prompt="Full Name", default="System Administrator", help="Administrator full name.")
+@click.option("--organization-id", default="org-edupredict-main", help="Canonical organization_id for the administrator.")
 @with_appcontext
-def create_admin_command(email, password, name):
+def create_admin_command(email, password, name, organization_id):
     """Securely create the initial administrator account."""
     click.echo(f"Creating administrator account for '{email}'...")
     user, err = UserService.create_user(
@@ -31,6 +32,7 @@ def create_admin_command(email, password, name):
         plain_password=password,
         full_name=name,
         role="admin",
+        organization_id=organization_id,
     )
     if err or not user:
         click.echo(click.style(f"Error: {err}", fg="red"))
