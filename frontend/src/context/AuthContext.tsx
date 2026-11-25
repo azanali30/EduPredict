@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '../types';
-import { api } from '../services/api';
+import { api, setActiveTenantId } from '../services/api';
 
 interface AuthContextType {
   user: User | null;
@@ -23,11 +23,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const res = await api.getMe();
       if (res?.user) {
         setUser(res.user);
+        setActiveTenantId(res.user.organization_id || null);
       } else {
         setUser(null);
+        setActiveTenantId(null);
       }
     } catch {
       setUser(null);
+      setActiveTenantId(null);
     } finally {
       setIsLoading(false);
     }
@@ -40,6 +43,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = async (email: string, password: string, remember?: boolean): Promise<User> => {
     const res = await api.login({ email, password, remember });
     setUser(res.user);
+    setActiveTenantId(res.user?.organization_id || null);
     return res.user;
   };
 
@@ -55,6 +59,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.warn('Logout API error:', err);
     } finally {
       setUser(null);
+      setActiveTenantId(null);
     }
   };
 

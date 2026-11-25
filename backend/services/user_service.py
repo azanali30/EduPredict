@@ -59,6 +59,7 @@ class UserService:
         professional_info: dict | None = None,
         employment_info: dict | None = None,
         documents: list[dict] | None = None,
+        organization_id: str | None = None,
     ) -> tuple[User | None, str | None]:
         """
         Create a new user with secure password hashing and multi-section profile metadata.
@@ -109,6 +110,16 @@ class UserService:
         if not final_dept and academic_info:
             final_dept = academic_info.get("department")
 
+        from flask import has_request_context
+        from backend.utils.tenant_context import get_current_tenant_id
+        from backend.services.billing_service import BillingService
+
+        resolved_org = organization_id or (get_current_tenant_id() if has_request_context() else None)
+        if resolved_org and role != "platform_super_admin":
+            seat_ok, seat_err, _ = BillingService.check_seat_quota(db, resolved_org)
+            if not seat_ok:
+                return None, seat_err
+
         pwd_hash = hash_password(plain_password)
         user = User(
             email=norm_email,
@@ -129,6 +140,7 @@ class UserService:
             professional_info=professional_info,
             employment_info=employment_info,
             documents=documents,
+            organization_id=resolved_org,
         )
 
         try:

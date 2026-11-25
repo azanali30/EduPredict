@@ -59,6 +59,14 @@ def analyst_required(f):
     return role_required("analyst")(f)
 
 
+def super_admin_required(f):
+    """
+    Decorator requiring strictly platform_super_admin role.
+    Institution admins, analysts, teachers, and students are rejected with 403.
+    """
+    return role_required("platform_super_admin")(f)
+
+
 def can_access_student_data(actor_user, student_id, db) -> bool:
     """
     Generic student-profile authorization rule:

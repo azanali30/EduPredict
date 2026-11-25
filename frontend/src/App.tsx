@@ -197,6 +197,27 @@ const ModelEvaluationDashboard = React.lazy(() =>
     default: m.ModelEvaluationDashboard,
   }))
 );
+const AdminBilling = React.lazy(() =>
+  import('./pages/admin/AdminBilling').then((m) => ({ default: m.AdminBilling }))
+);
+const PlatformOverview = React.lazy(() =>
+  import('./pages/platform/PlatformOverview').then((m) => ({ default: m.PlatformOverview }))
+);
+const InstitutionDirectory = React.lazy(() =>
+  import('./pages/platform/InstitutionDirectory').then((m) => ({ default: m.InstitutionDirectory }))
+);
+const InstitutionDetails = React.lazy(() =>
+  import('./pages/platform/InstitutionDetails').then((m) => ({ default: m.InstitutionDetails }))
+);
+const TenantOnboarding = React.lazy(() =>
+  import('./pages/platform/TenantOnboarding').then((m) => ({ default: m.TenantOnboarding }))
+);
+const SubscriptionPlans = React.lazy(() =>
+  import('./pages/platform/SubscriptionPlans').then((m) => ({ default: m.SubscriptionPlans }))
+);
+const GlobalAuditLogs = React.lazy(() =>
+  import('./pages/platform/GlobalAuditLogs').then((m) => ({ default: m.GlobalAuditLogs }))
+);
 
 const RootRedirect: React.FC = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -207,6 +228,7 @@ const RootRedirect: React.FC = () => {
     return <Navigate to="/login" replace />;
   }
 
+  if (user.role === 'platform_super_admin') return <Navigate to="/platform/overview" replace />;
   if (user.role === 'admin') return <Navigate to="/admin" replace />;
   if (user.role === 'teacher') return <Navigate to="/teacher" replace />;
   if (user.role === 'analyst') return <Navigate to="/analyst" replace />;
@@ -313,7 +335,24 @@ export const App: React.FC = () => {
               <Route path="/admin/notifications" element={<AdminNotifications />} />
               <Route path="/admin/feedback" element={<AdminFeedback />} />
               <Route path="/admin/logs" element={<SystemLogs />} />
+              <Route path="/admin/billing" element={<AdminBilling />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
+            </Route>
+
+            {/* Platform Super Admin Protected Workspace (Phase 9) */}
+            <Route
+              element={
+                <ProtectedRoute allowedRoles={['platform_super_admin']}>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route path="/platform/overview" element={<PlatformOverview />} />
+              <Route path="/platform/institutions" element={<InstitutionDirectory />} />
+              <Route path="/platform/institutions/:id" element={<InstitutionDetails />} />
+              <Route path="/platform/onboarding" element={<TenantOnboarding />} />
+              <Route path="/platform/subscriptions" element={<SubscriptionPlans />} />
+              <Route path="/platform/audit-logs" element={<GlobalAuditLogs />} />
             </Route>
 
             {/* Analyst Protected Workspace */}

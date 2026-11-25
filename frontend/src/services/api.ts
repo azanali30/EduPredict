@@ -22,6 +22,11 @@ import {
 } from '../types';
 
 let cachedCsrfToken: string | null = null;
+let activeTenantId: string | null = null;
+
+export function setActiveTenantId(orgId: string | null) {
+  activeTenantId = orgId && orgId.trim() ? orgId.trim() : null;
+}
 
 export async function getCsrfToken(): Promise<string> {
   if (cachedCsrfToken) return cachedCsrfToken;
@@ -46,6 +51,10 @@ export async function apiRequest<T = any>(
   const headers = new Headers(options.headers || {});
 
   headers.set('Accept', 'application/json');
+
+  if (activeTenantId && !headers.has('X-Institution-ID')) {
+    headers.set('X-Institution-ID', activeTenantId);
+  }
 
   if (options.body && typeof options.body === 'string' && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
@@ -649,6 +658,130 @@ export const evaluationApi = {
       {
         method: 'POST',
       }
+    ),
+};
+
+export const platformApi = {
+  getOverview: () =>
+    apiRequest<import('../types').PlatformOverviewResponse>('/api/platform/overview'),
+
+  listInstitutions: (params?: { status?: string; page?: number; limit?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.status) query.set('status', params.status);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest<{
+      status_code: number;
+      institutions: import('../types').InstitutionRecord[];
+      total: number;
+      page: number;
+      limit: number;
+    }>(`/api/platform/institutions${qs}`);
+  },
+
+  createInstitution: (payload: {
+    name: string;
+    slug: string;
+    admin_email: string;
+    admin_password: string;
+    admin_name: string;
+    plan_tier?: string;
+    contact_email?: string;
+    status?: string;
+  }) =>
+    apiRequest<{
+      status_code: number;
+      institution: import('../types').InstitutionRecord;
+      subscription: import('../types').SubscriptionRecord;
+    }>('/api/platform/institutions', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  selfServiceOnboard: (payload: {
+    name: string;
+    slug: string;
+    admin_email: string;
+    admin_password: string;
+    admin_name: string;
+    plan_tier?: string;
+  }) =>
+    apiRequest<{
+      status_code: number;
+      institution: import('../types').InstitutionRecord;
+      subscription: import('../types').SubscriptionRecord;
+    }>('/api/platform/onboarding/register', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  getInstitution: (instId: string) =>
+    apiRequest<{ status_code: number; institution: import('../types').InstitutionRecord }>(
+      `/api/platform/institutions/${instId}`
+    ),
+
+  activateInstitution: (instId: string, reason?: string) =>
+    apiRequest<{ status_code: number; institution: import('../types').InstitutionRecord }>(
+      `/api/platform/institutions/${instId}/activate`,
+      { method: 'POST', body: JSON.stringify({ reason }) }
+    ),
+
+  suspendInstitution: (instId: string, reason?: string) =>
+    apiRequest<{ status_code: number; institution: import('../types').InstitutionRecord }>(
+      `/api/platform/institutions/${instId}/suspend`,
+      { method: 'POST', body: JSON.stringify({ reason }) }
+    ),
+
+  reactivateInstitution: (instId: string, reason?: string) =>
+    apiRequest<{ status_code: number; institution: import('../types').InstitutionRecord }>(
+      `/api/platform/institutions/${instId}/reactivate`,
+      { method: 'POST', body: JSON.stringify({ reason }) }
+    ),
+
+  listPlans: () =>
+    apiRequest<{ status_code: number; plans: import('../types').SubscriptionPlan[] }>(
+      '/api/platform/plans'
+    ),
+
+  listSubscriptions: () =>
+    apiRequest<{ status_code: number; subscriptions: import('../types').SubscriptionRecord[] }>(
+      '/api/platform/subscriptions'
+    ),
+
+  getAuditLogs: (params?: { action?: string; target_institution?: string; page?: number; limit?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.action) query.set('action', params.action);
+    if (params?.target_institution) query.set('target_institution', params.target_institution);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest<{
+      status_code: number;
+      logs: import('../types').GlobalAuditLogItem[];
+      total: number;
+      page: number;
+      limit: number;
+    }>(`/api/platform/audit-logs${qs}`);
+  },
+
+  getMySubscription: () =>
+    apiRequest<{
+      status_code: number;
+      subscription: import('../types').SubscriptionRecord;
+      plans: import('../types').SubscriptionPlan[];
+    }>('/api/platform/billing/my-subscription'),
+
+  changeMyPlan: (plan_tier: string) =>
+    apiRequest<{ status_code: number; subscription: import('../types').SubscriptionRecord }>(
+      '/api/platform/billing/change-plan',
+      { method: 'POST', body: JSON.stringify({ plan_tier }) }
+    ),
+
+  cancelMyPlan: () =>
+    apiRequest<{ status_code: number; subscription: import('../types').SubscriptionRecord }>(
+      '/api/platform/billing/cancel',
+      { method: 'POST' }
     ),
 };
 

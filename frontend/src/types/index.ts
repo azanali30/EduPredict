@@ -1,4 +1,4 @@
-export type UserRole = 'student' | 'teacher' | 'admin' | 'analyst';
+export type UserRole = 'student' | 'teacher' | 'admin' | 'analyst' | 'platform_super_admin';
 
 export interface PersonalInfo {
   date_of_birth?: string;
@@ -82,6 +82,7 @@ export interface User {
   employment_info?: EmploymentInfo;
   documents?: UserDocument[];
   enrolled_subjects_under_teacher?: string[];
+  organization_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -661,6 +662,77 @@ export interface ModelRegistryItem {
   created_by?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+}
+
+// Phase 9: Multi-Institution SaaS Types
+export interface SubscriptionPlan {
+  plan_tier: string;
+  name: string;
+  price_monthly_usd: number;
+  billing_interval: string;
+  trial_days: number;
+  seat_limit: number;
+  prediction_quota_monthly: number;
+  features: string[];
+  is_active: boolean;
+}
+
+export interface SubscriptionRecord {
+  id: string;
+  organization_id: string;
+  plan_tier: string;
+  plan_name?: string;
+  price_monthly_usd?: number;
+  billing_status: 'trialing' | 'active' | 'past_due' | 'cancelled' | 'expired' | 'suspended';
+  seat_limit: number;
+  seats_used?: number;
+  prediction_quota_monthly: number;
+  predictions_used: number;
+  features?: string[];
+  current_period_start?: string;
+  current_period_end?: string;
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+}
+
+export interface InstitutionRecord {
+  id: string;
+  name: string;
+  slug: string;
+  organization_id: string;
+  status: 'pending' | 'trial' | 'active' | 'suspended' | 'cancelled';
+  plan_tier: string;
+  contact_email?: string | null;
+  user_count?: number;
+  subject_count?: number;
+  subscription?: SubscriptionRecord | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PlatformOverviewResponse {
+  status_code: number;
+  total_institutions: number;
+  active_institutions: number;
+  trial_institutions: number;
+  suspended_institutions: number;
+  active_subscriptions: number;
+  past_due_subscriptions: number;
+  monthly_predictions_used: number;
+}
+
+export interface GlobalAuditLogItem {
+  id: string;
+  actor_id?: string | null;
+  actor_role: string;
+  action: string;
+  target_institution?: string | null;
+  resource_type: string;
+  resource_id?: string | null;
+  ip_address?: string | null;
+  metadata: Record<string, any>;
+  outcome: string;
+  timestamp: string;
 }
 
 export interface AnalystDropoutTrendsResponse {

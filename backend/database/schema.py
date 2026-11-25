@@ -11,6 +11,19 @@ from pymongo.errors import PyMongoError
 logger = logging.getLogger(__name__)
 
 
+def _drop_legacy_index_if_present(collection, index_name: str, expected_keys: list[tuple[str, int]]) -> None:
+    """Safely drop a legacy single-tenant unique index only if its key pattern lacks organization_id."""
+    try:
+        info = collection.index_information()
+        if index_name in info:
+            existing_keys = list(info[index_name].get("key", []))
+            if existing_keys != expected_keys:
+                collection.drop_index(index_name)
+                logger.info("Migrated legacy index '%s' on '%s'.", index_name, collection.name)
+    except PyMongoError as exc:
+        logger.warning("Index migration check warning on '%s.%s': %s", collection.name, index_name, exc)
+
+
 def init_db_indexes(db: Database) -> dict[str, list[str]]:
     """
     Ensure all required indexes exist across MongoDB 6.x collections.
@@ -22,9 +35,10 @@ def init_db_indexes(db: Database) -> dict[str, list[str]]:
     created_indexes = {}
 
     try:
-        # 1. Users collection indexes
+        # 1. Users collection indexes (email remains globally unique for login)
         users_idx = [
             db.users.create_index([("email", ASCENDING)], unique=True, name="idx_users_email_unique"),
+            db.users.create_index([("organization_id", ASCENDING), ("role", ASCENDING)], name="idx_users_org_role"),
             db.users.create_index([("role", ASCENDING)], name="idx_users_role"),
             db.users.create_index([("created_at", DESCENDING)], name="idx_users_created_at"),
             db.users.create_index([("student_id", ASCENDING)], unique=True, sparse=True, name="idx_users_student_id_unique"),
@@ -36,8 +50,8 @@ def init_db_indexes(db: Database) -> dict[str, list[str]]:
         records_idx = [
             db.academic_records.create_index([("student_id", ASCENDING)], name="idx_records_student_id"),
             db.academic_records.create_index(
-                [("student_id", ASCENDING), ("term", ASCENDING)],
-                name="idx_records_student_term",
+                [("organization_id", ASCENDING), ("student_id", ASCENDING), ("term", ASCENDING)],
+                name="idx_records_org_student_term",
             ),
             db.academic_records.create_index([("created_at", DESCENDING)], name="idx_records_created_at"),
         ]
@@ -47,8 +61,8 @@ def init_db_indexes(db: Database) -> dict[str, list[str]]:
         preds_idx = [
             db.predictions.create_index([("student_id", ASCENDING)], name="idx_preds_student_id"),
             db.predictions.create_index(
-                [("student_id", ASCENDING), ("created_at", DESCENDING)],
-                name="idx_preds_student_created",
+                [("organization_id", ASCENDING), ("student_id", ASCENDING), ("created_at", DESCENDING)],
+                name="idx_preds_org_student_created",
             ),
             db.predictions.create_index(
                 [("subject", ASCENDING), ("milestone", ASCENDING)],
@@ -113,20 +127,48 @@ def init_db_indexes(db: Database) -> dict[str, list[str]]:
         ]
         created_indexes["analytical_academic_records"] = analytical_idx
 
-        # 7. Subjects collection indexes (Phase 6A Subject Catalog)
+        # 7. Subjects collection indexes (Phase 9B compound tenant-scoped uniqueness)
+        _drop_legacy_index_if_present(
+            db.subjects,
+            "idx_subjects_code_unique",
+            [("organization_id", ASCENDING), ("code", ASCENDING)],
+        )
+        _drop_legacy_index_if_present(
+            db.subjects,
+            "idx_subjects_canonical_unique",
+            [("organization_id", ASCENDING), ("canonical_key", ASCENDING)],
+        )
         subjects_idx = [
-            db.subjects.create_index([("code", ASCENDING)], unique=True, name="idx_subjects_code_unique"),
-            db.subjects.create_index([("canonical_key", ASCENDING)], unique=True, name="idx_subjects_canonical_unique"),
-            db.subjects.create_index([("is_active", ASCENDING)], name="idx_subjects_is_active"),
+            db.subjects.create_index(
+                [("organization_id", ASCENDING), ("code", ASCENDING)],
+                unique=True,
+                name="idx_subjects_org_code_unique",
+            ),
+            db.subjects.create_index(
+                [("organization_id", ASCENDING), ("canonical_key", ASCENDING)],
+                unique=True,
+                name="idx_subjects_org_canonical_unique",
+            ),
+            db.subjects.create_index([("organization_id", ASCENDING), ("is_active", ASCENDING)], name="idx_subjects_org_active"),
         ]
         created_indexes["subjects"] = subjects_idx
 
-        # 8. Teacher-Subject Assignments collection indexes (Phase 6A)
+        # 8. Teacher-Subject Assignments collection indexes
+        _drop_legacy_index_if_present(
+            db.teacher_student_assignments,
+            "idx_teacher_subj_term_unique",
+            [("organization_id", ASCENDING), ("teacher_id", ASCENDING), ("subject_id", ASCENDING), ("academic_term", ASCENDING)],
+        )
+        _drop_legacy_index_if_present(
+            db.teacher_subject_assignments,
+            "idx_teacher_subj_term_unique",
+            [("organization_id", ASCENDING), ("teacher_id", ASCENDING), ("subject_id", ASCENDING), ("academic_term", ASCENDING)],
+        )
         teacher_subj_idx = [
             db.teacher_subject_assignments.create_index(
-                [("teacher_id", ASCENDING), ("subject_id", ASCENDING), ("academic_term", ASCENDING)],
+                [("organization_id", ASCENDING), ("teacher_id", ASCENDING), ("subject_id", ASCENDING), ("academic_term", ASCENDING)],
                 unique=True,
-                name="idx_teacher_subj_term_unique",
+                name="idx_org_teacher_subj_term_unique",
             ),
             db.teacher_subject_assignments.create_index(
                 [("teacher_id", ASCENDING), ("status", ASCENDING)],
@@ -139,12 +181,17 @@ def init_db_indexes(db: Database) -> dict[str, list[str]]:
         ]
         created_indexes["teacher_subject_assignments"] = teacher_subj_idx
 
-        # 9. Student-Subject Enrollments collection indexes (Phase 6A)
+        # 9. Student-Subject Enrollments collection indexes
+        _drop_legacy_index_if_present(
+            db.student_subject_enrollments,
+            "idx_student_subj_term_unique",
+            [("organization_id", ASCENDING), ("student_id", ASCENDING), ("subject_id", ASCENDING), ("academic_term", ASCENDING)],
+        )
         student_subj_idx = [
             db.student_subject_enrollments.create_index(
-                [("student_id", ASCENDING), ("subject_id", ASCENDING), ("academic_term", ASCENDING)],
+                [("organization_id", ASCENDING), ("student_id", ASCENDING), ("subject_id", ASCENDING), ("academic_term", ASCENDING)],
                 unique=True,
-                name="idx_student_subj_term_unique",
+                name="idx_org_student_subj_term_unique",
             ),
             db.student_subject_enrollments.create_index(
                 [("student_id", ASCENDING), ("status", ASCENDING)],
@@ -236,6 +283,34 @@ def init_db_indexes(db: Database) -> dict[str, list[str]]:
             ),
         ]
         created_indexes["model_registry"] = registry_idx
+
+        # 14. Phase 9 Platform Control Store indexes
+        inst_idx = [
+            db.institutions.create_index([("slug", ASCENDING)], unique=True, name="idx_institutions_slug_unique"),
+            db.institutions.create_index([("organization_id", ASCENDING)], unique=True, name="idx_institutions_org_unique"),
+            db.institutions.create_index([("status", ASCENDING)], name="idx_institutions_status"),
+        ]
+        created_indexes["institutions"] = inst_idx
+
+        subs_idx = [
+            db.subscriptions.create_index([("organization_id", ASCENDING)], unique=True, name="idx_subs_org_unique"),
+            db.subscriptions.create_index([("billing_status", ASCENDING)], name="idx_subs_status"),
+            db.subscriptions.create_index([("stripe_customer_id", ASCENDING)], sparse=True, name="idx_subs_stripe_cust"),
+        ]
+        created_indexes["subscriptions"] = subs_idx
+
+        billing_ev_idx = [
+            db.processed_billing_events.create_index([("event_id", ASCENDING)], unique=True, name="idx_billing_event_id_unique"),
+            db.processed_billing_events.create_index([("processed_at", DESCENDING)], name="idx_billing_processed_at"),
+        ]
+        created_indexes["processed_billing_events"] = billing_ev_idx
+
+        global_audit_idx = [
+            db.global_audit_logs.create_index([("timestamp", DESCENDING)], name="idx_global_audit_ts"),
+            db.global_audit_logs.create_index([("action", ASCENDING)], name="idx_global_audit_action"),
+            db.global_audit_logs.create_index([("target_institution", ASCENDING)], name="idx_global_audit_inst"),
+        ]
+        created_indexes["global_audit_logs"] = global_audit_idx
 
         logger.info("MongoDB 6.x indexes successfully initialized.")
         return created_indexes

@@ -455,6 +455,21 @@ class DropoutService:
         if not _check_organization_scope(actor_user, user_doc):
             return None, "Access denied. Cross-organization student access is prohibited.", 403
 
+        # Phase 9C: Feature gate & atomic prediction quota check (when subscription exists)
+        from backend.services.billing_service import BillingService
+
+        quota_org = (
+            (user_doc.get("organization_id") if user_doc else None)
+            or getattr(actor_user, "organization_id", None)
+        )
+        if db is not None and quota_org:
+            fg_ok, fg_err, fg_code = BillingService.check_feature_entitlement(db, quota_org, "dropout_analytics")
+            if not fg_ok:
+                return None, fg_err, fg_code
+            q_ok, q_err, q_code = BillingService.consume_prediction_quota(db, quota_org, count=1)
+            if not q_ok:
+                return None, q_err, q_code
+
         # RBAC Check
         actor_role = getattr(actor_user, "role", "")
         if actor_role == "teacher":
@@ -898,6 +913,15 @@ class DropoutService:
             return None, "'student_ids' must be a non-empty list of student IDs.", 400
         if len(student_ids) > 100:
             return None, "Bulk evaluation is limited to at most 100 students per request.", 400
+
+        # Phase 9C: Bulk prediction feature gate check
+        from backend.services.billing_service import BillingService
+
+        actor_org = getattr(actor_user, "organization_id", None)
+        if db is not None and actor_org:
+            fg_ok, fg_err, fg_code = BillingService.check_feature_entitlement(db, actor_org, "bulk_prediction")
+            if not fg_ok:
+                return None, fg_err, fg_code
 
         results: List[Dict[str, Any]] = []
         succeeded = 0

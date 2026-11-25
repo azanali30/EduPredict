@@ -19,9 +19,15 @@ from backend.routes.anomaly_routes import anomaly_bp
 from backend.routes.dropout_routes import dropout_bp
 from backend.routes.demand_routes import demand_bp
 from backend.routes.evaluation_routes import evaluation_bp
-from backend.commands.admin_commands import create_admin_command, init_db_command
+from backend.routes.platform_routes import platform_bp
+from backend.commands.admin_commands import (
+    create_admin_command,
+    create_super_admin_command,
+    init_db_command,
+)
 from backend.services.user_service import UserService
 from backend.database.schema import init_db_indexes
+from backend.utils.tenant_context import resolve_tenant_request
 
 # Configure logging
 logging.basicConfig(
@@ -115,9 +121,11 @@ def create_app(config_name=None):
     app.register_blueprint(dropout_bp)
     app.register_blueprint(demand_bp)
     app.register_blueprint(evaluation_bp)
+    app.register_blueprint(platform_bp)
 
     # 4. Register CLI Commands
     app.cli.add_command(create_admin_command)
+    app.cli.add_command(create_super_admin_command)
     app.cli.add_command(init_db_command)
 
     # 5. Initialize Database Indexes if database is reachable
@@ -128,7 +136,7 @@ def create_app(config_name=None):
             except Exception as e:
                 logger.warning("Could not auto-initialize indexes on startup: %s", str(e))
 
-    # 6. CORS & Security Headers
+    # 6. CORS, Tenant Resolution & Security Headers
     @app.before_request
     def handle_cors_preflight():
         """Handle CORS OPTIONS preflight requests for explicitly allowed origins."""
@@ -142,10 +150,12 @@ def create_app(config_name=None):
                 response.headers["Access-Control-Allow-Credentials"] = "true"
                 response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
                 response.headers["Access-Control-Allow-Headers"] = (
-                    "Content-Type, X-CSRFToken, X-CSRF-Token, X-Requested-With, Authorization"
+                    "Content-Type, X-CSRFToken, X-CSRF-Token, X-Requested-With, Authorization, X-Institution-ID"
                 )
                 response.headers["Access-Control-Max-Age"] = "3600"
                 return response
+
+    app.before_request(resolve_tenant_request)
 
     @app.after_request
     def set_security_headers(response):
@@ -158,7 +168,7 @@ def create_app(config_name=None):
             response.headers["Access-Control-Allow-Credentials"] = "true"
             response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
             response.headers["Access-Control-Allow-Headers"] = (
-                "Content-Type, X-CSRFToken, X-CSRF-Token, X-Requested-With, Authorization"
+                "Content-Type, X-CSRFToken, X-CSRF-Token, X-Requested-With, Authorization, X-Institution-ID"
             )
 
         # Baseline Security Hardening Headers

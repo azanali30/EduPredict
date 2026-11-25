@@ -61,8 +61,17 @@ export const DashboardLayout: React.FC = () => {
     if (path === '/admin/notifications') return 'Administrative Notifications & Broadcasts';
     if (path === '/admin/feedback') return 'Feedback, Inquiries & Support Tickets';
     if (path === '/admin/logs') return 'System Monitoring & Security Audit Logs';
+    if (path === '/admin/billing') return 'Institution Billing & Plan Quotas';
     if (path === '/admin/settings') return 'System Administrator Settings & Security';
     if (path === '/admin') return 'AI Institutional Intelligence Command Center';
+
+    // Platform Super Admin Routes (Phase 9)
+    if (path === '/platform/overview') return 'Platform Super Admin Overview';
+    if (path === '/platform/institutions') return 'Institution Directory';
+    if (path.startsWith('/platform/institutions/')) return 'Institution Details';
+    if (path === '/platform/onboarding') return 'Onboard New Institution';
+    if (path === '/platform/subscriptions') return 'SaaS Plans & Tenant Subscriptions';
+    if (path === '/platform/audit-logs') return 'Global Platform Audit Logs';
 
     // Analyst Routes
     if (path === '/analyst/institutional') return 'Institutional Analytics & Demographic Distribution';

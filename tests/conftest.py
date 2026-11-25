@@ -44,6 +44,10 @@ def clean_db(app):
             mongo.db.demand_forecasts.delete_many({})
             mongo.db.demand_model_metadata.delete_many({})
             mongo.db.model_registry.delete_many({})
+            mongo.db.institutions.delete_many({})
+            mongo.db.subscriptions.delete_many({})
+            mongo.db.processed_billing_events.delete_many({})
+            mongo.db.global_audit_logs.delete_many({})
     yield mongo.db
 
 
