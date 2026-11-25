@@ -39,6 +39,7 @@ class User:
         professional_info: dict | None = None,
         employment_info: dict | None = None,
         documents: list[dict] | None = None,
+        organization_id: str | None = None,
     ):
         self.id = to_object_id(user_id) or ObjectId()
         self.email = normalize_email(email)
@@ -59,6 +60,7 @@ class User:
         self.professional_info = professional_info or {}
         self.employment_info = employment_info or {}
         self.documents = documents or []
+        self.organization_id = organization_id.strip() if organization_id else None
         now = datetime.now(timezone.utc)
         self.created_at = created_at or now
         self.updated_at = updated_at or now
@@ -116,6 +118,8 @@ class User:
             doc["department"] = self.department
         if self.avatar_url:
             doc["avatar_url"] = self.avatar_url
+        if self.organization_id:
+            doc["organization_id"] = self.organization_id
         return doc
 
     def to_dict(self, include_sensitive: bool = False) -> dict:
@@ -130,6 +134,7 @@ class User:
             "employee_id": self.employee_id,
             "contact_number": self.contact_number,
             "department": self.department,
+            "organization_id": self.organization_id,
             "avatar_url": self.avatar_url,
             "must_change_password": self.must_change_password,
             "personal_info": self.personal_info,
@@ -173,4 +178,5 @@ class User:
             professional_info=doc.get("professional_info") or {},
             employment_info=doc.get("employment_info") or {},
             documents=doc.get("documents") or [],
+            organization_id=doc.get("organization_id"),
         )

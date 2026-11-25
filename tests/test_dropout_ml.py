@@ -147,7 +147,7 @@ def test_calibrated_model_artifacts_and_inference():
 
 
 def test_academic_record_heuristic_mapping():
-    """Verify EduPredict academic records map cleanly to UCI feature space."""
+    """Verify EduPredict academic records map ONLY defensible fields and leave demographics/financials NaN."""
     record = {
         "attendance_percentage": 92.0,
         "study_hours_per_week": 18.0,
@@ -155,8 +155,58 @@ def test_academic_record_heuristic_mapping():
         "previous_exam_marks": 78.0,
         "quiz_average": 72.0,
     }
-    features = DropoutService.map_academic_record_to_features(record)
+    features, err = DropoutService.map_academic_record_to_features(record)
+    assert err is None
+    assert features is not None
     assert len(features) == len(ALL_FEATURE_COLUMNS)
-    assert features["Admission grade"] == 156.0
-    assert features["Curricular units 1st sem (approved)"] >= 5
-    assert features["Tuition fees up to date"] == 1
+    # Defensible academic mappings
+    assert features["Curricular units 1st sem (grade)"] == round(78.0 / 5.0, 4)
+    assert features["Curricular units 2nd sem (grade)"] == round(78.0 / 5.0, 4)
+    assert features["Curricular units 1st sem (approved)"] == 5
+    assert features["Previous qualification (grade)"] == 144.0
+    # Uncollected demographic, financial, and macroeconomic fields MUST remain NaN (never fabricated)
+    assert np.isnan(features["Tuition fees up to date"])
+    assert np.isnan(features["Debtor"])
+    assert np.isnan(features["Scholarship holder"])
+    assert np.isnan(features["Marital status"])
+    assert np.isnan(features["Age at enrollment"])
+    assert np.isnan(features["Unemployment rate"])
+
+
+def test_missing_required_academic_record_rejected():
+    """Missing required academic indicators must fail cleanly instead of silently substituting defaults."""
+    features_empty, err_empty = DropoutService.map_academic_record_to_features({})
+    assert features_empty is None
+    assert err_empty is not None
+
+    features_partial, err_partial = DropoutService.map_academic_record_to_features(
+        {"attendance_percentage": 85.0}
+    )
+    assert features_partial is None
+    assert "previous_exam_marks" in err_partial
+
+    eval_empty, err_eval = DropoutService.evaluate_student_features({})
+    assert eval_empty is None
+    assert "Insufficient feature data" in err_eval
+
+
+def test_exact_feature_snapshot_and_no_fabricated_factors():
+    """Verify features_snapshot records exact values used for inference and factors omit unobserved fields."""
+    record = {
+        "assignment_completion_rate": 90.0,
+        "previous_exam_marks": 80.0,
+    }
+    features, err = DropoutService.map_academic_record_to_features(record)
+    assert err is None
+    eval_res, eval_err = DropoutService.evaluate_student_features(features, feature_source="academic_record_mapping")
+    assert eval_err is None
+    assert eval_res is not None
+    snapshot = eval_res["features_snapshot"]
+    assert snapshot["Curricular units 1st sem (grade)"] == 16.0
+    assert snapshot["Tuition fees up to date"] is None
+    assert snapshot["Debtor"] is None
+    # Protective factors must NOT claim "Good Financial Standing" when tuition is unobserved
+    factor_names = [f["factor"] for f in eval_res["protective_factors"]]
+    assert "Good Financial Standing" not in factor_names
+    assert "Strong Academic Standing" in factor_names
+

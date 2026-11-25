@@ -43,9 +43,10 @@ def predict_and_record():
             "status_code": 400,
         }), 400
 
-    features = data.get("features", {})
+    features = data.get("features")
     academic_term = data.get("academic_term")
     student_name = data.get("student_name")
+    subject = data.get("subject")
 
     res, err, status_code = DropoutService.record_student_assessment(
         db=mongo.db,
@@ -54,6 +55,7 @@ def predict_and_record():
         actor_user=current_user,
         academic_term=academic_term,
         student_name=student_name,
+        subject=subject,
     )
 
     if err:
@@ -87,10 +89,15 @@ def get_student_assessment(student_id: str):
             "status_code": 403,
         }), 403
 
+    subject = request.args.get("subject")
+    academic_term = request.args.get("academic_term")
+
     res, err, status_code = DropoutService.get_student_assessment(
         db=mongo.db,
         actor_user=current_user,
         student_id=student_id,
+        subject=subject,
+        academic_term=academic_term,
     )
 
     if err:
@@ -123,9 +130,14 @@ def get_teacher_roster():
             "status_code": 400,
         }), 400
 
+    subject_id = request.args.get("subject_id")
+    academic_term = request.args.get("academic_term")
+
     res, err, status_code = DropoutService.get_teacher_roster_dropout(
         db=mongo.db,
         teacher_user=current_user,
+        subject_id=subject_id,
+        academic_term=academic_term,
         page=page,
         limit=limit,
     )
@@ -212,5 +224,11 @@ def get_model_metadata():
 
     return jsonify({
         "status_code": 200,
-        "metadata": meta,
+        "metadata": {
+            **meta,
+            "benchmark_disclosure": (
+                "Reported metrics are holdout benchmark results on the UCI Portuguese "
+                "higher-education dataset (ID 697), not validated EduPredict institutional performance."
+            ),
+        },
     }), 200

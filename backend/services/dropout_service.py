@@ -2,7 +2,8 @@
 EduPredict - Student Dropout Service Layer (Phase 8A)
 Module: backend.services.dropout_service
 Purpose: Business logic for dropout risk assessment, probability calibration,
-non-punitive recommendations, subject-scoped teacher access, and privacy-preserving analytics.
+non-punitive recommendations, subject/term-scoped teacher access, organization isolation,
+and privacy-preserving analytics.
 """
 
 import os
@@ -18,18 +19,15 @@ from pymongo import DESCENDING
 from pymongo.database import Database
 from pymongo.errors import PyMongoError
 
-from backend.models.dropout_record_model import DropoutRecord, VALID_DROPOUT_RISK_TIERS
+from backend.models.dropout_record_model import DropoutRecord
 from backend.models.user_model import User
 from backend.ml.dropout_pipeline import (
     ALL_FEATURE_COLUMNS,
     assert_no_dropout_leakage,
-    NOMINAL_CATEGORICAL_FEATURES,
-    BINARY_FEATURES,
-    NUMERICAL_FEATURES,
 )
 from backend.services.system_log_service import log_event
 from backend.services.anomaly_service import apply_complementary_partition_suppression
-from backend.utils.decorators import can_access_student_data
+from backend.utils.decorators import can_access_student_data, can_access_student_subject_data
 from backend.utils.security import to_object_id
 
 logger = logging.getLogger(__name__)
@@ -48,47 +46,22 @@ _CACHED_METADATA = None
 
 DEFAULT_DISCLAIMER = (
     "Early-warning estimate designed solely for proactive academic support. "
-    "Requires human review by authorized advisors before taking any intervention."
+    "Trained on the UCI Portuguese higher-education dataset (not locally validated on "
+    "EduPredict cohorts). Requires human review by authorized advisors before taking any intervention."
 )
 
-DEFAULT_FEATURE_VALUES: Dict[str, Any] = {
-    "Marital status": 1,
-    "Application mode": 1,
-    "Application order": 1,
-    "Course": 171,
-    "Daytime/evening attendance": 1,
-    "Previous qualification": 1,
-    "Previous qualification (grade)": 130.0,
-    "Nacionality": 1,
-    "Mother's qualification": 19,
-    "Father's qualification": 19,
-    "Mother's occupation": 5,
-    "Father's occupation": 5,
-    "Admission grade": 130.0,
-    "Displaced": 0,
-    "Educational special needs": 0,
-    "Debtor": 0,
-    "Tuition fees up to date": 1,
-    "Gender": 0,
-    "Scholarship holder": 0,
-    "Age at enrollment": 20,
-    "International": 0,
-    "Curricular units 1st sem (credited)": 0,
-    "Curricular units 1st sem (enrolled)": 6,
-    "Curricular units 1st sem (evaluations)": 6,
-    "Curricular units 1st sem (approved)": 5,
-    "Curricular units 1st sem (grade)": 12.5,
-    "Curricular units 1st sem (without evaluations)": 0,
-    "Curricular units 2nd sem (credited)": 0,
-    "Curricular units 2nd sem (enrolled)": 6,
-    "Curricular units 2nd sem (evaluations)": 6,
-    "Curricular units 2nd sem (approved)": 5,
-    "Curricular units 2nd sem (grade)": 12.5,
-    "Curricular units 2nd sem (without evaluations)": 0,
-    "Unemployment rate": 11.0,
-    "Inflation rate": 1.4,
-    "GDP": 1.0,
+EDUCATIONAL_MAPPING_KEYS = {
+    "previous_exam_marks",
+    "assignment_completion_rate",
+    "attendance_percentage",
+    "quiz_average",
+    "study_hours_per_week",
 }
+
+UCI_BENCHMARK_DISCLOSURE = (
+    "Reported metrics (e.g., ROC-AUC 0.9317, PR-AUC 0.9024) are holdout benchmark results "
+    "on the UCI Portuguese higher-education dataset, not validated EduPredict institutional performance."
+)
 
 
 def load_cached_dropout_model():
@@ -129,52 +102,167 @@ def load_cached_dropout_metadata() -> Optional[Dict[str, Any]]:
         return None
 
 
+def _extract_user_display_name(user_doc: Optional[Dict[str, Any]]) -> Optional[str]:
+    """Safely extract display name from EduPredict user document."""
+    if not user_doc:
+        return None
+    full_name = user_doc.get("full_name")
+    if full_name and isinstance(full_name, str) and full_name.strip():
+        return full_name.strip()
+    first_last = f"{user_doc.get('first_name', '')} {user_doc.get('last_name', '')}".strip()
+    if first_last:
+        return first_last
+    return user_doc.get("username") or user_doc.get("email")
+
+
+def _check_organization_scope(actor_user: Any, target_doc_or_user: Optional[Dict[str, Any]]) -> bool:
+    """
+    Enforce multi-organization / tenant isolation when organization_id is present.
+    If actor_user has an organization_id, the target record/user must belong to the same organization.
+    """
+    actor_org = getattr(actor_user, "organization_id", None)
+    if not actor_org:
+        return True
+    if not target_doc_or_user:
+        return False
+    target_org = (
+        target_doc_or_user.get("organization_id")
+        if isinstance(target_doc_or_user, dict)
+        else getattr(target_doc_or_user, "organization_id", None)
+    )
+    if not target_org:
+        return False
+    return str(actor_org).strip() == str(target_org).strip()
+
+
+def _check_teacher_student_access(
+    db: Database,
+    teacher_user: User,
+    student_oid: ObjectId,
+    subject: Optional[str] = None,
+    academic_term: Optional[str] = None,
+) -> bool:
+    """
+    Enforce Phase 6 subject, enrollment, and academic term authorization for teachers.
+    """
+    if subject:
+        return can_access_student_subject_data(
+            actor_user=teacher_user,
+            student_id=student_oid,
+            subject=subject,
+            db=db,
+            academic_term=academic_term,
+            require_term=bool(academic_term),
+        )
+
+    if db is None:
+        return False
+
+    teacher_oid = to_object_id(teacher_user.id)
+    if not teacher_oid:
+        return False
+
+    t_query: Dict[str, Any] = {"teacher_id": teacher_oid, "status": "active"}
+    if academic_term and isinstance(academic_term, str) and academic_term.strip():
+        t_query["academic_term"] = academic_term.strip()
+
+    t_subjs = list(db.teacher_subject_assignments.find(t_query))
+    if not t_subjs:
+        return False
+
+    term_conditions = []
+    for a in t_subjs:
+        s_id = a.get("subject_id")
+        term = a.get("academic_term")
+        if s_id and term:
+            term_conditions.append({
+                "student_id": student_oid,
+                "subject_id": s_id,
+                "academic_term": term,
+                "status": "active",
+            })
+
+    if not term_conditions:
+        return False
+
+    enroll_q = term_conditions[0] if len(term_conditions) == 1 else {"$or": term_conditions}
+    return db.student_subject_enrollments.find_one(enroll_q) is not None
+
+
 class DropoutService:
     """Service handling dropout risk scoring, persistence, and RBAC."""
 
     @staticmethod
-    def map_academic_record_to_features(academic_record: Dict[str, Any]) -> Dict[str, Any]:
+    def map_academic_record_to_features(
+        academic_record: Optional[Dict[str, Any]],
+    ) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
         """
-        Map EduPredict student academic indicators to UCI dropout feature space with safe heuristics.
+        Map genuinely observed EduPredict academic indicators to defensible UCI dropout features.
+        Uncollected demographic, financial, and macroeconomic fields are left as None/NaN
+        so they are never silently fabricated.
         """
-        features = dict(DEFAULT_FEATURE_VALUES)
+        if not academic_record or not isinstance(academic_record, dict):
+            return None, "Academic record is missing or invalid."
 
-        attendance = academic_record.get("attendance_percentage", 80.0)
-        study_hours = academic_record.get("study_hours_per_week", 15.0)
-        completion_rate = academic_record.get("assignment_completion_rate", 75.0)
-        exam_marks = academic_record.get("previous_exam_marks", 60.0)
-        quiz_avg = academic_record.get("quiz_average", 60.0)
+        raw_marks = academic_record.get("previous_exam_marks")
+        raw_completion = academic_record.get("assignment_completion_rate")
+        raw_attendance = academic_record.get("attendance_percentage")
+        raw_quiz = academic_record.get("quiz_average")
 
-        # Map to admission grade and previous qualification (scaled 0-200)
-        features["Admission grade"] = min(200.0, max(0.0, exam_marks * 2.0))
-        features["Previous qualification (grade)"] = min(200.0, max(0.0, quiz_avg * 2.0))
+        if raw_marks is None or raw_completion is None:
+            return (
+                None,
+                "Insufficient academic indicators: 'previous_exam_marks' and "
+                "'assignment_completion_rate' are required for dropout risk mapping.",
+            )
 
-        # Map academic performance to Curricular units 1st and 2nd sem (grades 0-20, approved units 0-6)
-        normalized_grade = min(20.0, max(0.0, (exam_marks / 5.0)))
+        try:
+            exam_marks = float(raw_marks)
+            completion_rate = float(raw_completion)
+            attendance = float(raw_attendance) if raw_attendance is not None else None
+            quiz_avg = float(raw_quiz) if raw_quiz is not None else None
+        except (ValueError, TypeError):
+            return None, "Invalid numeric values in academic record indicators."
+
+        # Start with unobserved (None/NaN) for all 36 UCI columns — never invent demographics/financials
+        features: Dict[str, Any] = {col: np.nan for col in ALL_FEATURE_COLUMNS}
+
+        # Defensible academic mappings (0-100 EduPredict scale -> 0-20 UCI grade scale, 6-unit term load)
+        normalized_grade = min(20.0, max(0.0, exam_marks / 5.0))
         approved_ratio = min(1.0, max(0.0, completion_rate / 100.0))
         approved_units = int(round(6 * approved_ratio))
 
+        features["Curricular units 1st sem (enrolled)"] = 6
         features["Curricular units 1st sem (approved)"] = approved_units
-        features["Curricular units 1st sem (grade)"] = normalized_grade
+        features["Curricular units 1st sem (grade)"] = round(normalized_grade, 4)
+        features["Curricular units 2nd sem (enrolled)"] = 6
         features["Curricular units 2nd sem (approved)"] = approved_units
-        features["Curricular units 2nd sem (grade)"] = normalized_grade
+        features["Curricular units 2nd sem (grade)"] = round(normalized_grade, 4)
 
-        # Map attendance to evaluations ratio
-        eval_count = 6 if attendance >= 50.0 else int(max(1, round(6 * (attendance / 100.0))))
-        features["Curricular units 1st sem (evaluations)"] = eval_count
-        features["Curricular units 2nd sem (evaluations)"] = eval_count
+        if quiz_avg is not None:
+            features["Previous qualification (grade)"] = round(min(200.0, max(0.0, quiz_avg * 2.0)), 4)
 
-        return features
+        if attendance is not None:
+            eval_count = 6 if attendance >= 50.0 else int(max(1, round(6 * min(1.0, max(0.0, attendance / 100.0)))))
+            features["Curricular units 1st sem (evaluations)"] = eval_count
+            features["Curricular units 2nd sem (evaluations)"] = eval_count
+
+        return features, None
 
     @classmethod
     def evaluate_student_features(
         cls,
         features_input: Dict[str, Any],
+        feature_source: str = "explicit_uci_features",
     ) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
         """
         Run inference using calibrated model, validate against leakage,
-        and generate risk factors and recommendations.
+        preserve missing/unobserved values cleanly via pipeline imputation,
+        and generate risk factors only from genuinely observed values.
         """
+        if not features_input or not isinstance(features_input, dict):
+            return None, "Insufficient feature data: no valid observed model features provided."
+
         # 1. Leakage guard
         try:
             assert_no_dropout_leakage(list(features_input.keys()))
@@ -186,14 +274,20 @@ class DropoutService:
         if model is None:
             return None, "Dropout prediction model is currently unavailable."
 
-        # 3. Align features
-        feature_dict = dict(DEFAULT_FEATURE_VALUES)
+        # 3. Align features — unobserved fields remain np.nan (never fabricated defaults)
+        feature_dict: Dict[str, Any] = {col: np.nan for col in ALL_FEATURE_COLUMNS}
+        observed_keys: List[str] = []
+
         for k, v in features_input.items():
-            if k in feature_dict and v is not None:
+            if k in feature_dict and v is not None and not (isinstance(v, float) and np.isnan(v)):
                 try:
-                    feature_dict[k] = float(v) if isinstance(v, (int, float, str)) else v
+                    feature_dict[k] = float(v)
+                    observed_keys.append(k)
                 except (ValueError, TypeError):
-                    pass
+                    return None, f"Invalid numeric value for feature '{k}'."
+
+        if not observed_keys:
+            return None, "Insufficient feature data: at least one valid model feature must be observed."
 
         df = pd.DataFrame([feature_dict])[ALL_FEATURE_COLUMNS]
 
@@ -212,75 +306,89 @@ class DropoutService:
         else:
             risk_tier = "High"
 
-        # 6. Key risk and protective factors
+        # 6. Key risk and protective factors — strictly from genuinely observed (non-NaN) features
         key_risk_factors = []
         protective_factors = []
 
-        cu1_app = feature_dict.get("Curricular units 1st sem (approved)", 5)
-        cu2_app = feature_dict.get("Curricular units 2nd sem (approved)", 5)
-        tuition = feature_dict.get("Tuition fees up to date", 1)
-        scholarship = feature_dict.get("Scholarship holder", 0)
-        debtor = feature_dict.get("Debtor", 0)
-        grade1 = feature_dict.get("Curricular units 1st sem (grade)", 12.0)
+        def _obs(col_name: str) -> Optional[float]:
+            val = feature_dict.get(col_name)
+            if val is None or (isinstance(val, float) and np.isnan(val)):
+                return None
+            return float(val)
 
-        if cu1_app < 4 or cu2_app < 4:
-            key_risk_factors.append({
-                "factor": "Curricular Unit Completion Deficit",
-                "detail": f"Completed {cu1_app} units in 1st sem and {cu2_app} units in 2nd sem out of expected enrolled units.",
-                "importance": "High",
-            })
-        else:
-            protective_factors.append({
-                "factor": "Consistent Curricular Progress",
-                "detail": f"Completed {cu1_app} (1st sem) and {cu2_app} (2nd sem) curricular units on schedule.",
-            })
+        cu1_app = _obs("Curricular units 1st sem (approved)")
+        cu2_app = _obs("Curricular units 2nd sem (approved)")
+        tuition = _obs("Tuition fees up to date")
+        scholarship = _obs("Scholarship holder")
+        debtor = _obs("Debtor")
+        grade1 = _obs("Curricular units 1st sem (grade)")
 
-        if tuition == 0:
-            key_risk_factors.append({
-                "factor": "Tuition Payment Delay",
-                "detail": "Tuition fees are flagged as overdue, which strongly correlates with enrollment interruption.",
-                "importance": "High",
-            })
-        else:
-            protective_factors.append({
-                "factor": "Good Financial Standing",
-                "detail": "Tuition payments are fully up-to-date.",
-            })
+        if cu1_app is not None or cu2_app is not None:
+            c1 = int(cu1_app) if cu1_app is not None else 0
+            c2 = int(cu2_app) if cu2_app is not None else 0
+            if (cu1_app is not None and cu1_app < 4) or (cu2_app is not None and cu2_app < 4):
+                key_risk_factors.append({
+                    "factor": "Curricular Unit Completion Deficit",
+                    "detail": f"Projected/observed completion of {c1} (1st sem) and {c2} (2nd sem) curricular units.",
+                    "importance": "High",
+                })
+            else:
+                protective_factors.append({
+                    "factor": "Consistent Curricular Progress",
+                    "detail": f"Projected/observed completion of {c1} (1st sem) and {c2} (2nd sem) curricular units.",
+                })
 
-        if debtor == 1:
+        if tuition is not None:
+            if tuition == 0:
+                key_risk_factors.append({
+                    "factor": "Tuition Payment Delay",
+                    "detail": "Tuition fees are flagged as overdue, which correlates with enrollment interruption.",
+                    "importance": "High",
+                })
+            else:
+                protective_factors.append({
+                    "factor": "Good Financial Standing",
+                    "detail": "Tuition payments are recorded as up-to-date.",
+                })
+
+        if debtor is not None and debtor == 1:
             key_risk_factors.append({
                 "factor": "Financial Debt Flag",
                 "detail": "Student has an outstanding institutional balance requiring advisory check-in.",
                 "importance": "Medium",
             })
 
-        if scholarship == 1:
+        if scholarship is not None and scholarship == 1:
             protective_factors.append({
                 "factor": "Active Scholarship",
                 "detail": "Student holds an active academic scholarship supporting continuous enrollment.",
             })
 
-        if grade1 < 10.0:
-            key_risk_factors.append({
-                "factor": "Early Academic Margin",
-                "detail": f"1st semester grade average ({grade1:.1f}/20) is below passing threshold.",
-                "importance": "High",
-            })
-        elif grade1 >= 14.0:
-            protective_factors.append({
-                "factor": "Strong Academic Standing",
-                "detail": f"1st semester grade average ({grade1:.1f}/20) exceeds cohort baseline.",
-            })
+        if grade1 is not None:
+            if grade1 < 10.0:
+                key_risk_factors.append({
+                    "factor": "Early Academic Margin",
+                    "detail": f"Mapped grade average ({grade1:.1f}/20) is below the 10.0 passing benchmark.",
+                    "importance": "High",
+                })
+            elif grade1 >= 14.0:
+                protective_factors.append({
+                    "factor": "Strong Academic Standing",
+                    "detail": f"Mapped grade average ({grade1:.1f}/20) exceeds cohort baseline.",
+                })
 
         # 7. Supportive, Non-Punitive Recommendations
         recommendations = []
         if risk_tier == "High":
             recommendations.extend([
                 "Schedule a 1-on-1 supportive counseling check-in with an Academic Success Advisor.",
-                "Connect with Student Financial Support to explore tuition installment plans and emergency grants.",
                 "Enroll in complimentary Peer Tutoring and study skill development workshops.",
-                "Develop an individualized course completion plan with department faculty mentor.",
+                "Develop an individualized course completion plan with a department faculty mentor.",
             ])
+            if tuition == 0 or debtor == 1:
+                recommendations.append(
+                    "Connect with Student Financial Support to explore tuition installment plans and emergency grants."
+                )
         elif risk_tier == "Moderate":
             recommendations.extend([
                 "Attend midterm progress advisory hours to review core subject milestones.",
@@ -296,6 +404,12 @@ class DropoutService:
         metadata = load_cached_dropout_metadata() or {}
         model_version = metadata.get("model_version", "Dropout_LogisticRegression_v1.0.0")
 
+        # Exact snapshot of values passed to inference (None for unobserved/imputed fields)
+        exact_snapshot = {
+            col: (None if (val is None or (isinstance(val, float) and np.isnan(val))) else round(float(val), 4))
+            for col, val in feature_dict.items()
+        }
+
         result = {
             "risk_probability": round(proba, 4),
             "risk_tier": risk_tier,
@@ -303,6 +417,9 @@ class DropoutService:
             "key_risk_factors": key_risk_factors,
             "protective_factors": protective_factors,
             "recommendations": recommendations,
+            "feature_source": feature_source,
+            "observed_feature_count": len(observed_keys),
+            "features_snapshot": exact_snapshot,
             "requires_human_review": True,
             "disclaimer": DEFAULT_DISCLAIMER,
             "evaluated_at": datetime.now(timezone.utc).isoformat(),
@@ -315,32 +432,91 @@ class DropoutService:
         cls,
         db: Database,
         student_id: ObjectId | str,
-        features_input: Dict[str, Any],
+        features_input: Optional[Dict[str, Any]],
         actor_user: User,
         academic_term: Optional[str] = None,
         student_name: Optional[str] = None,
+        subject: Optional[str] = None,
     ) -> Tuple[Optional[Dict[str, Any]], Optional[str], int]:
         """
         Assess student dropout risk and persist to MongoDB dropout_records collection.
-        Authorized for Admin and Teacher (for assigned students only).
+        Authorized for Admin (org-scoped) and Teacher (subject/enrollment/term/org-scoped).
         """
         student_oid = to_object_id(student_id)
         if not student_oid:
             return None, "Invalid student_id.", 400
 
+        user_doc = db.users.find_one({"_id": student_oid}) if db is not None else None
+        if db is not None and not user_doc:
+            return None, "Student record not found.", 404
+
+        # Organization isolation check (applies to Admin and Teacher)
+        if not _check_organization_scope(actor_user, user_doc):
+            return None, "Access denied. Cross-organization student access is prohibited.", 403
+
         # RBAC Check
-        if not can_access_student_data(actor_user, student_oid, db):
+        actor_role = getattr(actor_user, "role", "")
+        if actor_role == "teacher":
+            if not _check_teacher_student_access(db, actor_user, student_oid, subject=subject, academic_term=academic_term):
+                return None, "Access denied. You are not authorized to evaluate this student for the specified subject/term.", 403
+        elif not can_access_student_data(actor_user, student_oid, db):
             return None, "Access denied. You are not authorized to evaluate this student.", 403
 
-        # Lookup student name if not provided
-        if not student_name and db is not None:
-            user_doc = db.users.find_one({"_id": student_oid})
-            if user_doc:
-                student_name = f"{user_doc.get('first_name', '')} {user_doc.get('last_name', '')}".strip() or user_doc.get("username")
+        if not student_name and user_doc:
+            student_name = _extract_user_display_name(user_doc)
 
-        eval_data, err = cls.evaluate_student_features(features_input)
+        # Resolve features: explicit payload vs DB academic record
+        resolved_features: Optional[Dict[str, Any]] = None
+        feature_source = "explicit_uci_features"
+
+        if features_input and isinstance(features_input, dict) and len(features_input) > 0:
+            # Check leakage first before classifying payload type
+            try:
+                assert_no_dropout_leakage(list(features_input.keys()))
+            except ValueError as err:
+                return None, str(err), 400
+
+            has_uci_keys = any(k in ALL_FEATURE_COLUMNS for k in features_input.keys())
+            has_edupredict_keys = any(k in EDUCATIONAL_MAPPING_KEYS for k in features_input.keys())
+
+            if has_edupredict_keys and not has_uci_keys:
+                resolved_features, map_err = cls.map_academic_record_to_features(features_input)
+                if map_err:
+                    return None, map_err, 422
+                feature_source = "academic_record_mapping"
+            else:
+                resolved_features = features_input
+                feature_source = "explicit_uci_features"
+        else:
+            # Look up student's actual academic record in MongoDB
+            if db is None:
+                return None, "Database connection unavailable.", 500
+            ac_query: Dict[str, Any] = {"student_id": student_oid}
+            if academic_term and academic_term.strip():
+                ac_query["term"] = academic_term.strip()
+            ac_doc = db.academic_records.find_one(ac_query, sort=[("created_at", DESCENDING)])
+            if not ac_doc:
+                return (
+                    None,
+                    "Insufficient academic data: no academic record or valid features available for dropout assessment.",
+                    422,
+                )
+            resolved_features, map_err = cls.map_academic_record_to_features(ac_doc)
+            if map_err:
+                return None, map_err, 422
+            feature_source = "academic_record_mapping"
+            if not academic_term:
+                academic_term = ac_doc.get("term")
+
+        eval_data, err = cls.evaluate_student_features(resolved_features, feature_source=feature_source)
         if err:
-            return None, err, 400
+            status = 422 if "Insufficient" in err else 400
+            return None, err, status
+
+        org_id = (
+            (user_doc.get("organization_id") if user_doc else None)
+            or getattr(actor_user, "organization_id", None)
+        )
 
         record = DropoutRecord(
             student_id=student_oid,
@@ -352,9 +528,12 @@ class DropoutService:
             protective_factors=eval_data["protective_factors"],
             recommendations=eval_data["recommendations"],
             academic_term=academic_term or "Current Term",
+            organization_id=org_id,
+            feature_source=eval_data["feature_source"],
+            observed_feature_count=eval_data["observed_feature_count"],
             requires_human_review=True,
             disclaimer=DEFAULT_DISCLAIMER,
-            features_snapshot=features_input,
+            features_snapshot=eval_data["features_snapshot"],
         )
 
         if db is not None:
@@ -371,6 +550,8 @@ class DropoutService:
                         "student_id": str(student_oid),
                         "risk_tier": record.risk_tier,
                         "risk_probability": round(record.risk_probability, 4),
+                        "feature_source": record.feature_source,
+                        "observed_feature_count": record.observed_feature_count,
                         "actor_email": getattr(actor_user, "email", "system"),
                     },
                     user_id=student_oid,
@@ -388,41 +569,65 @@ class DropoutService:
         db: Database,
         actor_user: User,
         student_id: ObjectId | str,
+        subject: Optional[str] = None,
+        academic_term: Optional[str] = None,
     ) -> Tuple[Optional[Dict[str, Any]], Optional[str], int]:
         """
         Retrieve dropout risk assessment for a specific student.
         - Student: only self
-        - Teacher: assigned students only
-        - Admin: all students
+        - Teacher: assigned students only (matching active subject, enrollment, and term)
+        - Admin: organization-scoped students
         - Analyst: 403 Forbidden
         """
         student_oid = to_object_id(student_id)
         if not student_oid:
             return None, "Invalid student_id.", 400
 
-        if not can_access_student_data(actor_user, student_oid, db):
-            return None, "Access denied. You are not authorized to view this student's dropout assessment.", 403
-
         if db is None:
             return None, "Database connection unavailable.", 500
 
-        doc = db.dropout_records.find_one({"student_id": student_oid})
+        user_doc = db.users.find_one({"_id": student_oid})
+        if not _check_organization_scope(actor_user, user_doc):
+            return None, "Access denied. Cross-organization student access is prohibited.", 403
+
+        actor_role = getattr(actor_user, "role", "")
+        if actor_role == "teacher":
+            if not _check_teacher_student_access(db, actor_user, student_oid, subject=subject, academic_term=academic_term):
+                return None, "Access denied. You are not authorized to view this student's dropout assessment.", 403
+        elif not can_access_student_data(actor_user, student_oid, db):
+            return None, "Access denied. You are not authorized to view this student's dropout assessment.", 403
+
+        doc_query: Dict[str, Any] = {"student_id": student_oid}
+        if academic_term and academic_term.strip():
+            doc_query["academic_term"] = academic_term.strip()
+
+        doc = db.dropout_records.find_one(doc_query)
         if doc:
             record = DropoutRecord.from_doc(doc)
             return record.to_dict(), None, 200
 
-        # If not evaluated yet, generate on-the-fly using student's academic record if exists
-        ac_doc = db.academic_records.find_one({"student_id": student_oid}, sort=[("created_at", DESCENDING)])
-        features = cls.map_academic_record_to_features(ac_doc) if ac_doc else dict(DEFAULT_FEATURE_VALUES)
+        # If not evaluated yet, evaluate on-the-fly ONLY if a genuine academic record exists
+        ac_query: Dict[str, Any] = {"student_id": student_oid}
+        if academic_term and academic_term.strip():
+            ac_query["term"] = academic_term.strip()
+        ac_doc = db.academic_records.find_one(ac_query, sort=[("created_at", DESCENDING)])
+        if not ac_doc:
+            return (
+                None,
+                "Dropout risk assessment is unavailable because no academic record exists for this student.",
+                422,
+            )
 
-        eval_data, err = cls.evaluate_student_features(features)
+        features, map_err = cls.map_academic_record_to_features(ac_doc)
+        if map_err:
+            return None, map_err, 422
+
+        eval_data, err = cls.evaluate_student_features(features, feature_source="academic_record_mapping")
         if err:
             return None, err, 500
 
-        user_doc = db.users.find_one({"_id": student_oid})
-        name = ""
-        if user_doc:
-            name = f"{user_doc.get('first_name', '')} {user_doc.get('last_name', '')}".strip() or user_doc.get("username")
+        name = _extract_user_display_name(user_doc)
+        org_id = user_doc.get("organization_id") if user_doc else getattr(actor_user, "organization_id", None)
 
         record = DropoutRecord(
             student_id=student_oid,
@@ -433,9 +638,13 @@ class DropoutService:
             key_risk_factors=eval_data["key_risk_factors"],
             protective_factors=eval_data["protective_factors"],
             recommendations=eval_data["recommendations"],
-            academic_term=ac_doc.get("term", "Current Term") if ac_doc else "Current Term",
+            academic_term=ac_doc.get("term", "Current Term"),
+            organization_id=org_id,
+            feature_source=eval_data["feature_source"],
+            observed_feature_count=eval_data["observed_feature_count"],
             requires_human_review=True,
             disclaimer=DEFAULT_DISCLAIMER,
+            features_snapshot=eval_data["features_snapshot"],
         )
 
         return record.to_dict(), None, 200
@@ -445,72 +654,123 @@ class DropoutService:
         cls,
         db: Database,
         teacher_user: User,
+        subject_id: Optional[str] = None,
+        academic_term: Optional[str] = None,
         page: int = 1,
         limit: int = 50,
     ) -> Tuple[Optional[Dict[str, Any]], Optional[str], int]:
         """
-        Retrieve dropout risk assessments for all students actively enrolled
-        in subjects assigned to this teacher. Strictly scoped to assigned classes.
+        Retrieve dropout risk assessments for students actively enrolled
+        in subjects AND exact academic terms assigned to this teacher.
+        Strictly excludes students without valid assessments or academic records.
         """
         if db is None:
             return None, "Database unavailable.", 500
 
         teacher_oid = to_object_id(teacher_user.id)
-        assignments = list(db.teacher_subject_assignments.find({"teacher_id": teacher_oid, "status": "active"}))
+        t_query: Dict[str, Any] = {"teacher_id": teacher_oid, "status": "active"}
+        if subject_id:
+            subj_oid = to_object_id(subject_id)
+            if not subj_oid:
+                return None, "Invalid subject_id.", 400
+            t_query["subject_id"] = subj_oid
+        if academic_term and academic_term.strip():
+            t_query["academic_term"] = academic_term.strip()
+
+        assignments = list(db.teacher_subject_assignments.find(t_query))
         if not assignments:
             return {"students": [], "total": 0, "page": page, "limit": limit}, None, 200
 
-        # Collect subject IDs
-        subject_ids = [a["subject_id"] for a in assignments if a.get("subject_id")]
-        enrollments = list(db.student_subject_enrollments.find({
-            "subject_id": {"$in": subject_ids},
-            "status": "active",
-        }))
+        # Require exact (subject_id, academic_term) match on active enrollments
+        pair_conditions = []
+        for a in assignments:
+            s_id = a.get("subject_id")
+            term = a.get("academic_term")
+            if s_id and term:
+                pair_conditions.append({
+                    "subject_id": s_id,
+                    "academic_term": term,
+                    "status": "active",
+                })
 
-        student_ids = list(set([e["student_id"] for e in enrollments if e.get("student_id")]))
+        if not pair_conditions:
+            return {"students": [], "total": 0, "page": page, "limit": limit}, None, 200
+
+        enroll_q = pair_conditions[0] if len(pair_conditions) == 1 else {"$or": pair_conditions}
+        enrollments = list(db.student_subject_enrollments.find(enroll_q))
+
+        candidate_student_ids = list({e["student_id"] for e in enrollments if e.get("student_id")})
+        if not candidate_student_ids:
+            return {"students": [], "total": 0, "page": page, "limit": limit}, None, 200
+
+        # Enforce organization isolation on student list
+        teacher_org = getattr(teacher_user, "organization_id", None)
+        if teacher_org:
+            org_users = list(db.users.find({"_id": {"$in": candidate_student_ids}, "organization_id": teacher_org}, {"_id": 1}))
+            student_ids = [u["_id"] for u in org_users]
+        else:
+            student_ids = candidate_student_ids
+
         if not student_ids:
             return {"students": [], "total": 0, "page": page, "limit": limit}, None, 200
 
-        # Query assessments
         skip = (page - 1) * limit
-        total = db.dropout_records.count_documents({"student_id": {"$in": student_ids}})
-        cursor = db.dropout_records.find({"student_id": {"$in": student_ids}}).sort("created_at", DESCENDING).skip(skip).limit(limit)
+        rec_query: Dict[str, Any] = {"student_id": {"$in": student_ids}}
+        if academic_term and academic_term.strip():
+            rec_query["academic_term"] = academic_term.strip()
 
+        cursor = db.dropout_records.find(rec_query).sort("created_at", DESCENDING).skip(skip).limit(limit)
         records = [DropoutRecord.from_doc(d).to_dict() for d in cursor]
 
-        # For students without explicit dropout_record, backfill lightweight default
-        assessed_ids = set([to_object_id(r["student_id"]) for r in records])
+        # For students without persisted dropout_record, evaluate ONLY if genuine academic_record exists
+        assessed_ids = {to_object_id(r["student_id"]) for r in records}
         unassessed_ids = [sid for sid in student_ids if sid not in assessed_ids]
 
         if unassessed_ids and len(records) < limit:
-            users_cursor = db.users.find({"_id": {"$in": unassessed_ids[:(limit - len(records))]}})
+            users_cursor = db.users.find({"_id": {"$in": unassessed_ids}})
             for u in users_cursor:
+                if len(records) >= limit:
+                    break
                 uid = u["_id"]
-                ac_doc = db.academic_records.find_one({"student_id": uid}, sort=[("created_at", DESCENDING)])
-                feats = cls.map_academic_record_to_features(ac_doc) if ac_doc else dict(DEFAULT_FEATURE_VALUES)
-                eval_res, _ = cls.evaluate_student_features(feats)
-                if eval_res:
-                    name = f"{u.get('first_name', '')} {u.get('last_name', '')}".strip() or u.get("username")
-                    records.append({
-                        "id": str(ObjectId()),
-                        "student_id": str(uid),
-                        "student_name": name,
-                        "risk_probability": eval_res["risk_probability"],
-                        "risk_tier": eval_res["risk_tier"],
-                        "model_version": eval_res["model_version"],
-                        "key_risk_factors": eval_res["key_risk_factors"],
-                        "protective_factors": eval_res["protective_factors"],
-                        "recommendations": eval_res["recommendations"],
-                        "academic_term": "Current Term",
-                        "requires_human_review": True,
-                        "disclaimer": DEFAULT_DISCLAIMER,
-                        "created_at": datetime.now(timezone.utc).isoformat(),
-                        "updated_at": datetime.now(timezone.utc).isoformat(),
-                    })
+                ac_query: Dict[str, Any] = {"student_id": uid}
+                if academic_term and academic_term.strip():
+                    ac_query["term"] = academic_term.strip()
+                ac_doc = db.academic_records.find_one(ac_query, sort=[("created_at", DESCENDING)])
+                if not ac_doc:
+                    continue  # Never fabricate prediction when no academic record exists
+
+                feats, map_err = cls.map_academic_record_to_features(ac_doc)
+                if map_err or not feats:
+                    continue
+
+                eval_res, eval_err = cls.evaluate_student_features(feats, feature_source="academic_record_mapping")
+                if eval_err or not eval_res:
+                    continue
+
+                name = _extract_user_display_name(u)
+                records.append({
+                    "id": str(ObjectId()),
+                    "student_id": str(uid),
+                    "student_name": name,
+                    "risk_probability": eval_res["risk_probability"],
+                    "risk_tier": eval_res["risk_tier"],
+                    "model_version": eval_res["model_version"],
+                    "key_risk_factors": eval_res["key_risk_factors"],
+                    "protective_factors": eval_res["protective_factors"],
+                    "recommendations": eval_res["recommendations"],
+                    "academic_term": ac_doc.get("term", "Current Term"),
+                    "feature_source": eval_res["feature_source"],
+                    "observed_feature_count": eval_res["observed_feature_count"],
+                    "features_snapshot": eval_res["features_snapshot"],
+                    "requires_human_review": True,
+                    "disclaimer": DEFAULT_DISCLAIMER,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                })
 
         return {
             "students": records,
-            "total": total or len(records),
+            "total": len(records),
             "page": page,
             "limit": limit,
         }, None, 200
@@ -522,19 +782,24 @@ class DropoutService:
         admin_user: User,
     ) -> Tuple[Optional[Dict[str, Any]], Optional[str], int]:
         """
-        Institution-wide dropout metrics and distributions for Admin role.
+        Institution-scoped dropout metrics and distributions for Admin role.
+        Enforces organization isolation when organization_id is set on admin_user.
         """
         if db is None:
             return None, "Database unavailable.", 500
 
-        total_assessed = db.dropout_records.count_documents({})
-        low_count = db.dropout_records.count_documents({"risk_tier": "Low"})
-        mod_count = db.dropout_records.count_documents({"risk_tier": "Moderate"})
-        high_count = db.dropout_records.count_documents({"risk_tier": "High"})
+        base_filter: Dict[str, Any] = {}
+        admin_org = getattr(admin_user, "organization_id", None)
+        if admin_org:
+            base_filter["organization_id"] = admin_org
 
-        # Recent high risk alerts
+        total_assessed = db.dropout_records.count_documents(base_filter)
+        low_count = db.dropout_records.count_documents({**base_filter, "risk_tier": "Low"})
+        mod_count = db.dropout_records.count_documents({**base_filter, "risk_tier": "Moderate"})
+        high_count = db.dropout_records.count_documents({**base_filter, "risk_tier": "High"})
+
         recent_high = list(
-            db.dropout_records.find({"risk_tier": "High"})
+            db.dropout_records.find({**base_filter, "risk_tier": "High"})
             .sort("created_at", DESCENDING)
             .limit(10)
         )
@@ -554,6 +819,8 @@ class DropoutService:
                 "model_version": metadata.get("model_version", "Dropout_LogisticRegression_v1.0.0"),
                 "base_estimator": metadata.get("base_estimator", "LogisticRegression"),
                 "calibration": metadata.get("calibration", "CalibratedClassifierCV"),
+                "benchmark_dataset": "UCI Machine Learning Repository ID 697 (Portuguese Higher Education)",
+                "benchmark_disclosure": UCI_BENCHMARK_DISCLOSURE,
                 "test_metrics": metadata.get("test_metrics", {}),
             },
         }, None, 200
@@ -567,15 +834,20 @@ class DropoutService:
     ) -> Tuple[Optional[Dict[str, Any]], Optional[str], int]:
         """
         Privacy-preserving aggregate dropout analytics with conservative N<5 cell suppression.
-        Guarantees zero PII exposure and complementary suppression of small marginals.
+        Guarantees zero PII exposure, complementary suppression, and organization scoping.
         """
         if db is None:
             return None, "Database unavailable.", 500
 
-        total_assessed = db.dropout_records.count_documents({})
-        low_count = db.dropout_records.count_documents({"risk_tier": "Low"})
-        mod_count = db.dropout_records.count_documents({"risk_tier": "Moderate"})
-        high_count = db.dropout_records.count_documents({"risk_tier": "High"})
+        base_filter: Dict[str, Any] = {}
+        analyst_org = getattr(analyst_user, "organization_id", None)
+        if analyst_org:
+            base_filter["organization_id"] = analyst_org
+
+        total_assessed = db.dropout_records.count_documents(base_filter)
+        low_count = db.dropout_records.count_documents({**base_filter, "risk_tier": "Low"})
+        mod_count = db.dropout_records.count_documents({**base_filter, "risk_tier": "Moderate"})
+        high_count = db.dropout_records.count_documents({**base_filter, "risk_tier": "High"})
 
         raw_counts = {
             "Low": low_count,
@@ -596,6 +868,8 @@ class DropoutService:
             "risk_distribution": suppressed_partition,
             "model_summary": {
                 "model_version": metadata.get("model_version", "Dropout_LogisticRegression_v1.0.0"),
+                "benchmark_dataset": "UCI Portuguese Higher Education (ID 697)",
+                "benchmark_disclosure": UCI_BENCHMARK_DISCLOSURE,
                 "roc_auc": metadata.get("test_metrics", {}).get("roc_auc"),
                 "pr_auc": metadata.get("test_metrics", {}).get("pr_auc"),
                 "brier_score": metadata.get("test_metrics", {}).get("brier_score"),

@@ -94,12 +94,13 @@ To ensure raw decision scores represent true empirical probabilities, the champi
   - `idx_dropout_student_created`: `(student_id, created_at)`
 
 ### 5.2 Service Layer (`backend/services/dropout_service.py`)
-- `evaluate_student_features()`: Validates features, enforces leakage guard, loads cached calibrated model, outputs calibrated probability, risk tier, key factors, and supportive recommendations.
-- `record_student_assessment()`: Validates RBAC, evaluates student, upserts to MongoDB, records audit event via `log_event()`.
-- `get_student_assessment()`: Enforces self-only access for students, subject-scoped access for teachers, institution-wide for admin, and 403 Forbidden for analyst.
-- `get_teacher_roster_dropout()`: Retrieves students actively enrolled in teacher's assigned subjects; returns zero records if unassigned.
-- `get_admin_overview()`: Institution-wide distribution, total assessed, and model validation telemetry.
-- `get_analyst_overview()`: Macro distributions with Statistical Disclosure Control (SDC) conservative $N < 5$ cell suppression and complementary partition masking; zero student PII.
+- `map_academic_record_to_features()`: Maps only genuinely observed EduPredict academic indicators (`previous_exam_marks`, `assignment_completion_rate`, `attendance_percentage`, `quiz_average`) to defensible UCI curricular/grade features. Uncollected demographic, financial, and macroeconomic fields remain `NaN`/`None` and are never fabricated. Missing required indicators return a validation error (`422`) rather than silent defaults.
+- `evaluate_student_features()`: Validates features, enforces leakage guard, loads cached calibrated model, preserves unobserved fields via pipeline imputation, generates risk/protective factors strictly from observed features, and records the exact `features_snapshot` used for inference.
+- `record_student_assessment()`: Validates RBAC, organization scope, and subject/term alignment; evaluates student (from explicit payload or MongoDB `academic_records`); upserts to MongoDB; records audit event via `log_event()`.
+- `get_student_assessment()`: Enforces self-only access for students, active subject/enrollment/term-scoped access for teachers, organization-scoped access for admin, and `403 Forbidden` for analyst. Returns `422` if no valid academic record exists rather than fabricating a risk score.
+- `get_teacher_roster_dropout()`: Enforces exact `(subject_id, academic_term)` active assignment and enrollment matching plus organization isolation; skips unassessed students without academic records.
+- `get_admin_overview()`: Organization-scoped distribution, total assessed, and UCI holdout benchmark disclosures.
+- `get_analyst_overview()`: Organization-scoped macro distributions with Statistical Disclosure Control (SDC) conservative $N < 5$ cell suppression and complementary partition masking; zero student PII.
 
 ### 5.3 REST API Endpoints (`backend/routes/dropout_routes.py`)
 | Endpoint | Method | Allowed Roles | Description |

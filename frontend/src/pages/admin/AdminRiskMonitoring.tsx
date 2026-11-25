@@ -601,17 +601,17 @@ export const AdminRiskMonitoring: React.FC = () => {
 
               {/* Model Performance & Validation Card */}
               <SectionCard
-                title="Model Architecture & Probability Calibration"
-                subtitle="Calibrated early-warning classification evaluated on 885 unseen test cohort records."
+                title="UCI Benchmark Reference & Probability Calibration"
+                subtitle="Holdout benchmark metrics on the UCI Portuguese higher-education dataset (885 test records) — not locally validated on EduPredict institutional cohorts."
                 icon={<Cpu size={18} className="text-brand-600" />}
               >
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-2">
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                    <p className="text-[11px] font-semibold text-slate-500 uppercase">Test ROC-AUC</p>
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase">UCI Test ROC-AUC</p>
                     <p className="text-xl font-bold text-slate-800">
                       {dropoutData?.model_metadata?.test_metrics?.roc_auc ?? '0.9317'}
                     </p>
-                    <p className="text-[10px] text-slate-500">Holdout cohort</p>
+                    <p className="text-[10px] text-slate-500">UCI holdout benchmark</p>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
                     <p className="text-[11px] font-semibold text-slate-500 uppercase">Precision</p>
@@ -656,12 +656,20 @@ export const AdminRiskMonitoring: React.FC = () => {
 
                 <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200 text-xs text-amber-800 flex items-start gap-2">
                   <Info size={16} className="text-amber-600 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-semibold">Human Review & Ethical Governance: </span>
-                    <span>
-                      Model predictions are probabilistic early-warning estimates intended exclusively for supportive academic interventions.
-                      All risk flags require review by authorized academic advisors before contacting students.
-                    </span>
+                  <div className="space-y-1">
+                    <div>
+                      <span className="font-semibold">Human Review & Ethical Governance: </span>
+                      <span>
+                        Model predictions are probabilistic early-warning estimates intended exclusively for supportive academic interventions.
+                        All risk flags require human review by authorized academic advisors before contacting students, and never trigger automatic penalties.
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-semibold">Dataset & Feature Mapping Limitation: </span>
+                      <span>
+                        Trained on the Portuguese higher-education UCI dataset (ID 697). Mapping EduPredict academic indicators (grades, completion rate, attendance) leaves uncollected demographic, financial, and macroeconomic fields imputed rather than locally observed, and metrics above reflect UCI holdout benchmarks rather than local institutional validation.
+                      </span>
+                    </div>
                   </div>
                 </div>
               </SectionCard>

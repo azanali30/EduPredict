@@ -78,6 +78,7 @@ $$\begin{pmatrix} \text{TN} = 576 & \text{FP} = 25 \\ \text{FN} = 70 & \text{TP}
 
 ## 6. Limitations & Known Biases
 
-1. **Institutional Specificity**: The model was trained on European polytechnic student data (Portugal). Baseline tuition structures, grade scales (0–20), and admission pathways reflect that educational system.
-2. **Transfer Learning Consideration**: Deploying to non-European or secondary school contexts requires mapping institutional indicators into compatible ranges (as implemented via `map_academic_record_to_features()`).
-3. **Requirement for External Validation**: Model outputs must always be treated as probabilistic early-warning indicators rather than deterministic judgments.
+1. **UCI Holdout Benchmark vs. Local Institutional Validity**: All reported performance metrics (e.g., ROC-AUC `0.9317`, PR-AUC `0.9024`, Precision `89.54%`, Recall `75.35%`, Brier Score `0.0851`) represent holdout evaluation on the **UCI Portuguese higher-education dataset (ID 697)**, NOT validated EduPredict institutional performance.
+2. **Institutional Specificity**: The model was trained on European polytechnic student data (Portugal). Baseline tuition structures, grade scales (0–20), and admission pathways reflect that educational system.
+3. **Academic Feature Mapping Limitations**: When evaluating EduPredict `academic_records` via `map_academic_record_to_features()`, only defensible academic indicators (exam marks, assignment completion rate, attendance, quiz average) are mapped. Uncollected demographic, financial (`Tuition fees up to date`, `Debtor`, `Scholarship holder`), and macroeconomic features are left unobserved (`NaN`/`None`) and imputed by the scikit-learn pipeline rather than fabricated. Consequently, local predictions rely solely on academic proxies until native institutional dropout labels are collected and externally validated.
+4. **Requirement for External Validation & Human Review**: Model outputs must always be treated as probabilistic early-warning estimates requiring authorized advisor review before any intervention. Automated penalties or disciplinary actions are strictly prohibited.

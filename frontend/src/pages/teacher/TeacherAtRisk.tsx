@@ -357,11 +357,10 @@ export const TeacherAtRisk: React.FC = () => {
           <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 pb-3">
             <button
               onClick={() => setSelectedTab('ALL')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-                selectedTab === 'ALL'
-                  ? 'bg-navy-900 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 ${selectedTab === 'ALL'
+                ? 'bg-navy-900 text-white shadow-xs'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
             >
               <span>All At-Risk Learners</span>
               <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-white/20">
@@ -371,11 +370,10 @@ export const TeacherAtRisk: React.FC = () => {
 
             <button
               onClick={() => setSelectedTab('HIGH')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-                selectedTab === 'HIGH'
-                  ? 'bg-rose-600 text-white shadow-xs'
-                  : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
-              }`}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 ${selectedTab === 'HIGH'
+                ? 'bg-rose-600 text-white shadow-xs'
+                : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
+                }`}
             >
               <ShieldAlert size={13} />
               <span>High Risk Only</span>
@@ -386,11 +384,10 @@ export const TeacherAtRisk: React.FC = () => {
 
             <button
               onClick={() => setSelectedTab('MODERATE')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-                selectedTab === 'MODERATE'
-                  ? 'bg-amber-500 text-white shadow-xs'
-                  : 'bg-amber-50 text-amber-800 hover:bg-amber-100'
-              }`}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 ${selectedTab === 'MODERATE'
+                ? 'bg-amber-500 text-white shadow-xs'
+                : 'bg-amber-50 text-amber-800 hover:bg-amber-100'
+                }`}
             >
               <AlertTriangle size={13} />
               <span>Moderate Risk Only</span>
@@ -401,11 +398,10 @@ export const TeacherAtRisk: React.FC = () => {
 
             <button
               onClick={() => setSelectedTab('UNSCREENED')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-                selectedTab === 'UNSCREENED'
-                  ? 'bg-slate-700 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 ${selectedTab === 'UNSCREENED'
+                ? 'bg-slate-700 text-white shadow-xs'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
             >
               <Clock size={13} />
               <span>Unscreened Learners</span>
@@ -492,17 +488,17 @@ export const TeacherAtRisk: React.FC = () => {
             selectedTab === 'UNSCREENED'
               ? 'No Unscreened Students Found'
               : selectedTab === 'HIGH'
-              ? 'No High-Risk Learners Flagged'
-              : selectedTab === 'MODERATE'
-              ? 'No Moderate-Risk Learners Flagged'
-              : 'No At-Risk Learners Flagged'
+                ? 'No High-Risk Learners Flagged'
+                : selectedTab === 'MODERATE'
+                  ? 'No Moderate-Risk Learners Flagged'
+                  : 'No At-Risk Learners Flagged'
           }
           description={
             searchTerm || subjectFilter !== 'ALL' || milestoneFilter !== 'ALL'
               ? 'No students match the current filters. Try resetting the search or filter options.'
               : selectedTab === 'UNSCREENED'
-              ? 'All assigned students currently have at least one diagnostic prediction on file.'
-              : 'All evaluated students in your cohort currently project passing marks (50+/100) or have not yet been evaluated.'
+                ? 'All assigned students currently have at least one diagnostic prediction on file.'
+                : 'All evaluated students in your cohort currently project passing marks (50+/100) or have not yet been evaluated.'
           }
           actionText={
             searchTerm || subjectFilter !== 'ALL' || milestoneFilter !== 'ALL'
@@ -512,10 +508,10 @@ export const TeacherAtRisk: React.FC = () => {
           onAction={
             searchTerm || subjectFilter !== 'ALL' || milestoneFilter !== 'ALL'
               ? () => {
-                  setSearchTerm('');
-                  setSubjectFilter('ALL');
-                  setMilestoneFilter('ALL');
-                }
+                setSearchTerm('');
+                setSubjectFilter('ALL');
+                setMilestoneFilter('ALL');
+              }
               : undefined
           }
         />
@@ -527,10 +523,10 @@ export const TeacherAtRisk: React.FC = () => {
               {selectedTab === 'ALL'
                 ? 'combined priority triage'
                 : selectedTab === 'HIGH'
-                ? 'high-risk critical queue'
-                : selectedTab === 'MODERATE'
-                ? 'moderate-risk monitoring queue'
-                : 'unscreened queue'}
+                  ? 'high-risk critical queue'
+                  : selectedTab === 'MODERATE'
+                    ? 'moderate-risk monitoring queue'
+                    : 'unscreened queue'}
             </span>
             <span className="text-[11px] text-slate-400">
               Sorted by cohort registration
@@ -546,25 +542,23 @@ export const TeacherAtRisk: React.FC = () => {
               return (
                 <div
                   key={student.id}
-                  className={`p-5 rounded-2xl bg-white border transition-all duration-200 shadow-2xs hover:shadow-card ${
-                    isUnscreened
-                      ? 'border-slate-200 hover:border-slate-300'
-                      : pred.predicted_status === 'High Risk'
+                  className={`p-5 rounded-2xl bg-white border transition-all duration-200 shadow-2xs hover:shadow-card ${isUnscreened
+                    ? 'border-slate-200 hover:border-slate-300'
+                    : pred.predicted_status === 'High Risk'
                       ? 'border-rose-200 bg-rose-50/20 hover:border-rose-300'
                       : 'border-amber-200 bg-amber-50/20 hover:border-amber-300'
-                  }`}
+                    }`}
                 >
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     {/* Student Basic Info */}
                     <div className="flex items-start gap-3.5">
                       <div
-                        className={`w-11 h-11 rounded-2xl flex items-center justify-center font-bold text-sm shrink-0 border ${
-                          isUnscreened
-                            ? 'bg-slate-100 text-slate-600 border-slate-200'
-                            : pred.predicted_status === 'High Risk'
+                        className={`w-11 h-11 rounded-2xl flex items-center justify-center font-bold text-sm shrink-0 border ${isUnscreened
+                          ? 'bg-slate-100 text-slate-600 border-slate-200'
+                          : pred.predicted_status === 'High Risk'
                             ? 'bg-rose-100 text-rose-700 border-rose-200'
                             : 'bg-amber-100 text-amber-800 border-amber-200'
-                        }`}
+                          }`}
                       >
                         {student.full_name
                           .split(' ')
@@ -591,13 +585,12 @@ export const TeacherAtRisk: React.FC = () => {
                           )}
                           {dropout && (
                             <span
-                              className={`badge text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                dropout.risk_tier === 'High'
-                                  ? 'bg-rose-100 text-rose-800 border border-rose-200'
-                                  : dropout.risk_tier === 'Moderate'
+                              className={`badge text-[10px] font-bold px-2 py-0.5 rounded-full ${dropout.risk_tier === 'High'
+                                ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                                : dropout.risk_tier === 'Moderate'
                                   ? 'bg-amber-100 text-amber-800 border border-amber-200'
                                   : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                              }`}
+                                }`}
                               title={`Dropout Early Warning: ${dropout.risk_tier} Risk (${(dropout.risk_probability * 100).toFixed(1)}%). Requires advisor review.`}
                             >
                               Dropout: {dropout.risk_tier} ({(dropout.risk_probability * 100).toFixed(0)}%)
@@ -636,13 +629,12 @@ export const TeacherAtRisk: React.FC = () => {
                             </div>
                             <div className="flex items-baseline gap-1 mt-0.5">
                               <span
-                                className={`text-lg font-black tracking-tight ${
-                                  pred.predicted_marks < 50
-                                    ? 'text-rose-600'
-                                    : pred.predicted_marks < 70
+                                className={`text-lg font-black tracking-tight ${pred.predicted_marks < 50
+                                  ? 'text-rose-600'
+                                  : pred.predicted_marks < 70
                                     ? 'text-amber-600'
                                     : 'text-emerald-600'
-                                }`}
+                                  }`}
                               >
                                 {pred.predicted_marks.toFixed(1)}
                               </span>

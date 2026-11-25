@@ -21,15 +21,19 @@ class DropoutRecord:
         student_name: Optional[str] = None,
         risk_probability: float = 0.0,
         risk_tier: str = "Low",
-        model_version: str = "Dropout_HistGradientBoosting_v1.0.0",
+        model_version: str = "Dropout_LogisticRegression_v1.0.0",
         key_risk_factors: Optional[List[Dict[str, Any]]] = None,
         protective_factors: Optional[List[Dict[str, Any]]] = None,
         recommendations: Optional[List[str]] = None,
         academic_term: Optional[str] = None,
+        organization_id: Optional[str] = None,
+        feature_source: str = "academic_record_mapping",
+        observed_feature_count: int = 0,
         requires_human_review: bool = True,
         disclaimer: str = (
             "Early-warning estimate designed solely for proactive academic support. "
-            "Requires human review by authorized advisors before taking any intervention."
+            "Trained on the UCI Portuguese higher-education dataset; requires human review "
+            "by authorized advisors before taking any intervention."
         ),
         features_snapshot: Optional[Dict[str, Any]] = None,
         created_at: Optional[datetime] = None,
@@ -48,6 +52,9 @@ class DropoutRecord:
         self.protective_factors = protective_factors or []
         self.recommendations = recommendations or []
         self.academic_term = academic_term.strip() if academic_term else "Current Term"
+        self.organization_id = str(organization_id).strip() if organization_id else None
+        self.feature_source = feature_source
+        self.observed_feature_count = int(observed_feature_count)
         self.requires_human_review = bool(requires_human_review)
         self.disclaimer = disclaimer
         self.features_snapshot = features_snapshot or {}
@@ -57,7 +64,7 @@ class DropoutRecord:
 
     def to_doc(self) -> Dict[str, Any]:
         """Convert to MongoDB document."""
-        return {
+        doc: Dict[str, Any] = {
             "_id": self.id,
             "student_id": self.student_id,
             "student_name": self.student_name,
@@ -68,12 +75,17 @@ class DropoutRecord:
             "protective_factors": self.protective_factors,
             "recommendations": self.recommendations,
             "academic_term": self.academic_term,
+            "feature_source": self.feature_source,
+            "observed_feature_count": self.observed_feature_count,
             "requires_human_review": self.requires_human_review,
             "disclaimer": self.disclaimer,
             "features_snapshot": self.features_snapshot,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
         }
+        if self.organization_id is not None:
+            doc["organization_id"] = self.organization_id
+        return doc
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to JSON-serializable dictionary."""
@@ -88,8 +100,12 @@ class DropoutRecord:
             "protective_factors": self.protective_factors,
             "recommendations": self.recommendations,
             "academic_term": self.academic_term,
+            "organization_id": self.organization_id,
+            "feature_source": self.feature_source,
+            "observed_feature_count": self.observed_feature_count,
             "requires_human_review": self.requires_human_review,
             "disclaimer": self.disclaimer,
+            "features_snapshot": self.features_snapshot,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
@@ -104,11 +120,14 @@ class DropoutRecord:
             student_name=doc.get("student_name"),
             risk_probability=doc.get("risk_probability", 0.0),
             risk_tier=doc.get("risk_tier", "Low"),
-            model_version=doc.get("model_version", "Dropout_HistGradientBoosting_v1.0.0"),
+            model_version=doc.get("model_version", "Dropout_LogisticRegression_v1.0.0"),
             key_risk_factors=doc.get("key_risk_factors"),
             protective_factors=doc.get("protective_factors"),
             recommendations=doc.get("recommendations"),
             academic_term=doc.get("academic_term"),
+            organization_id=doc.get("organization_id"),
+            feature_source=doc.get("feature_source", "academic_record_mapping"),
+            observed_feature_count=doc.get("observed_feature_count", 0),
             requires_human_review=doc.get("requires_human_review", True),
             disclaimer=doc.get("disclaimer", ""),
             features_snapshot=doc.get("features_snapshot"),

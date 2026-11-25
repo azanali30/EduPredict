@@ -215,28 +215,28 @@ export const AnalystRisk: React.FC = () => {
           </div>
 
           {dropoutData?.model_summary && (
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
-              <div className="flex items-center gap-2 mb-2">
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+              <div className="flex items-center gap-2">
                 <Cpu size={16} className="text-brand-600" />
                 <span className="text-xs font-bold text-slate-800">
-                  Model Calibration & Benchmark Diagnostics ({dropoutData.model_summary.model_version})
+                  UCI Benchmark Reference Diagnostics ({dropoutData.model_summary.model_version})
                 </span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                 <div>
-                  <span className="text-slate-500">Holdout ROC-AUC:</span>
+                  <span className="text-slate-500">UCI Holdout ROC-AUC:</span>
                   <span className="ml-1.5 font-bold text-slate-800 font-mono">
                     {dropoutData.model_summary.roc_auc ?? '0.9317'}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-500">Holdout PR-AUC:</span>
+                  <span className="text-slate-500">UCI Holdout PR-AUC:</span>
                   <span className="ml-1.5 font-bold text-slate-800 font-mono">
                     {dropoutData.model_summary.pr_auc ?? '0.9024'}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-500">Brier Score:</span>
+                  <span className="text-slate-500">UCI Brier Score:</span>
                   <span className="ml-1.5 font-bold text-slate-800 font-mono">
                     {dropoutData.model_summary.brier_score ?? '0.0851'}
                   </span>
@@ -248,6 +248,9 @@ export const AnalystRisk: React.FC = () => {
                   </span>
                 </div>
               </div>
+              <p className="text-[11px] text-slate-500">
+                Note: Benchmark metrics above reflect holdout evaluation on the UCI Portuguese higher-education dataset, not locally validated EduPredict institutional performance.
+              </p>
             </div>
           )}
         </div>

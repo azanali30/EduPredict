@@ -12,6 +12,7 @@ from backend.services.subject_service import SubjectService
 from backend.services.assignment_service import AssignmentService
 from backend.services.enrollment_service import EnrollmentService
 from backend.services.dropout_service import DropoutService
+from backend.models.academic_record_model import AcademicRecord
 
 
 def test_unauthenticated_dropout_access_denied(client):
@@ -114,6 +115,19 @@ def test_student_access_scoping(client, test_student, test_admin, clean_db):
         role="student",
     )
 
+    # Seed genuine academic record for test_student
+    clean_db.academic_records.insert_one(
+        AcademicRecord(
+            student_id=test_student.id,
+            term="2025-2026-T1",
+            attendance_percentage=88.0,
+            study_hours_per_week=14.0,
+            assignment_completion_rate=85.0,
+            quiz_average=74.0,
+            previous_exam_marks=76.0,
+        ).to_doc()
+    )
+
     client.post("/auth/login", json={"email": test_student.email, "password": "StudentPassword123!"})
 
     # 1. View self assessment
@@ -152,6 +166,19 @@ def test_teacher_subject_scoped_access(client, test_teacher, test_admin, test_st
 
     # Enroll test_student in Mathematics
     EnrollmentService.enroll_student(clean_db, test_student.id, math_subj.id, term, test_admin.id)
+
+    # Seed genuine academic record for test_student
+    clean_db.academic_records.insert_one(
+        AcademicRecord(
+            student_id=test_student.id,
+            term=term,
+            attendance_percentage=90.0,
+            study_hours_per_week=15.0,
+            assignment_completion_rate=85.0,
+            quiz_average=75.0,
+            previous_exam_marks=78.0,
+        ).to_doc()
+    )
 
     # Create unassigned student B
     unassigned_student, _ = UserService.create_user(
@@ -227,3 +254,159 @@ def test_predict_endpoint_validation_and_leakage(client, test_admin, test_studen
     saved_doc = clean_db.dropout_records.find_one({"student_id": test_student.id})
     assert saved_doc is not None
     assert saved_doc["risk_tier"] == "Low"
+
+
+def test_unavailable_academic_record_returns_422(client, test_student, test_admin, clean_db):
+    """
+    When a student has NO academic record and no explicit features are provided,
+    both GET /api/dropout/student/<id> and POST /api/dropout/predict must return 422
+    rather than silently fabricating a risk prediction from defaults.
+    """
+    client.post("/auth/login", json={"email": test_student.email, "password": "StudentPassword123!"})
+    res_get = client.get(f"/api/dropout/student/{test_student.id}")
+    assert res_get.status_code == 422
+    assert "unavailable" in res_get.get_json().get("message", "").lower()
+
+    client.post("/auth/login", json={"email": test_admin.email, "password": "AdminPassword123!"})
+    res_post = client.post("/api/dropout/predict", json={"student_id": str(test_student.id)})
+    assert res_post.status_code == 422
+    assert "insufficient academic data" in res_post.get_json().get("message", "").lower()
+
+
+def test_predict_uses_real_academic_record_and_stores_snapshot(client, test_admin, test_student, clean_db):
+    """
+    POST /api/dropout/predict without explicit features reads MongoDB academic_records,
+    maps only defensible fields, and stores the exact snapshot used for inference.
+    """
+    clean_db.academic_records.insert_one(
+        AcademicRecord(
+            student_id=test_student.id,
+            term="2025-2026-T1",
+            attendance_percentage=40.0,
+            study_hours_per_week=4.0,
+            assignment_completion_rate=25.0,
+            quiz_average=35.0,
+            previous_exam_marks=30.0,
+        ).to_doc()
+    )
+
+    client.post("/auth/login", json={"email": test_admin.email, "password": "AdminPassword123!"})
+    res = client.post("/api/dropout/predict", json={
+        "student_id": str(test_student.id),
+        "academic_term": "2025-2026-T1",
+    })
+    assert res.status_code == 201
+    assessment = res.get_json()["assessment"]
+    assert assessment["feature_source"] == "academic_record_mapping"
+    snapshot = assessment["features_snapshot"]
+    # Mapped from previous_exam_marks=30.0 -> 6.0/20
+    assert snapshot["Curricular units 1st sem (grade)"] == 6.0
+    # Uncollected financial/demographic fields must remain None (not fabricated)
+    assert snapshot["Tuition fees up to date"] is None
+    assert snapshot["Debtor"] is None
+    assert snapshot["Marital status"] is None
+
+
+def test_teacher_term_mismatch_denied(client, test_teacher, test_admin, test_student, clean_db):
+    """
+    Teacher assigned to Mathematics in 2025-2026-T1 must NOT access or see a student
+    who is only enrolled in Mathematics in 2024-2025-T2 (term mismatch).
+    """
+    SubjectService.ensure_canonical_subjects(clean_db)
+    math_subj = SubjectService.get_subject_by_canonical_key(clean_db, "mathematics")
+
+    AssignmentService.assign_teacher_to_subject(clean_db, test_teacher.id, math_subj.id, "2025-2026-T1", test_admin.id)
+    EnrollmentService.enroll_student(clean_db, test_student.id, math_subj.id, "2024-2025-T2", test_admin.id)
+
+    clean_db.academic_records.insert_one(
+        AcademicRecord(
+            student_id=test_student.id,
+            term="2024-2025-T2",
+            attendance_percentage=80.0,
+            study_hours_per_week=10.0,
+            assignment_completion_rate=75.0,
+            quiz_average=70.0,
+            previous_exam_marks=72.0,
+        ).to_doc()
+    )
+
+    client.post("/auth/login", json={"email": test_teacher.email, "password": "TeacherPassword123!"})
+
+    # Direct student lookup -> 403 Forbidden
+    res_get = client.get(f"/api/dropout/student/{test_student.id}")
+    assert res_get.status_code == 403
+
+    # Predict with mismatched term -> 403 Forbidden
+    res_post = client.post("/api/dropout/predict", json={
+        "student_id": str(test_student.id),
+        "subject": "Mathematics",
+        "academic_term": "2024-2025-T2",
+    })
+    assert res_post.status_code == 403
+
+    # Teacher roster must NOT include student from different term
+    res_roster = client.get("/api/dropout/teacher/roster")
+    assert res_roster.status_code == 200
+    assert res_roster.get_json()["students"] == []
+
+
+def test_cross_organization_isolation(client, clean_db):
+    """
+    Admin, Teacher, and Analyst scoped to organization_id='org-alpha' must NOT access
+    students or aggregate counts belonging to organization_id='org-beta'.
+    """
+    admin_alpha, _ = UserService.create_user(
+        db=clean_db, email="admin.alpha@edupredict.com", plain_password="AdminPassword123!",
+        full_name="Admin Alpha", role="admin",
+    )
+    clean_db.users.update_one({"_id": admin_alpha.id}, {"$set": {"organization_id": "org-alpha"}})
+
+    analyst_alpha, _ = UserService.create_user(
+        db=clean_db, email="analyst.alpha@edupredict.com", plain_password="AnalystPassword123!",
+        full_name="Analyst Alpha", role="analyst",
+    )
+    clean_db.users.update_one({"_id": analyst_alpha.id}, {"$set": {"organization_id": "org-alpha"}})
+
+    student_alpha, _ = UserService.create_user(
+        db=clean_db, email="stud.alpha@edupredict.com", plain_password="StudentPassword123!",
+        full_name="Student Alpha", role="student",
+    )
+    clean_db.users.update_one({"_id": student_alpha.id}, {"$set": {"organization_id": "org-alpha"}})
+
+    student_beta, _ = UserService.create_user(
+        db=clean_db, email="stud.beta@edupredict.com", plain_password="StudentPassword123!",
+        full_name="Student Beta", role="student",
+    )
+    clean_db.users.update_one({"_id": student_beta.id}, {"$set": {"organization_id": "org-beta"}})
+
+    # Seed a dropout record in org-beta directly
+    clean_db.dropout_records.insert_one({
+        "_id": ObjectId(),
+        "student_id": student_beta.id,
+        "student_name": "Student Beta",
+        "risk_probability": 0.75,
+        "risk_tier": "High",
+        "organization_id": "org-beta",
+    })
+
+    # Login as Admin Alpha
+    client.post("/auth/login", json={"email": "admin.alpha@edupredict.com", "password": "AdminPassword123!"})
+
+    # Cross-org student lookup and predict must be 403 Forbidden
+    assert client.get(f"/api/dropout/student/{student_beta.id}").status_code == 403
+    assert client.post("/api/dropout/predict", json={
+        "student_id": str(student_beta.id),
+        "features": {"Admission grade": 140.0},
+    }).status_code == 403
+
+    # Admin Alpha overview must NOT see org-beta's record
+    res_admin = client.get("/api/dropout/admin/overview")
+    assert res_admin.status_code == 200
+    assert res_admin.get_json()["total_assessed"] == 0
+
+    # Login as Analyst Alpha — overview must NOT see org-beta's record
+    client.post("/auth/login", json={"email": "analyst.alpha@edupredict.com", "password": "AnalystPassword123!"})
+    res_analyst = client.get("/api/dropout/analyst/overview")
+    assert res_analyst.status_code == 200
+    assert res_analyst.get_json()["total_assessed"]["count"] == 0
+
