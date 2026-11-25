@@ -363,12 +363,12 @@ export interface AnomalyListResponse {
 export interface AnalystAnomalyStats {
   status_code: number;
   total_evaluated_records:
-    | {
-        count: number | null;
-        display: string;
-        suppressed: boolean;
-      }
-    | number;
+  | {
+    count: number | null;
+    display: string;
+    suppressed: boolean;
+  }
+  | number;
   total_anomalies: {
     count: number | null;
     display: string;
@@ -486,12 +486,12 @@ export interface CourseDemandForecastItem {
   utilization_pct: number | null;
   model_used: string;
   validation_status:
-    | 'institutionally_validated'
-    | 'walk_forward_evaluated'
-    | 'experimental'
-    | 'baseline'
-    | 'insufficient_data'
-    | 'validated';
+  | 'institutionally_validated'
+  | 'walk_forward_evaluated'
+  | 'experimental'
+  | 'baseline'
+  | 'insufficient_data'
+  | 'validated';
   data_sufficiency: 'sufficient' | 'baseline_only' | 'insufficient';
   evaluation_metrics: {
     mae?: number | null;

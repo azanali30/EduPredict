@@ -173,15 +173,21 @@ class UserService:
         target_user_id,
         update_data: dict,
         actor_admin_id=None,
+        organization_id: str | None = None,
     ) -> tuple[User | None, str | None]:
         """
         Update user profile attributes by an administrator.
-        Prevents privilege escalation (role/email cannot be modified through this method).
-        Validates unique student_id / employee_id when modified.
+        Prevents privilege escalation (role/email cannot be modified through this method)
+        and enforces organization_id isolation when provided.
         """
         user = UserService.get_by_id(db, target_user_id)
         if not user:
             return None, "User not found."
+
+        if user.role == "platform_super_admin":
+            return None, "Access denied. Institution administrators cannot modify Platform Super Admin accounts."
+        if organization_id and user.organization_id != organization_id.strip():
+            return None, "Access denied. Cross-organization user access is prohibited."
 
         set_fields = {}
         now = datetime.now(timezone.utc)
@@ -253,7 +259,10 @@ class UserService:
             user.documents = update_data["documents"]
 
         try:
-            db.users.update_one({"_id": user.id}, {"$set": set_fields})
+            update_filter = {"_id": user.id}
+            if organization_id:
+                update_filter["organization_id"] = organization_id.strip()
+            db.users.update_one(update_filter, {"$set": set_fields})
             user.updated_at = now
             log_event(
                 db,
@@ -464,13 +473,18 @@ class UserService:
         role: str | None = None,
         limit: int = 50,
         skip: int = 0,
+        organization_id: str | None = None,
     ) -> list[dict]:
-        """List users for administration, sorted by created_at desc."""
+        """List users for administration, scoped to organization_id when set."""
         if db is None:
             return []
-        query = {}
-        if role and role in VALID_ROLES:
+        query: dict = {}
+        if organization_id and organization_id.strip():
+            query["organization_id"] = organization_id.strip()
+        if role and role in VALID_ROLES and role != "platform_super_admin":
             query["role"] = role
+        else:
+            query["role"] = {"$ne": "platform_super_admin"}
         cursor = db.users.find(query).sort("created_at", -1).skip(skip).limit(limit)
         return [User.from_doc(doc).to_dict() for doc in cursor if doc]
 
@@ -480,10 +494,19 @@ class UserService:
         target_user_id,
         new_role: str,
         actor_admin_id,
+        organization_id: str | None = None,
     ) -> tuple[User | None, str | None]:
-        """Update user role (restricted to administrators)."""
+        """
+        Update user role (restricted to institution administrators).
+        Strictly blocks assignment of 'platform_super_admin' and cross-organization targets.
+        """
+        if new_role == "platform_super_admin":
+            return (
+                None,
+                "Access denied. Institution administrators cannot assign 'platform_super_admin'.",
+            )
         if new_role not in VALID_ROLES:
-            return None, f"Invalid role '{new_role}'. Must be one of: {', '.join(VALID_ROLES)}"
+            return None, f"Invalid role '{new_role}'. Must be one of: {', '.join(sorted(VALID_ROLES - {'platform_super_admin'}))}"
 
         target_oid = to_object_id(target_user_id)
         actor_oid = to_object_id(actor_admin_id)
@@ -494,14 +517,22 @@ class UserService:
         if not target_user:
             return None, "User not found."
 
+        if target_user.role == "platform_super_admin":
+            return None, "Access denied. Institution administrators cannot modify Platform Super Admin accounts."
+        if organization_id and target_user.organization_id != organization_id.strip():
+            return None, "Access denied. Cross-organization user access is prohibited."
+
         # Safety check: Prevent admin from demoting themselves if they are the current actor
         if target_oid == actor_oid and new_role != "admin":
             return None, "Administrators cannot remove their own administrator privileges."
 
         now = datetime.now(timezone.utc)
         try:
+            update_filter = {"_id": target_oid}
+            if organization_id:
+                update_filter["organization_id"] = organization_id.strip()
             db.users.update_one(
-                {"_id": target_oid},
+                update_filter,
                 {"$set": {"role": new_role, "updated_at": now}},
             )
             old_role = target_user.role
@@ -524,8 +555,9 @@ class UserService:
         target_user_id,
         is_active: bool,
         actor_admin_id,
+        organization_id: str | None = None,
     ) -> tuple[User | None, str | None]:
-        """Activate or deactivate a user account (restricted to administrators)."""
+        """Activate or deactivate a user account (restricted to same-organization administrators)."""
         target_oid = to_object_id(target_user_id)
         actor_oid = to_object_id(actor_admin_id)
         if not target_oid or db is None:
@@ -539,10 +571,18 @@ class UserService:
         if not target_user:
             return None, "User not found."
 
+        if target_user.role == "platform_super_admin":
+            return None, "Access denied. Institution administrators cannot modify Platform Super Admin accounts."
+        if organization_id and target_user.organization_id != organization_id.strip():
+            return None, "Access denied. Cross-organization user access is prohibited."
+
         now = datetime.now(timezone.utc)
         try:
+            update_filter = {"_id": target_oid}
+            if organization_id:
+                update_filter["organization_id"] = organization_id.strip()
             db.users.update_one(
-                {"_id": target_oid},
+                update_filter,
                 {"$set": {"is_active": is_active, "updated_at": now}},
             )
             target_user.is_active = is_active

@@ -34,6 +34,7 @@ def list_all_users():
         role=role_filter,
         limit=limit,
         skip=skip,
+        organization_id=getattr(current_user, "organization_id", None),
     )
     return jsonify({
         "users": users,
@@ -209,10 +210,12 @@ def update_user_profile(user_id):
         target_user_id=oid,
         update_data=data,
         actor_admin_id=current_user.id,
+        organization_id=getattr(current_user, "organization_id", None),
     )
 
     if err or not updated_user:
-        status_code = 404 if "not found" in (err or "").lower() else 400
+        err_l = (err or "").lower()
+        status_code = 403 if "access denied" in err_l else 404 if "not found" in err_l else 400
         return jsonify({
             "error": "Update Failed",
             "message": err or "Failed to update user profile.",
@@ -247,10 +250,12 @@ def update_user_status(user_id):
         target_user_id=user_id,
         is_active=is_active,
         actor_admin_id=current_user.id,
+        organization_id=getattr(current_user, "organization_id", None),
     )
 
     if err or not updated_user:
-        status_code = 404 if "not found" in (err or "").lower() else 400
+        err_l = (err or "").lower()
+        status_code = 403 if "access denied" in err_l else 404 if "not found" in err_l else 400
         return jsonify({
             "error": "Status Update Failed",
             "message": err or "Failed to update user status.",
@@ -285,10 +290,12 @@ def update_user_role(user_id):
         target_user_id=user_id,
         new_role=new_role,
         actor_admin_id=current_user.id,
+        organization_id=getattr(current_user, "organization_id", None),
     )
 
     if err or not updated_user:
-        status_code = 404 if "not found" in (err or "").lower() else 400
+        err_l = (err or "").lower()
+        status_code = 403 if "access denied" in err_l else 404 if "not found" in err_l else 400
         return jsonify({
             "error": "Role Update Failed",
             "message": err or "Failed to update role.",

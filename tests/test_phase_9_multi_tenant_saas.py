@@ -184,3 +184,115 @@ def test_billing_webhooks_quotas_concurrency_and_feature_gates(app, client, clea
     # Replay same event_id -> duplicate_ignored
     wh2 = client.post("/api/platform/billing/webhook", data=payload, headers={"Stripe-Signature": good_sig})
     assert wh2.status_code == 200 and wh2.get_json()["status"] == "duplicate_ignored"
+
+
+def test_admin_cannot_escalate_to_super_admin_and_user_mgmt_org_isolation(client, clean_db):
+    """
+    Verify Institution Admin cannot promote any user to platform_super_admin (403)
+    and cannot list or modify users belonging to another institution (403).
+    """
+    res_a, _, _ = InstitutionService.onboard_institution(
+        clean_db, "Org Alpha", "orgalpha", "admin@orgalpha.edu", "AdminPass123!", "Alpha Admin", status="active"
+    )
+    res_b, _, _ = InstitutionService.onboard_institution(
+        clean_db, "Org Beta", "orgbeta", "admin@orgbeta.edu", "AdminPass123!", "Beta Admin", status="active"
+    )
+    org_a = res_a["institution"]["organization_id"]
+    org_b = res_b["institution"]["organization_id"]
+
+    stu_a, _ = UserService.create_user(
+        clean_db, "stu.a@orgalpha.edu", "StuPass123!", "Student A", "student", organization_id=org_a
+    )
+    stu_b, _ = UserService.create_user(
+        clean_db, "stu.b@orgbeta.edu", "StuPass123!", "Student B", "student", organization_id=org_b
+    )
+
+    # Log in as Org Alpha Admin
+    client.post("/auth/login", json={"email": "admin@orgalpha.edu", "password": "AdminPass123!"})
+
+    # 1. Privilege escalation blocked (403)
+    esc = client.put(f"/api/admin/users/{stu_a.id}/role", json={"role": "platform_super_admin"})
+    assert esc.status_code == 403
+    assert UserService.get_by_id(clean_db, stu_a.id).role == "student"
+
+    # 2. Org A Admin lists only Org A users (cannot see Org B users)
+    list_res = client.get("/api/admin/users")
+    assert list_res.status_code == 200
+    listed_ids = {u["id"] for u in list_res.get_json()["users"]}
+    assert str(stu_a.id) in listed_ids
+    assert str(stu_b.id) not in listed_ids
+
+    # 3. Org A Admin cannot update Org B user details, role, or status (403) & DB unchanged
+    assert client.put(f"/api/admin/users/{stu_b.id}", json={"full_name": "Hacked"}).status_code == 403
+    assert client.put(f"/api/admin/users/{stu_b.id}/role", json={"role": "teacher"}).status_code == 403
+    assert client.put(f"/api/admin/users/{stu_b.id}/status", json={"is_active": False}).status_code == 403
+    stu_b_after = UserService.get_by_id(clean_db, stu_b.id)
+    assert stu_b_after.full_name == "Student B"
+    assert stu_b_after.role == "student"
+    assert stu_b_after.is_active is True
+
+    # 4. Same-tenant operation still works
+    ok_upd = client.put(f"/api/admin/users/{stu_a.id}", json={"full_name": "Student A Updated"})
+    assert ok_upd.status_code == 200
+    assert UserService.get_by_id(clean_db, stu_a.id).full_name == "Student A Updated"
+
+
+def test_create_super_admin_cli_duplicate_guard_and_force(runner, clean_db):
+    """Verify create-super-admin refuses duplicate by default and requires explicit --force."""
+    r1 = runner.invoke(
+        create_super_admin_command,
+        input="super1@edupredict.com\nSuperPass123!\nSuperPass123!\nSuper One\n",
+    )
+    assert r1.exit_code == 0
+
+    # Duplicate without --force must fail
+    r2 = runner.invoke(
+        create_super_admin_command,
+        input="super2@edupredict.com\nSuperPass123!\nSuperPass123!\nSuper Two\n",
+    )
+    assert r2.exit_code != 0
+    assert "already exists" in r2.output.lower()
+
+    # Duplicate with --force succeeds while still validating password/email & logging audit event
+    r3 = runner.invoke(
+        create_super_admin_command,
+        args=["--force"],
+        input="super2@edupredict.com\nSuperPass123!\nSuperPass123!\nSuper Two\n",
+    )
+    assert r3.exit_code == 0
+    assert clean_db.users.count_documents({"role": "platform_super_admin"}) == 2
+    assert clean_db.global_audit_logs.count_documents({"action": "PLATFORM_SUPER_ADMIN_PROVISIONED"}) == 2
+
+
+def test_demand_forecasting_billing_entitlement_and_quota(client, clean_db):
+    """Verify advanced_forecasting entitlement and atomic quota checks on POST /api/demand/forecast."""
+    res, _, _ = InstitutionService.onboard_institution(
+        clean_db, "Delta Univ", "delta", "admin@delta.edu", "AdminPass123!", "Delta Admin", plan_tier="starter", status="active"
+    )
+    org_id = res["institution"]["organization_id"]
+
+    client.post("/auth/login", json={"email": "admin@delta.edu", "password": "AdminPass123!"})
+
+    # 1. Starter plan lacks 'advanced_forecasting' -> 403
+    blocked = client.post("/api/demand/forecast", json={"periods_ahead": 1})
+    assert blocked.status_code == 403
+
+    # 2. Upgrade to Growth -> enabled, and quota=1 permits 1 generation, blocks 2nd (429)
+    BillingService.change_plan(clean_db, org_id, "growth")
+    clean_db.subscriptions.update_one(
+        {"organization_id": org_id}, {"$set": {"prediction_quota_monthly": 1, "predictions_used": 0}}
+    )
+
+    # Invalid periods_ahead fails BEFORE consuming quota (predictions_used stays 0)
+    bad_req = client.post("/api/demand/forecast", json={"periods_ahead": 99})
+    assert bad_req.status_code == 400
+    assert BillingService.get_subscription(clean_db, org_id)["predictions_used"] == 0
+
+    # Valid forecast consumes 1 quota
+    ok_req = client.post("/api/demand/forecast", json={"periods_ahead": 1})
+    assert ok_req.status_code == 201
+    assert BillingService.get_subscription(clean_db, org_id)["predictions_used"] == 1
+
+    # Next forecast exceeds quota -> 429
+    over_req = client.post("/api/demand/forecast", json={"periods_ahead": 1})
+    assert over_req.status_code == 429

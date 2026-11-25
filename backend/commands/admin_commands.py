@@ -48,9 +48,22 @@ def create_admin_command(email, password, name):
     help="Strong password (min 8 chars, 1 letter, 1 digit).",
 )
 @click.option("--name", prompt="Full Name", default="Platform Super Admin", help="Super Admin full name.")
+@click.option(
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Explicitly allow provisioning an additional Platform Super Admin when one already exists.",
+)
 @with_appcontext
-def create_super_admin_command(email, password, name):
+def create_super_admin_command(email, password, name, force):
     """Securely provision an initial Platform Super Admin account (no hardcoded defaults)."""
+    if mongo.db is not None and not force:
+        existing_super = mongo.db.users.find_one({"role": "platform_super_admin"})
+        if existing_super:
+            raise click.ClickException(
+                "A Platform Super Admin already exists. Pass --force to explicitly provision another."
+            )
+
     click.echo(f"Provisioning Platform Super Admin '{email}'...")
     user, err = UserService.create_user(
         db=mongo.db,
@@ -60,8 +73,7 @@ def create_super_admin_command(email, password, name):
         role="platform_super_admin",
     )
     if err or not user:
-        click.echo(click.style(f"Error: {err}", fg="red"))
-        return
+        raise click.ClickException(err or "Failed to provision Platform Super Admin.")
     log_global_event(
         db=mongo.db,
         action="PLATFORM_SUPER_ADMIN_PROVISIONED",
@@ -69,7 +81,7 @@ def create_super_admin_command(email, password, name):
         actor_role="platform_super_admin",
         resource_type="user",
         resource_id=str(user.id),
-        metadata={"email": user.email},
+        metadata={"email": user.email, "forced": bool(force)},
         outcome="success",
     )
     click.echo(click.style(f"Platform Super Admin created with ID: {user.id}", fg="green"))

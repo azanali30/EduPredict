@@ -428,6 +428,15 @@ class DemandForecastService:
         if err:
             return None, err, code
 
+        # Phase 9C: Enforce advanced_forecasting entitlement and atomic prediction quota
+        from backend.services.billing_service import BillingService
+
+        fg_ok, fg_err, fg_code = BillingService.check_feature_entitlement(
+            db, org_id, "advanced_forecasting"
+        )
+        if not fg_ok:
+            return None, fg_err, fg_code
+
         org_student_ids = cls._get_org_student_ids(db, org_id)
         subject_oids = [s["_id"] for s in subjects]
         histories_map = cls._extract_batch_subject_histories(db, subject_oids, org_student_ids)
@@ -485,6 +494,9 @@ class DemandForecastService:
             models_used[m_name] = models_used.get(m_name, 0) + 1
 
         if docs_to_insert:
+            q_ok, q_err, q_code = BillingService.consume_prediction_quota(db, org_id, count=1)
+            if not q_ok:
+                return None, q_err, q_code
             try:
                 db.demand_forecasts.insert_many(docs_to_insert)
             except PyMongoError as pe:

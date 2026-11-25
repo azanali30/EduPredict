@@ -48,3 +48,9 @@
   - `backend/utils/rate_limiter.py` is process-local in-memory and does not share state across multiple WSGI workers; production horizontal scaling should migrate rate limiting to Redis.
   - Heavy multi-tenant ML batch jobs should be offloaded to an async task queue (Celery + Redis) in future scaling.
   - Live Stripe API keys are not provisioned in local dev; webhook verification and sandbox lifecycle are verified in test mode.
+
+## 8. Security Remediation Summary
+- **Privilege Escalation Prevention:** `UserService.update_role()` and `PUT /api/admin/users/<id>/role` strictly block Institution Admins from assigning `platform_super_admin` (`403 Forbidden`).
+- **Tenant-Isolated User Management:** `UserService.list_users()`, `update_user_by_admin()`, `update_role()`, and `update_status()` enforce `organization_id` matching and include `organization_id` directly in MongoDB update filters.
+- **CLI Hardening:** `flask create-super-admin` refuses duplicate `platform_super_admin` provisioning unless `--force` is explicitly supplied, while preserving email/password validation and audit logging.
+- **Demand Forecasting Billing Controls:** `DemandForecastService.generate_and_save_forecasts()` enforces the `advanced_forecasting` feature gate and atomically consumes prediction quota only when valid forecast snapshots are persisted.
