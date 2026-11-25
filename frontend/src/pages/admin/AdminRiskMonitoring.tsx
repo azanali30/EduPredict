@@ -601,7 +601,7 @@ export const AdminRiskMonitoring: React.FC = () => {
 
               {/* Model Performance & Validation Card */}
               <SectionCard
-                title="UCI Benchmark Reference & Probability Calibration"
+                title="Experimental Early-Warning Benchmark — Not Yet Validated on Local Institutional Outcomes"
                 subtitle="Holdout benchmark metrics on the UCI Portuguese higher-education dataset (885 test records) — not locally validated on EduPredict institutional cohorts."
                 icon={<Cpu size={18} className="text-brand-600" />}
               >

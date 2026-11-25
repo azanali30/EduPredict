@@ -38,7 +38,7 @@ Implemented in `backend/ml/dropout_pipeline.py`:
 - `assert_no_dropout_leakage(features)`: Validates that target indicators (`Target`, `is_dropout`, `dropout_status`, `outcome`, `graduation_date`) or post-dropout temporal data are never included in the predictor matrix.
 - All curricular evaluations used represent pre-departure terms (1st and 2nd semester units).
 
-### 3.2 Preprocessing ColumnTransformer
+### 3.2 Preprocessing, Missing-Value Imputation & Feature Mapping Audit
 - **Numerical Features** (18 variables: admission grades, previous qualification grades, age at enrollment, curricular units credited/enrolled/evaluated/approved/graded, macroeconomic indicators):
   - Imputation: `SimpleImputer(strategy='median')`
   - Scaling: `StandardScaler()`
@@ -48,6 +48,20 @@ Implemented in `backend/ml/dropout_pipeline.py`:
 - **Binary Features** (8 variables: daytime/evening, displaced, special needs, debtor, tuition up-to-date, gender, scholarship holder, international):
   - Imputation: `SimpleImputer(strategy='most_frequent')`
 - **Output Dimensionality**: 242 encoded feature columns.
+
+#### Missing-Value Imputation Behavior
+- **Features Subject to Missingness**: Any of the 36 UCI input features may be `NaN`/`None` at inference time. In particular, when scoring EduPredict `academic_records` via `map_academic_record_to_features()`, all uncollected demographic, financial (`Tuition fees up to date`, `Debtor`, `Scholarship holder`), and macroeconomic (`Unemployment rate`, `Inflation rate`, `GDP`) fields are explicitly passed as `NaN` rather than fabricated.
+- **How Statistics Are Learned**: All `SimpleImputer` medians (for the 18 numerical columns) and modes (`most_frequent` for the 10 nominal categorical and 8 binary columns) are learned exclusively from the 3,539 UCI training records during `Pipeline.fit()`.
+- **Inference Handling**: During `predict_proba()`, `SimpleImputer.transform()` substitutes the learned UCI training-set median or mode for each `NaN` column.
+- **Limitation**: Substituting Portuguese polytechnic training-set medians/modes for uncollected local fields does **not** measure local socioeconomic or financial risk factors and therefore does **not** establish predictive accuracy for EduPredict's local student population.
+
+#### Academic Feature-Mapping Assumptions & Approximations
+When mapping EduPredict `academic_records` into UCI features inside `DropoutService.map_academic_record_to_features()`:
+1. **Assignment Completion → Approved Curricular Units**: `assignment_completion_rate` (0–100%) is approximated as an approved-unit ratio (`round(6 * completion_rate / 100)`). Assignment submission rate is an engagement proxy, not a verified count of passed university courses.
+2. **Reuse Across Both Semesters**: Both `Curricular units 1st sem (approved/grade/evaluations)` and `Curricular units 2nd sem (approved/grade/evaluations)` receive the same mapped values from a single term's `AcademicRecord`, because EduPredict's `AcademicRecord` schema does not separate 1st-semester vs. 2nd-semester transcript histories.
+3. **Six Enrolled Units Assumption**: `Curricular units 1st sem (enrolled)` and `Curricular units 2nd sem (enrolled)` are fixed at `6` units per semester, matching the median full-time load in the UCI dataset rather than reading actual credit registrations.
+
+These mappings are **heuristic approximations**, not direct measurements of actual transcript records, and must never be presented as verified institutional academic records.
 
 ### 3.3 Stratified Partitioning
 - 80/20 Stratified Train/Test Split (`random_state=42`):
@@ -139,13 +153,14 @@ To ensure raw decision scores represent true empirical probabilities, the champi
 
 ---
 
-## 7. Ethical Governance & Mandatory Human Review
+## 7. Ethical Governance, Disclaimer & Mandatory Human Review
 
 All predictions carry the immutable system disclaimer:
-> *"Early-warning estimate designed solely for proactive academic support. Requires human review by authorized advisors before taking any intervention."*
+> **"Experimental Early-Warning Benchmark — Not Yet Validated on Local Institutional Outcomes."**  
+> *"Early-warning estimate designed solely for proactive academic support; requires human review by authorized advisors before taking any intervention."*
 
-The system strictly forbids automated punitive actions:
+Predictions must never be represented as confirmed student dropout outcomes, and the system strictly forbids automated punitive actions:
 - No automatic suspension or disqualification.
 - No automatic alteration of academic standing or enrollment records.
 - No unapproved communication to external parties.
-- Transparent explainability through key risk factors and protective indicators.
+- Transparent explainability through key risk factors and protective indicators derived solely from genuinely observed features.

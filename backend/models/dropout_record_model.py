@@ -31,9 +31,9 @@ class DropoutRecord:
         observed_feature_count: int = 0,
         requires_human_review: bool = True,
         disclaimer: str = (
-            "Early-warning estimate designed solely for proactive academic support. "
-            "Trained on the UCI Portuguese higher-education dataset; requires human review "
-            "by authorized advisors before taking any intervention."
+            "Experimental Early-Warning Benchmark — Not Yet Validated on Local Institutional Outcomes. "
+            "Early-warning estimate designed solely for proactive academic support; "
+            "requires human review by authorized advisors before taking any intervention."
         ),
         features_snapshot: Optional[Dict[str, Any]] = None,
         created_at: Optional[datetime] = None,

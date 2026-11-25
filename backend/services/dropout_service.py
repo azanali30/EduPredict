@@ -45,9 +45,9 @@ _CACHED_MODEL = None
 _CACHED_METADATA = None
 
 DEFAULT_DISCLAIMER = (
-    "Early-warning estimate designed solely for proactive academic support. "
-    "Trained on the UCI Portuguese higher-education dataset (not locally validated on "
-    "EduPredict cohorts). Requires human review by authorized advisors before taking any intervention."
+    "Experimental Early-Warning Benchmark — Not Yet Validated on Local Institutional Outcomes. "
+    "Early-warning estimate designed solely for proactive academic support; "
+    "requires human review by authorized advisors before taking any intervention."
 )
 
 EDUCATIONAL_MAPPING_KEYS = {

@@ -76,9 +76,27 @@ $$\begin{pmatrix} \text{TN} = 576 & \text{FP} = 25 \\ \text{FN} = 70 & \text{TP}
 
 ---
 
-## 6. Limitations & Known Biases
+## 6. Limitations, UCI Benchmark Context & Known Biases
 
-1. **UCI Holdout Benchmark vs. Local Institutional Validity**: All reported performance metrics (e.g., ROC-AUC `0.9317`, PR-AUC `0.9024`, Precision `89.54%`, Recall `75.35%`, Brier Score `0.0851`) represent holdout evaluation on the **UCI Portuguese higher-education dataset (ID 697)**, NOT validated EduPredict institutional performance.
-2. **Institutional Specificity**: The model was trained on European polytechnic student data (Portugal). Baseline tuition structures, grade scales (0–20), and admission pathways reflect that educational system.
-3. **Academic Feature Mapping Limitations**: When evaluating EduPredict `academic_records` via `map_academic_record_to_features()`, only defensible academic indicators (exam marks, assignment completion rate, attendance, quiz average) are mapped. Uncollected demographic, financial (`Tuition fees up to date`, `Debtor`, `Scholarship holder`), and macroeconomic features are left unobserved (`NaN`/`None`) and imputed by the scikit-learn pipeline rather than fabricated. Consequently, local predictions rely solely on academic proxies until native institutional dropout labels are collected and externally validated.
-4. **Requirement for External Validation & Human Review**: Model outputs must always be treated as probabilistic early-warning estimates requiring authorized advisor review before any intervention. Automated penalties or disciplinary actions are strictly prohibited.
+> **Model Status:** **Experimental Early-Warning Benchmark — Not Yet Validated on Local Institutional Outcomes.**
+
+1. **UCI Holdout Benchmark vs. Local Institutional Validity**: All reported performance metrics (e.g., ROC-AUC `0.9317`, PR-AUC `0.9024`, Precision `89.54%`, Recall `75.35%`, Brier Score `0.0851`) represent holdout evaluation on the **UCI Portuguese higher-education dataset (ID 697)**, **NOT** validated EduPredict institutional performance.
+2. **Original Institutional Context**: The UCI dataset originates from the Polytechnic Institute of Portalegre, Portugal (Valentim Real et al., 2021; 4,424 student records; CC BY 4.0). Its 0–20 grading scale, European tuition/scholarship structures, admission pathways, and macroeconomic indicators reflect that specific institutional and national context.
+3. **Target Grouping Limitation (`Enrolled` + `Graduate` = `Non-Dropout`)**: Grouping 794 still-`Enrolled` students with 2,209 `Graduate` students into a single `Non-Dropout` negative class introduces right-censoring and label noise, because an unknown fraction of `Enrolled` students may later depart before graduation.
+4. **Academic Feature-Mapping Approximations & Missing-Value Imputation**: When evaluating EduPredict `academic_records` via `map_academic_record_to_features()`, `assignment_completion_rate` is converted into approved curricular units assuming `6` enrolled units per semester and reused across both 1st and 2nd semesters. Uncollected demographic, financial, and macroeconomic fields remain `NaN`/`None` and are substituted at inference time by `SimpleImputer` (UCI training-set medians and modes). Imputing Portuguese polytechnic medians/modes does not measure local risk factors and does not establish local predictive validity.
+5. **Requirement for External Validation & Human Review**: Model outputs must always be treated as probabilistic early-warning estimates requiring authorized advisor review before any intervention. Automated penalties or disciplinary actions are strictly prohibited.
+
+---
+
+## 7. Institutional Validation Protocol (Pending Local Data)
+
+Local institutional validation remains **pending** until genuine historical EduPredict institutional outcomes become available. Before any production or high-stakes deployment claims can be made, the following validation protocol must be executed:
+
+1. **Historical Institutional Record Collection**: Gather multi-term historical student cohorts from the target institution under appropriate governance and privacy approvals.
+2. **Actual Semester-Level Feature Extraction**: Extract verified semester-by-semester enrollment counts, credit completions, course grades, attendance logs, and approved financial/demographic indicators directly from institutional systems—replacing the Phase 8A proxy approximations (`6` assumed units, duplicated semester values).
+3. **Verified Dropout Outcome Labels**: Label each cohort using confirmed administrative outcomes (official withdrawal/attrition vs. confirmed graduation/retention) over a fixed observation window without right-censored ambiguity.
+4. **Temporal & Cohort Train/Test Separation**: Partition data chronologically (e.g., earlier academic years for training/validation, most recent completed cohorts for unseen holdout testing) so evaluation reflects real future deployment.
+5. **Strict Leakage Prevention**: Audit all candidate features to exclude post-withdrawal indicators, administrative exit codes, and future-term grades unavailable at the prediction milestone.
+6. **Evaluation Metrics**: Compute Precision, Recall, F1-Score, ROC-AUC, PR-AUC, and Confusion Matrices across relevant risk subgroups and cohorts.
+7. **Probability Calibration & Threshold Evaluation**: Assess Brier Score and calibration reliability curves on the local holdout cohort, then calibrate decision thresholds (`Low`, `Moderate`, `High`) jointly with academic advisors to balance missed at-risk students (false negatives) against advisor workload (false positives).
+8. **Validation Gate**: Require documented sign-off on local holdout performance, fairness/subgroup checks, and advisor workflow readiness before lifting the *"Experimental Early-Warning Benchmark — Not Yet Validated on Local Institutional Outcomes"* designation.

@@ -219,7 +219,7 @@ export const AnalystRisk: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Cpu size={16} className="text-brand-600" />
                 <span className="text-xs font-bold text-slate-800">
-                  UCI Benchmark Reference Diagnostics ({dropoutData.model_summary.model_version})
+                  Experimental Early-Warning Benchmark — Not Yet Validated on Local Institutional Outcomes ({dropoutData.model_summary.model_version})
                 </span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
