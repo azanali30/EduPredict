@@ -18,6 +18,7 @@ from backend.routes.upload_routes import upload_bp
 from backend.routes.anomaly_routes import anomaly_bp
 from backend.routes.dropout_routes import dropout_bp
 from backend.routes.demand_routes import demand_bp
+from backend.routes.evaluation_routes import evaluation_bp
 from backend.commands.admin_commands import create_admin_command, init_db_command
 from backend.services.user_service import UserService
 from backend.database.schema import init_db_indexes
@@ -113,6 +114,7 @@ def create_app(config_name=None):
     app.register_blueprint(anomaly_bp)
     app.register_blueprint(dropout_bp)
     app.register_blueprint(demand_bp)
+    app.register_blueprint(evaluation_bp)
 
     # 4. Register CLI Commands
     app.cli.add_command(create_admin_command)

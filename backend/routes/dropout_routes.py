@@ -11,6 +11,7 @@ from flask_login import login_required, current_user
 from backend.extensions import mongo
 from backend.services.dropout_service import DropoutService, load_cached_dropout_metadata
 from backend.utils.decorators import role_required, admin_required, teacher_required
+from backend.utils.rate_limiter import rate_limit
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,7 @@ dropout_bp = Blueprint("dropout", __name__, url_prefix="/api/dropout")
 @dropout_bp.route("/predict", methods=["POST"])
 @login_required
 @role_required("admin", "teacher")
+@rate_limit(max_requests=30, window_seconds=60)
 def predict_and_record():
     """
     Generate and persist a dropout risk assessment for an authorized student.
@@ -232,3 +234,104 @@ def get_model_metadata():
             ),
         },
     }), 200
+
+
+@dropout_bp.route("/predict/bulk", methods=["POST"])
+@login_required
+@role_required("admin", "teacher")
+@rate_limit(max_requests=20, window_seconds=60)
+def bulk_predict_and_record():
+    """Generate and persist dropout assessments for multiple authorized students."""
+    data = request.get_json()
+    if data is None or not isinstance(data, dict):
+        return jsonify({
+            "error": "Bad Request",
+            "message": "Payload must be a valid JSON object.",
+            "status_code": 400,
+        }), 400
+
+    result, err, status = DropoutService.bulk_record_student_assessments(
+        db=mongo.db,
+        actor_user=current_user,
+        student_ids=data.get("student_ids") or [],
+        academic_term=data.get("academic_term"),
+        subject=data.get("subject"),
+    )
+    if err:
+        return jsonify({"error": "Bulk Prediction Error", "message": err, "status_code": status}), status
+    return jsonify({"status_code": 200, **result}), 200
+
+
+@dropout_bp.route("/student/<student_id>/history", methods=["GET"])
+@login_required
+def get_student_dropout_history(student_id: str):
+    """Retrieve paginated historical dropout assessments for an authorized student."""
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+        limit = max(1, min(int(request.args.get("limit", 20)), 100))
+    except (ValueError, TypeError):
+        page, limit = 1, 20
+
+    result, err, status = DropoutService.get_student_prediction_history(
+        db=mongo.db,
+        actor_user=current_user,
+        student_id=student_id,
+        page=page,
+        limit=limit,
+    )
+    if err:
+        return jsonify({"error": "Access Error", "message": err, "status_code": status}), status
+    return jsonify({"status_code": 200, **result}), 200
+
+
+@dropout_bp.route("/prediction/<prediction_id>", methods=["GET"])
+@login_required
+def get_dropout_prediction_detail(prediction_id: str):
+    """Retrieve a single dropout prediction record and its explanations."""
+    result, err, status = DropoutService.get_prediction_detail(
+        db=mongo.db,
+        actor_user=current_user,
+        prediction_id=prediction_id,
+    )
+    if err:
+        return jsonify({"error": "Access Error", "message": err, "status_code": status}), status
+    return jsonify({"status_code": 200, "assessment": result}), 200
+
+
+@dropout_bp.route("/admin/records", methods=["GET"])
+@login_required
+@admin_required
+def get_admin_dropout_records():
+    """Retrieve filterable, paginated dropout prediction records for Admin."""
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+        limit = max(1, min(int(request.args.get("limit", 20)), 100))
+    except (ValueError, TypeError):
+        page, limit = 1, 20
+
+    result, err, status = DropoutService.get_admin_prediction_records(
+        db=mongo.db,
+        admin_user=current_user,
+        risk_tier=request.args.get("risk_tier"),
+        academic_term=request.args.get("academic_term"),
+        search=request.args.get("search"),
+        page=page,
+        limit=limit,
+    )
+    if err:
+        return jsonify({"error": "Server Error", "message": err, "status_code": status}), status
+    return jsonify({"status_code": 200, **result}), 200
+
+
+@dropout_bp.route("/analyst/trends", methods=["GET"])
+@login_required
+@role_required("analyst")
+def get_analyst_dropout_trends():
+    """Retrieve privacy-suppressed dropout risk trends grouped by academic term."""
+    result, err, status = DropoutService.get_analyst_trends(
+        db=mongo.db,
+        analyst_user=current_user,
+    )
+    if err:
+        return jsonify({"error": "Server Error", "message": err, "status_code": status}), status
+    return jsonify({"status_code": 200, **result}), 200

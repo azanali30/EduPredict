@@ -192,6 +192,11 @@ const AnalystReports = React.lazy(() =>
 const AnalystSettings = React.lazy(() =>
   import('./pages/analyst/AnalystSettings').then((m) => ({ default: m.AnalystSettings }))
 );
+const ModelEvaluationDashboard = React.lazy(() =>
+  import('./pages/shared/ModelEvaluationDashboard').then((m) => ({
+    default: m.ModelEvaluationDashboard,
+  }))
+);
 
 const RootRedirect: React.FC = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -302,6 +307,7 @@ export const App: React.FC = () => {
               <Route path="/admin/predictions" element={<AdminPredictions />} />
               <Route path="/admin/risk-monitoring" element={<AdminRiskMonitoring />} />
               <Route path="/admin/demand-forecasting" element={<CourseDemandForecasting />} />
+              <Route path="/admin/model-evaluation" element={<ModelEvaluationDashboard />} />
               <Route path="/admin/reports" element={<AdminReports />} />
               <Route path="/admin/data-management" element={<AdminDataManagement />} />
               <Route path="/admin/notifications" element={<AdminNotifications />} />
@@ -323,6 +329,7 @@ export const App: React.FC = () => {
               <Route path="/analyst/curriculum" element={<AnalystCurriculum />} />
               <Route path="/analyst/trends" element={<AnalystTrends />} />
               <Route path="/analyst/demand-forecasting" element={<CourseDemandForecasting />} />
+              <Route path="/analyst/model-evaluation" element={<ModelEvaluationDashboard />} />
               <Route path="/analyst/risk" element={<AnalystRisk />} />
               <Route path="/analyst/anomalies" element={<AnalystAnomalies />} />
               <Route path="/analyst/data-quality" element={<AnalystDataQuality />} />

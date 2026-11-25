@@ -543,6 +543,8 @@ class DropoutService:
                     {"$set": record.to_doc()},
                     upsert=True,
                 )
+                history_doc = {**record.to_doc(), "_id": ObjectId()}
+                db.dropout_prediction_history.insert_one(history_doc)
                 log_event(
                     db=db,
                     event_type="DROPOUT_ASSESSMENT_RECORDED",
@@ -876,4 +878,285 @@ class DropoutService:
                 "calibration": metadata.get("calibration", "CalibratedClassifierCV"),
             },
             "privacy_notice": f"Statistical Disclosure Control applied: cells with count < {threshold} are suppressed with complementary cell masking.",
+        }, None, 200
+
+    @classmethod
+    def bulk_record_student_assessments(
+        cls,
+        db: Database,
+        actor_user: User,
+        student_ids: List[str],
+        academic_term: Optional[str] = None,
+        subject: Optional[str] = None,
+    ) -> Tuple[Optional[Dict[str, Any]], Optional[str], int]:
+        """
+        Evaluate and persist dropout risk assessments for multiple students (max 100).
+        Enforces per-student organization isolation and RBAC via record_student_assessment.
+        """
+        if not isinstance(student_ids, list) or len(student_ids) == 0:
+            return None, "'student_ids' must be a non-empty list of student IDs.", 400
+        if len(student_ids) > 100:
+            return None, "Bulk evaluation is limited to at most 100 students per request.", 400
+
+        results: List[Dict[str, Any]] = []
+        succeeded = 0
+        failed = 0
+
+        for sid in student_ids:
+            sid_str = str(sid).strip() if sid is not None else ""
+            if not sid_str:
+                failed += 1
+                results.append({"student_id": sid, "status": "error", "error": "Empty student_id", "status_code": 400})
+                continue
+
+            record_dict, err, status = cls.record_student_assessment(
+                db=db,
+                actor_user=actor_user,
+                student_id=sid_str,
+                features_input=None,
+                academic_term=academic_term,
+                subject=subject,
+            )
+            if err:
+                failed += 1
+                results.append({
+                    "student_id": sid_str,
+                    "status": "error",
+                    "error": err,
+                    "status_code": status,
+                })
+            else:
+                succeeded += 1
+                results.append({
+                    "student_id": sid_str,
+                    "status": "success",
+                    "assessment": record_dict,
+                })
+
+        return {
+            "total_requested": len(student_ids),
+            "succeeded": succeeded,
+            "failed": failed,
+            "results": results,
+        }, None, 200
+
+    @classmethod
+    def get_student_prediction_history(
+        cls,
+        db: Database,
+        actor_user: User,
+        student_id: str,
+        page: int = 1,
+        limit: int = 20,
+    ) -> Tuple[Optional[Dict[str, Any]], Optional[str], int]:
+        """
+        Retrieve paginated historical dropout assessments for an authorized student.
+        Analyst is denied individual-level prediction history (403).
+        """
+        if db is None:
+            return None, "Database unavailable.", 500
+
+        actor_role = getattr(actor_user, "role", "")
+        if actor_role == "analyst":
+            return None, "Analysts cannot access individual student prediction history.", 403
+
+        student_oid = to_object_id(student_id)
+        if not student_oid:
+            return None, "Invalid student ID format.", 400
+
+        user_doc = db.users.find_one({"_id": student_oid})
+        if user_doc and not _check_organization_scope(actor_user, user_doc):
+            return None, "Access denied. Cross-organization access is prohibited.", 403
+
+        if actor_role == "teacher":
+            if not _check_teacher_student_access(db, actor_user, student_oid):
+                return None, "Access denied. Student is not in your assigned subjects.", 403
+        elif not can_access_student_data(actor_user, student_oid, db):
+            return None, "Access denied.", 403
+
+        page = max(1, page)
+        limit = max(1, min(limit, 100))
+        skip = (page - 1) * limit
+
+        query: Dict[str, Any] = {"student_id": student_oid}
+        actor_org = getattr(actor_user, "organization_id", None)
+        if actor_org:
+            query["organization_id"] = actor_org
+
+        total = db.dropout_prediction_history.count_documents(query)
+        cursor = (
+            db.dropout_prediction_history.find(query)
+            .sort("created_at", DESCENDING)
+            .skip(skip)
+            .limit(limit)
+        )
+        history = [DropoutRecord.from_doc(doc).to_dict() for doc in cursor]
+
+        if total == 0:
+            latest_doc = db.dropout_records.find_one(query)
+            if latest_doc:
+                history = [DropoutRecord.from_doc(latest_doc).to_dict()]
+                total = 1
+
+        return {
+            "student_id": str(student_oid),
+            "history": history,
+            "total": total,
+            "page": page,
+            "limit": limit,
+        }, None, 200
+
+    @classmethod
+    def get_prediction_detail(
+        cls,
+        db: Database,
+        actor_user: User,
+        prediction_id: str,
+    ) -> Tuple[Optional[Dict[str, Any]], Optional[str], int]:
+        """
+        Retrieve a single dropout prediction record with explanations and feature snapshot.
+        Enforces strict RBAC and organization isolation.
+        """
+        if db is None:
+            return None, "Database unavailable.", 500
+
+        actor_role = getattr(actor_user, "role", "")
+        if actor_role == "analyst":
+            return None, "Analysts cannot access individual student prediction details.", 403
+
+        pred_oid = to_object_id(prediction_id)
+        if not pred_oid:
+            return None, "Invalid prediction ID format.", 400
+
+        doc = db.dropout_prediction_history.find_one({"_id": pred_oid})
+        if not doc:
+            doc = db.dropout_records.find_one({"_id": pred_oid})
+        if not doc:
+            return None, "Prediction record not found.", 404
+
+        actor_org = getattr(actor_user, "organization_id", None)
+        doc_org = doc.get("organization_id")
+        if actor_org and doc_org and doc_org != actor_org:
+            return None, "Access denied. Cross-organization access is prohibited.", 403
+
+        student_oid = doc.get("student_id")
+        if not student_oid:
+            return None, "Access denied. Cross-organization access is prohibited.", 403
+        user_doc = db.users.find_one({"_id": student_oid})
+        if user_doc and not _check_organization_scope(actor_user, user_doc):
+            return None, "Access denied. Cross-organization access is prohibited.", 403
+
+        if actor_role == "teacher":
+            if not _check_teacher_student_access(db, actor_user, student_oid):
+                return None, "Access denied. Student is not in your assigned subjects.", 403
+        elif not can_access_student_data(actor_user, student_oid, db):
+            return None, "Access denied.", 403
+
+        return DropoutRecord.from_doc(doc).to_dict(), None, 200
+
+    @classmethod
+    def get_admin_prediction_records(
+        cls,
+        db: Database,
+        admin_user: User,
+        risk_tier: Optional[str] = None,
+        academic_term: Optional[str] = None,
+        search: Optional[str] = None,
+        page: int = 1,
+        limit: int = 20,
+    ) -> Tuple[Optional[Dict[str, Any]], Optional[str], int]:
+        """
+        Filterable, paginated dropout prediction records for Admin dashboard.
+        """
+        if db is None:
+            return None, "Database unavailable.", 500
+
+        query: Dict[str, Any] = {}
+        admin_org = getattr(admin_user, "organization_id", None)
+        if admin_org:
+            query["organization_id"] = admin_org
+
+        if risk_tier and risk_tier.strip() in {"Low", "Moderate", "High"}:
+            query["risk_tier"] = risk_tier.strip()
+        if academic_term and academic_term.strip():
+            query["academic_term"] = academic_term.strip()
+        if search and search.strip():
+            term_rx = {"$regex": search.strip(), "$options": "i"}
+            query["$or"] = [
+                {"student_name": term_rx},
+                {"academic_term": term_rx},
+                {"model_version": term_rx},
+            ]
+
+        page = max(1, page)
+        limit = max(1, min(limit, 100))
+        skip = (page - 1) * limit
+
+        total = db.dropout_records.count_documents(query)
+        cursor = (
+            db.dropout_records.find(query)
+            .sort("updated_at", DESCENDING)
+            .skip(skip)
+            .limit(limit)
+        )
+        records = [DropoutRecord.from_doc(doc).to_dict() for doc in cursor]
+
+        return {
+            "records": records,
+            "total": total,
+            "page": page,
+            "limit": limit,
+        }, None, 200
+
+    @classmethod
+    def get_analyst_trends(
+        cls,
+        db: Database,
+        analyst_user: User,
+        threshold: int = 5,
+    ) -> Tuple[Optional[Dict[str, Any]], Optional[str], int]:
+        """
+        Organization-scoped, privacy-suppressed dropout risk trends grouped by academic_term.
+        Applies Statistical Disclosure Control (N < 5 complementary suppression).
+        """
+        if db is None:
+            return None, "Database unavailable.", 500
+
+        base_filter: Dict[str, Any] = {}
+        analyst_org = getattr(analyst_user, "organization_id", None)
+        if analyst_org:
+            base_filter["organization_id"] = analyst_org
+
+        docs = list(db.dropout_records.find(base_filter))
+        term_buckets: Dict[str, Dict[str, int]] = {}
+        for doc in docs:
+            term = doc.get("academic_term") or "Current Term"
+            tier = doc.get("risk_tier") or "Low"
+            if term not in term_buckets:
+                term_buckets[term] = {"Low": 0, "Moderate": 0, "High": 0}
+            if tier in term_buckets[term]:
+                term_buckets[term][tier] += 1
+
+        trends: List[Dict[str, Any]] = []
+        for term in sorted(term_buckets.keys()):
+            counts = term_buckets[term]
+            term_total = sum(counts.values())
+            suppressed_partition, suppressed_total = apply_complementary_partition_suppression(
+                category_counts=counts,
+                total_count=term_total,
+                threshold=threshold,
+            )
+            trends.append({
+                "academic_term": term,
+                "total_assessed": suppressed_total,
+                "risk_distribution": suppressed_partition,
+            })
+
+        return {
+            "trends": trends,
+            "privacy_notice": (
+                f"Statistical Disclosure Control applied: cells with count < {threshold} "
+                "are suppressed with complementary cell masking."
+            ),
+            "benchmark_disclosure": UCI_BENCHMARK_DISCLOSURE,
         }, None, 200

@@ -509,6 +509,69 @@ export const dropoutApi = {
         body: JSON.stringify(payload),
       }
     ),
+
+  bulkPredict: (payload: {
+    student_ids: string[];
+    academic_term?: string;
+    subject?: string;
+  }) =>
+    apiRequest<{
+      status_code: number;
+      total_requested: number;
+      succeeded: number;
+      failed: number;
+      results: Array<{
+        student_id: string;
+        status: 'success' | 'error';
+        assessment?: DropoutRecord;
+        error?: string;
+        status_code?: number;
+      }>;
+    }>('/api/dropout/predict/bulk', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  getStudentDropoutHistory: (studentId: string, page = 1, limit = 20) =>
+    apiRequest<{
+      status_code: number;
+      student_id: string;
+      history: DropoutRecord[];
+      total: number;
+      page: number;
+      limit: number;
+    }>(`/api/dropout/student/${studentId}/history?page=${page}&limit=${limit}`),
+
+  getPredictionDetail: (predictionId: string) =>
+    apiRequest<{ status_code: number; assessment: DropoutRecord }>(
+      `/api/dropout/prediction/${predictionId}`
+    ),
+
+  getAdminDropoutRecords: (params?: {
+    risk_tier?: string;
+    academic_term?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const query = new URLSearchParams();
+    if (params?.risk_tier) query.set('risk_tier', params.risk_tier);
+    if (params?.academic_term) query.set('academic_term', params.academic_term);
+    if (params?.search) query.set('search', params.search);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest<{
+      status_code: number;
+      records: DropoutRecord[];
+      total: number;
+      page: number;
+      limit: number;
+    }>(`/api/dropout/admin/records${qs}`);
+  },
+
+  getAnalystDropoutTrends: () =>
+    apiRequest<import('../types').AnalystDropoutTrendsResponse>('/api/dropout/analyst/trends'),
 };
 
 export const demandApi = {
@@ -552,6 +615,41 @@ export const demandApi = {
 
   getModelMetadata: () =>
     apiRequest<{ status_code: number; methodology: any; latest_run: any }>('/api/demand/model-metadata'),
+};
+
+export const evaluationApi = {
+  getDropoutEvaluation: () =>
+    apiRequest<import('../types').DropoutEvaluationResponse>('/api/models/evaluation/dropout'),
+
+  getDemandEvaluation: () =>
+    apiRequest<import('../types').DemandEvaluationResponse>('/api/models/evaluation/demand'),
+
+  listRegistryModels: (modelType?: 'dropout' | 'demand') => {
+    const qs = modelType ? `?model_type=${modelType}` : '';
+    return apiRequest<{
+      status_code: number;
+      models: import('../types').ModelRegistryItem[];
+      total: number;
+      organization_id: string | null;
+    }>(`/api/models/registry${qs}`);
+  },
+
+  activateModel: (modelId: string, approvalNotes: string) =>
+    apiRequest<{ status_code: number; model: import('../types').ModelRegistryItem }>(
+      `/api/models/registry/${modelId}/activate`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ approval_notes: approvalNotes }),
+      }
+    ),
+
+  deactivateModel: (modelId: string) =>
+    apiRequest<{ status_code: number; model: import('../types').ModelRegistryItem }>(
+      `/api/models/registry/${modelId}/deactivate`,
+      {
+        method: 'POST',
+      }
+    ),
 };
 
 

@@ -25,21 +25,28 @@ export const StudentRecommendations: React.FC = () => {
   const { user } = useAuth();
   const [predictions, setPredictions] = useState<PredictionRecord[]>([]);
   const [dropoutRecord, setDropoutRecord] = useState<DropoutRecord | null>(null);
+  const [dropoutHistory, setDropoutHistory] = useState<DropoutRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [predsRes, dropoutRes] = await Promise.all([
+        const [predsRes, dropoutRes, historyRes] = await Promise.all([
           api.listPredictions().catch(() => ({ predictions: [] })),
           user?.id
             ? dropoutApi.getStudentDropoutRisk(user.id).catch(() => null)
+            : Promise.resolve(null),
+          user?.id
+            ? dropoutApi.getStudentDropoutHistory(user.id, 1, 5).catch(() => null)
             : Promise.resolve(null),
         ]);
         setPredictions(predsRes?.predictions || []);
         if (dropoutRes?.assessment) {
           setDropoutRecord(dropoutRes.assessment);
+        }
+        if (historyRes?.history) {
+          setDropoutHistory(historyRes.history);
         }
       } catch (err: any) {
         setError(err?.message || 'Failed to generate recommendations.');
@@ -110,6 +117,42 @@ export const StudentRecommendations: React.FC = () => {
       />
 
       <ErrorAlert message={error || ''} onDismiss={() => setError(null)} />
+
+      {dropoutRecord && (
+        <SectionCard
+          title="Early-Warning Support & Assessment History"
+          subtitle={dropoutRecord.disclaimer}
+        >
+          <div className="space-y-3 text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200">
+              <div>
+                <span className="text-xs uppercase text-slate-500 font-semibold">Current Support Tier</span>
+                <p className="font-bold text-slate-900">
+                  {dropoutRecord.risk_tier} ({(dropoutRecord.risk_probability * 100).toFixed(1)}%)
+                </p>
+              </div>
+              <div className="text-xs text-slate-500">
+                Term: {dropoutRecord.academic_term} · Model: {dropoutRecord.model_version}
+              </div>
+            </div>
+            {dropoutHistory.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-xs font-semibold text-slate-600 uppercase">Recent Assessment History</p>
+                <div className="divide-y divide-slate-100 border border-slate-200 rounded-lg">
+                  {dropoutHistory.map((h) => (
+                    <div key={h.id} className="px-3 py-2 flex items-center justify-between text-xs">
+                      <span className="font-medium text-slate-800">{h.academic_term}</span>
+                      <span className="text-slate-600">
+                        {h.risk_tier} ({(h.risk_probability * 100).toFixed(1)}%)
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </SectionCard>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

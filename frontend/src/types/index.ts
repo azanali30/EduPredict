@@ -538,6 +538,147 @@ export interface DemandOverviewResponse {
   generated_at: string;
 }
 
+// Phase 8C & 8D: Model Evaluation, Registry, and Integrated Prediction Types
+export interface DropoutEvaluationResponse {
+  status_code: number;
+  domain: string;
+  champion_model: string;
+  champion_model_version: string;
+  validation_status: string;
+  local_institutional_validation: boolean;
+  benchmark_disclosure: string;
+  explainability_disclaimer: string;
+  dataset: {
+    name: string;
+    train_samples: number;
+    test_samples: number;
+    feature_count: number;
+  };
+  dataset_fingerprint?: string | null;
+  calibrated_champion_metrics: {
+    accuracy: number;
+    precision: number;
+    recall: number;
+    f1_score: number;
+    roc_auc: number;
+    pr_auc: number;
+    brier_score: number;
+    confusion_matrix: { tn: number; fp: number; fn: number; tp: number };
+  };
+  candidate_comparison: Array<{
+    model_name: string;
+    accuracy: number;
+    precision: number;
+    recall: number;
+    f1_score: number;
+    roc_auc: number;
+    pr_auc: number;
+    brier_score: number;
+    is_champion: boolean;
+    confusion_matrix?: { tn: number; fp: number; fn: number; tp: number };
+  }>;
+  roc_curve: Array<{ fpr: number; tpr: number }>;
+  pr_curve: Array<{ recall: number; precision: number }>;
+  calibration_curve: Array<{
+    mean_predicted_probability: number;
+    fraction_of_positives: number;
+    count?: number;
+  }>;
+  expected_calibration_error: number;
+  feature_contributions: Array<{
+    feature: string;
+    importance: number;
+    direction: string;
+    note?: string;
+  }>;
+  risk_tradeoffs?: Record<string, any>;
+  risk_thresholds?: Record<string, any>;
+}
+
+export interface DemandEvaluationResponse {
+  status_code: number;
+  domain: string;
+  organization_id: string;
+  overall_status: string;
+  validation_methodology: string;
+  model_comparison: Array<{
+    model_name: string;
+    evaluated_subjects: number;
+    mae: number | null;
+    rmse: number | null;
+    mape: number | null;
+    smape: number | null;
+    forecast_bias: number | null;
+    directional_accuracy: number | null;
+    status: string;
+  }>;
+  subject_evaluations: Array<{
+    subject_id: string;
+    subject_code: string;
+    subject_name: string;
+    department: string;
+    terms_observed: number;
+    data_sufficiency: string;
+    validation_status: string;
+    model_used: string;
+    mae: number | null;
+    rmse: number | null;
+    mape: number | null;
+    smape: number | null;
+    forecast_bias: number | null;
+  }>;
+  actual_vs_predicted: Array<{
+    subject_code: string;
+    subject_name: string;
+    latest_actual: number | null;
+    predicted_enrollment: number;
+    residual: number | null;
+    data_sufficiency: string;
+  }>;
+  insufficient_data_notice?: string | null;
+}
+
+export interface ModelRegistryItem {
+  id: string;
+  model_type: 'dropout' | 'demand';
+  model_name: string;
+  model_version: string;
+  algorithm?: string;
+  model_status: string;
+  deployment_status: string;
+  is_active: boolean;
+  organization_id?: string | null;
+  evaluation_metrics: Record<string, any>;
+  dataset_fingerprint?: string | null;
+  validation_methodology: string;
+  approval_notes?: string | null;
+  created_by?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface AnalystDropoutTrendsResponse {
+  status_code: number;
+  trends: Array<{
+    academic_term: string;
+    total_assessed: {
+      count: number | null;
+      display: string;
+      suppressed: boolean;
+    };
+    risk_distribution: Record<
+      string,
+      {
+        count: number | null;
+        display: string;
+        suppressed: boolean;
+      }
+    >;
+  }>;
+  privacy_notice: string;
+  benchmark_disclosure: string;
+}
+
 
 
 

@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { api, dropoutApi } from '../../services/api';
-import { AnalystDropoutOverviewResponse } from '../../types';
+import {
+  AnalystDropoutOverviewResponse,
+  AnalystDropoutTrendsResponse,
+} from '../../types';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatCard } from '../../components/common/StatCard';
 import { SectionCard } from '../../components/common/SectionCard';
@@ -28,16 +31,21 @@ export const AnalystRisk: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dropoutData, setDropoutData] = useState<AnalystDropoutOverviewResponse | null>(null);
+  const [dropoutTrends, setDropoutTrends] = useState<AnalystDropoutTrendsResponse | null>(null);
 
   useEffect(() => {
     const fetchOverview = async () => {
       try {
-        const [_, dropRes] = await Promise.all([
+        const [_, dropRes, trendsRes] = await Promise.all([
           api.getAnalystOverview().catch(() => null),
           dropoutApi.getAnalystDropoutOverview().catch(() => null),
+          dropoutApi.getAnalystDropoutTrends().catch(() => null),
         ]);
         if (dropRes) {
           setDropoutData(dropRes);
+        }
+        if (trendsRes) {
+          setDropoutTrends(trendsRes);
         }
       } catch (err: any) {
         setError(err?.message || 'Failed to retrieve academic risk telemetry.');
@@ -251,6 +259,53 @@ export const AnalystRisk: React.FC = () => {
               <p className="text-[11px] text-slate-500">
                 Note: Benchmark metrics above reflect holdout evaluation on the UCI Portuguese higher-education dataset, not locally validated EduPredict institutional performance.
               </p>
+            </div>
+          )}
+
+          {dropoutTrends && (
+            <div className="p-4 bg-white border border-slate-200 rounded-xl space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-bold text-slate-800">
+                  Term-by-Term Dropout Risk Trends (SDC Protected)
+                </h4>
+                <span className="text-[11px] text-slate-500">N &lt; 5 cells masked</span>
+              </div>
+              {dropoutTrends.trends.length === 0 ? (
+                <p className="text-xs text-slate-500">
+                  No term-level dropout assessment trends recorded yet.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-slate-500 uppercase">
+                        <th className="py-2 pr-3">Academic Term</th>
+                        <th className="py-2 px-3">Total Assessed</th>
+                        <th className="py-2 px-3">Low Risk</th>
+                        <th className="py-2 px-3">Moderate Risk</th>
+                        <th className="py-2 px-3">High Risk</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {dropoutTrends.trends.map((t) => (
+                        <tr key={t.academic_term}>
+                          <td className="py-2 pr-3 font-semibold text-slate-800">{t.academic_term}</td>
+                          <td className="py-2 px-3 font-mono">{t.total_assessed.display}</td>
+                          <td className="py-2 px-3 font-mono text-emerald-700">
+                            {t.risk_distribution?.Low?.display ?? '0'}
+                          </td>
+                          <td className="py-2 px-3 font-mono text-amber-700">
+                            {t.risk_distribution?.Moderate?.display ?? '0'}
+                          </td>
+                          <td className="py-2 px-3 font-mono text-rose-700">
+                            {t.risk_distribution?.High?.display ?? '0'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
         </div>

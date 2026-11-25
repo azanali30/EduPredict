@@ -97,6 +97,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               { to: '/admin/analytics', label: 'Performance Analytics', icon: <BarChart3 size={18} /> },
               { to: '/admin/predictions', label: 'AI Predictions Hub', icon: <Sparkles size={18} />, badge: 'AI' },
               { to: '/admin/demand-forecasting', label: 'Demand Forecasting', icon: <TrendingUp size={18} />, badge: '8B' },
+              { to: '/admin/model-evaluation', label: 'Model Evaluation', icon: <BarChart3 size={18} />, badge: '8C' },
               { to: '/admin/risk-monitoring', label: 'Risk & Anomaly Monitor', icon: <AlertTriangle size={18} /> },
             ],
           },
@@ -193,6 +194,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             items: [
               { to: '/analyst/trends', label: 'Performance Trends', icon: <LineChart size={18} /> },
               { to: '/analyst/demand-forecasting', label: 'Demand Forecasting', icon: <TrendingUp size={18} /> },
+              { to: '/analyst/model-evaluation', label: 'Model Evaluation', icon: <BarChart3 size={18} />, badge: '8C' },
               { to: '/analyst/risk', label: 'Academic Risk Analytics', icon: <AlertTriangle size={18} /> },
               { to: '/analyst/anomalies', label: 'Anomaly Analysis', icon: <Activity size={18} /> },
               { to: '/analyst/data-quality', label: 'Data Quality & Insights', icon: <Database size={18} /> },

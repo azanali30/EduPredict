@@ -62,6 +62,22 @@ export const AdminRiskMonitoring: React.FC = () => {
   const [predLoading, setPredLoading] = useState(true);
   const [inspectRecord, setInspectRecord] = useState<PredictionRecord | null>(null);
   const [predSearch, setPredSearch] = useState('');
+  const [adminDropoutRecords, setAdminDropoutRecords] = useState<any[]>([]);
+  const [dropoutRiskFilter, setDropoutRiskFilter] = useState<string>('');
+  const [dropoutSearch, setDropoutSearch] = useState<string>('');
+
+  const fetchAdminDropoutRecords = async (riskTier = dropoutRiskFilter, search = dropoutSearch) => {
+    try {
+      const res = await dropoutApi.getAdminDropoutRecords({
+        risk_tier: riskTier || undefined,
+        search: search || undefined,
+        limit: 50,
+      });
+      setAdminDropoutRecords(res.records || []);
+    } catch {
+      // Handled gracefully
+    }
+  };
 
   const fetchAnomalies = async () => {
     setAnomaliesLoading(true);
@@ -108,8 +124,15 @@ export const AdminRiskMonitoring: React.FC = () => {
   useEffect(() => {
     if (activeTab === 'dropout' && !dropoutData) {
       fetchDropoutOverview();
+      fetchAdminDropoutRecords();
     }
   }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'dropout') {
+      fetchAdminDropoutRecords(dropoutRiskFilter, dropoutSearch);
+    }
+  }, [dropoutRiskFilter, dropoutSearch]);
 
   const handleReviewSave = async (
     anomalyId: string,
@@ -741,6 +764,65 @@ export const AdminRiskMonitoring: React.FC = () => {
                                 Required
                               </span>
                             </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </SectionCard>
+
+              <SectionCard
+                title="All Organization Dropout Prediction Records"
+                subtitle="Filterable institution-wide dropout risk assessments (Phase 8D/8E)"
+              >
+                <div className="flex flex-wrap items-center gap-3 mb-4">
+                  <select
+                    value={dropoutRiskFilter}
+                    onChange={(e) => setDropoutRiskFilter(e.target.value)}
+                    className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white"
+                  >
+                    <option value="">All Risk Tiers</option>
+                    <option value="High">High Risk</option>
+                    <option value="Moderate">Moderate Risk</option>
+                    <option value="Low">Low Risk</option>
+                  </select>
+                  <input
+                    type="text"
+                    value={dropoutSearch}
+                    onChange={(e) => setDropoutSearch(e.target.value)}
+                    placeholder="Search student or term..."
+                    className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white min-w-[220px]"
+                  />
+                </div>
+                {adminDropoutRecords.length === 0 ? (
+                  <p className="text-xs text-slate-500 py-4 text-center">
+                    No dropout prediction records match the selected filters.
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead>
+                        <tr className="border-b border-slate-200 text-slate-500 uppercase">
+                          <th className="py-2 pr-3">Student</th>
+                          <th className="py-2 px-3">Term</th>
+                          <th className="py-2 px-3">Risk Tier</th>
+                          <th className="py-2 px-3">Probability</th>
+                          <th className="py-2 px-3">Model Version</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {adminDropoutRecords.map((rec) => (
+                          <tr key={rec.id}>
+                            <td className="py-2 pr-3 font-medium text-slate-800">
+                              {rec.student_name || rec.student_id}
+                            </td>
+                            <td className="py-2 px-3">{rec.academic_term}</td>
+                            <td className="py-2 px-3 font-semibold">{rec.risk_tier}</td>
+                            <td className="py-2 px-3 font-mono">
+                              {(rec.risk_probability * 100).toFixed(1)}%
+                            </td>
+                            <td className="py-2 px-3 font-mono text-slate-500">{rec.model_version}</td>
                           </tr>
                         ))}
                       </tbody>
