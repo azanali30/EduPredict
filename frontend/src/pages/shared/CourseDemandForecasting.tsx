@@ -127,9 +127,9 @@ export const CourseDemandForecasting: React.FC = () => {
     if (status === 'sufficient') {
       return {
         bg: 'bg-emerald-50 border-emerald-200 text-emerald-900',
-        label: 'Sufficient Multi-Term History (Walk-Forward Validated / Experimental)',
+        label: 'Walk-Forward Evaluated / Experimental Multi-Term Series',
         detail:
-          'At least 4 chronological terms observed for one or more subjects; walk-forward validation compares Naive, Moving Average, and Ridge Lag models.',
+          'At least 4 chronological terms observed for one or more subjects; common-origin walk-forward evaluation compares baselines and Ridge Lag models (>= 7 terms). Not yet institutionally validated.',
       };
     }
     if (status === 'baseline_only') {
@@ -288,8 +288,13 @@ export const CourseDemandForecasting: React.FC = () => {
             />
             <StatCard
               title={`Predicted Enrollment (+${periodsAhead}T)`}
-              value={Math.round(summary?.total_predicted_enrollment ?? 0)}
-              subtitle="Estimated demand (not confirmed)"
+              value={
+                summary?.overall_data_sufficiency === 'insufficient' &&
+                (summary?.total_latest_actual_enrollment ?? 0) === 0
+                  ? 'Insufficient Data'
+                  : Math.round(summary?.total_predicted_enrollment ?? 0)
+              }
+              subtitle="Heuristic estimate (not confirmed)"
               icon={<TrendingUp size={20} className="text-teal-600" />}
             />
             <StatCard
@@ -453,7 +458,7 @@ export const CourseDemandForecasting: React.FC = () => {
                       <th className="py-2.5 px-3">Terms</th>
                       <th className="py-2.5 px-3">Latest Actual</th>
                       <th className="py-2.5 px-3">Predicted ({overview.forecasts[0]?.forecast_period})</th>
-                      <th className="py-2.5 px-3">Confidence Range</th>
+                      <th className="py-2.5 px-3">Heuristic Range (Not Calibrated CI)</th>
                       <th className="py-2.5 px-3">Growth / Trend</th>
                       <th className="py-2.5 px-3">Demand Tier</th>
                       <th className="py-2.5 px-3">Model & Validation</th>
@@ -517,7 +522,7 @@ export const CourseDemandForecasting: React.FC = () => {
                                 : 'bg-slate-100 text-slate-600'
                             }`}
                           >
-                            {f.demand_tier}
+                            {f.demand_tier === 'Unclassified' ? 'Unclassified (No Capacity)' : f.demand_tier}
                           </span>
                         </td>
                         <td className="py-3 px-3">

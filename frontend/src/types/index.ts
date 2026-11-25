@@ -477,20 +477,30 @@ export interface CourseDemandForecastItem {
   confidence_lower: number | null;
   confidence_upper: number | null;
   confidence_level: string;
+  interval_type?: string;
+  is_calibrated_confidence_interval?: boolean;
   growth_rate_pct: number | null;
   trend_direction: string;
   demand_tier: string;
   utilization_pct: number | null;
   model_used: string;
-  validation_status: 'validated' | 'experimental' | 'baseline' | 'insufficient_data';
+  validation_status:
+    | 'institutionally_validated'
+    | 'walk_forward_evaluated'
+    | 'experimental'
+    | 'baseline'
+    | 'insufficient_data'
+    | 'validated';
   data_sufficiency: 'sufficient' | 'baseline_only' | 'insufficient';
   evaluation_metrics: {
     mae?: number | null;
     rmse?: number | null;
     mape?: number | null;
+    mape_note?: string;
     directional_accuracy?: number | null;
     validation_splits?: number;
   };
+  excluded_models?: Record<string, string>;
   multi_step_forecasts?: Array<{ period: string; predicted_enrollment: number }>;
   disclaimer: string;
   created_at?: string;

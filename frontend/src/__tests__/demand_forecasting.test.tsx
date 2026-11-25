@@ -53,13 +53,15 @@ const mockOverviewResponse = {
       predicted_enrollment: 38.5,
       confidence_lower: 34,
       confidence_upper: 43,
-      confidence_level: 'Moderate',
+      confidence_level: 'Moderate (Heuristic)',
+      interval_type: 'heuristic_residual_band',
+      is_calibrated_confidence_interval: false,
       growth_rate_pct: 10.0,
       trend_direction: 'Growth',
       demand_tier: 'High Demand',
       utilization_pct: 96.25,
       model_used: 'RidgeLagForecaster',
-      validation_status: 'experimental' as const,
+      validation_status: 'walk_forward_evaluated' as const,
       data_sufficiency: 'sufficient' as const,
       evaluation_metrics: { mae: 2.1, rmse: 2.5, mape: 6.2, validation_splits: 3 },
       disclaimer: 'Estimated enrollment demand for academic planning only — not confirmed registration.',
@@ -69,7 +71,7 @@ const mockOverviewResponse = {
       subject_code: 'POR101',
       subject_name: 'Portuguese Language',
       department: 'Humanities',
-      capacity: 40,
+      capacity: null,
       historical_series: [],
       terms_observed: 5,
       forecast_period: '2026-2027-T1',
@@ -78,11 +80,11 @@ const mockOverviewResponse = {
       predicted_enrollment: 13.5,
       confidence_lower: 10,
       confidence_upper: 17,
-      confidence_level: 'Moderate',
+      confidence_level: 'Low (Heuristic)',
       growth_rate_pct: 35.0,
       trend_direction: 'Growth',
-      demand_tier: 'Low Demand',
-      utilization_pct: 33.75,
+      demand_tier: 'Unclassified',
+      utilization_pct: null,
       model_used: 'MovingAverage2',
       validation_status: 'experimental' as const,
       data_sufficiency: 'sufficient' as const,
@@ -120,6 +122,9 @@ describe('CourseDemandForecasting Page (Phase 8B)', () => {
     expect(screen.getByText('Save Forecast Snapshot')).toBeDefined();
     expect(screen.getByText('Mathematics')).toBeDefined();
     expect(screen.getByText('Portuguese Language')).toBeDefined();
+    expect(screen.getByText('Unclassified (No Capacity)')).toBeDefined();
+    expect(screen.getByText(/Heuristic Range \(Not Calibrated CI\)/i)).toBeDefined();
+    expect(screen.getByText(/walk_forward_evaluated/i)).toBeDefined();
     expect(screen.getByText(/not confirmed registration/i)).toBeDefined();
   });
 

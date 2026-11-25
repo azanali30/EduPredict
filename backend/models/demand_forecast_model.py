@@ -10,8 +10,15 @@ from typing import Any, Dict, List, Optional
 from bson import ObjectId
 from backend.utils.security import to_object_id
 
-VALID_DEMAND_TIERS = {"High Demand", "Moderate Demand", "Low Demand", "Insufficient Data"}
-VALID_VALIDATION_STATUSES = {"validated", "experimental", "baseline", "insufficient_data"}
+VALID_DEMAND_TIERS = {"High Demand", "Moderate Demand", "Low Demand", "Unclassified", "Insufficient Data"}
+VALID_VALIDATION_STATUSES = {
+    "institutionally_validated",
+    "walk_forward_evaluated",
+    "experimental",
+    "baseline",
+    "insufficient_data",
+    "validated",  # Backward compatibility for previously saved records
+}
 
 
 class DemandForecastRecord:
@@ -31,7 +38,9 @@ class DemandForecastRecord:
         latest_actual_enrollment: Optional[int] = None,
         confidence_lower: Optional[float] = None,
         confidence_upper: Optional[float] = None,
-        confidence_level: str = "Low",
+        confidence_level: str = "Low (Heuristic)",
+        interval_type: str = "heuristic_residual_band",
+        is_calibrated_confidence_interval: bool = False,
         growth_rate_pct: Optional[float] = None,
         trend_direction: str = "Insufficient Data",
         demand_tier: str = "Insufficient Data",
@@ -71,6 +80,8 @@ class DemandForecastRecord:
             max(0.0, float(confidence_upper)) if confidence_upper is not None else None
         )
         self.confidence_level = confidence_level
+        self.interval_type = interval_type
+        self.is_calibrated_confidence_interval = bool(is_calibrated_confidence_interval)
         self.growth_rate_pct = (
             round(float(growth_rate_pct), 2) if growth_rate_pct is not None else None
         )
@@ -106,6 +117,8 @@ class DemandForecastRecord:
             "confidence_lower": round(self.confidence_lower, 2) if self.confidence_lower is not None else None,
             "confidence_upper": round(self.confidence_upper, 2) if self.confidence_upper is not None else None,
             "confidence_level": self.confidence_level,
+            "interval_type": self.interval_type,
+            "is_calibrated_confidence_interval": self.is_calibrated_confidence_interval,
             "growth_rate_pct": self.growth_rate_pct,
             "trend_direction": self.trend_direction,
             "demand_tier": self.demand_tier,
@@ -140,6 +153,8 @@ class DemandForecastRecord:
             "confidence_lower": round(self.confidence_lower, 2) if self.confidence_lower is not None else None,
             "confidence_upper": round(self.confidence_upper, 2) if self.confidence_upper is not None else None,
             "confidence_level": self.confidence_level,
+            "interval_type": self.interval_type,
+            "is_calibrated_confidence_interval": self.is_calibrated_confidence_interval,
             "growth_rate_pct": self.growth_rate_pct,
             "trend_direction": self.trend_direction,
             "demand_tier": self.demand_tier,
@@ -173,7 +188,9 @@ class DemandForecastRecord:
             predicted_enrollment=doc.get("predicted_enrollment", 0.0),
             confidence_lower=doc.get("confidence_lower"),
             confidence_upper=doc.get("confidence_upper"),
-            confidence_level=doc.get("confidence_level", "Low"),
+            confidence_level=doc.get("confidence_level", "Low (Heuristic)"),
+            interval_type=doc.get("interval_type", "heuristic_residual_band"),
+            is_calibrated_confidence_interval=doc.get("is_calibrated_confidence_interval", False),
             growth_rate_pct=doc.get("growth_rate_pct"),
             trend_direction=doc.get("trend_direction", "Insufficient Data"),
             demand_tier=doc.get("demand_tier", "Insufficient Data"),

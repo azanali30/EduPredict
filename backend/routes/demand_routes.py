@@ -99,7 +99,7 @@ def generate_forecast():
     )
     if err:
         return jsonify({
-            "error": "Forbidden" if status_code == 403 else "Error",
+            "error": "Forbidden" if status_code == 403 else "Bad Request" if status_code == 400 else "Error",
             "message": err,
             "status_code": status_code,
         }), status_code
@@ -131,7 +131,8 @@ def get_forecast_history():
         limit=limit,
     )
     if err:
-        return jsonify({"error": "Error", "message": err, "status_code": status_code}), status_code
+        error_label = "Forbidden" if status_code == 403 else "Bad Request" if status_code == 400 else "Error"
+        return jsonify({"error": error_label, "message": err, "status_code": status_code}), status_code
 
     return jsonify({"status_code": 200, **res}), 200
 
@@ -160,8 +161,14 @@ def get_subject_forecast(subject_id: str):
         periods_ahead=periods_ahead,
     )
     if err:
+        error_label = (
+            "Forbidden" if status_code == 403
+            else "Bad Request" if status_code == 400
+            else "Not Found" if status_code == 404
+            else "Error"
+        )
         return jsonify({
-            "error": "Forbidden" if status_code == 403 else "Not Found" if status_code == 404 else "Error",
+            "error": error_label,
             "message": err,
             "status_code": status_code,
         }), status_code
@@ -179,6 +186,7 @@ def get_model_metadata():
         actor_user=current_user,
     )
     if err:
-        return jsonify({"error": "Error", "message": err, "status_code": status_code}), status_code
+        error_label = "Forbidden" if status_code == 403 else "Bad Request" if status_code == 400 else "Error"
+        return jsonify({"error": error_label, "message": err, "status_code": status_code}), status_code
 
     return jsonify({"status_code": 200, **res}), 200
