@@ -733,4 +733,83 @@ export const streamApi = {
     ),
 };
 
+export interface BackupSummaryItem {
+  backup_id: string;
+  created_at: string;
+  format_version: string;
+  archive_size: number;
+  total_documents: number;
+  collection_count: number;
+  verified: boolean;
+  archive_exists: boolean;
+}
+
+export interface MonitoringOverviewResponse {
+  status_code: number;
+  application: {
+    name: string;
+    version: string;
+    environment: string;
+    status: string;
+    uptime_seconds: number;
+    timestamp: string;
+  };
+  database: {
+    connected: boolean;
+    status: string;
+    latency_ms: number | null;
+    server_version: string;
+    collection_counts: Record<string, number>;
+    total_indexes: number;
+    storage_bytes: number | null;
+  };
+  streaming: {
+    events_received: number;
+    events_processed: number;
+    events_failed: number;
+    events_pending: number;
+    average_latency_ms: number | null;
+  };
+  reconciliation: {
+    realtime_processed: number;
+    batch_backfill_processed: number;
+    total_unique_processed: number;
+    consistent: boolean;
+  };
+  backups: {
+    total_available: number;
+    latest: BackupSummaryItem | null;
+  };
+  errors: {
+    failed_stream_events: number;
+    recent_system_errors: number;
+  };
+}
+
+export const monitoringApi = {
+  getOverview: () => apiRequest<MonitoringOverviewResponse>('/api/monitoring/overview'),
+
+  listBackups: () =>
+    apiRequest<{ status_code: number; backups: BackupSummaryItem[]; total: number }>(
+      '/api/monitoring/backups'
+    ),
+
+  createBackup: () =>
+    apiRequest<{ status_code: number; backup: BackupSummaryItem }>(
+      '/api/monitoring/backups',
+      { method: 'POST' }
+    ),
+
+  verifyBackup: (backupId: string) =>
+    apiRequest<{
+      status_code: number;
+      verified: boolean;
+      backup_id: string;
+      total_documents: number;
+      collection_count: number;
+    }>(`/api/monitoring/backups/${encodeURIComponent(backupId)}/verify`, {
+      method: 'POST',
+    }),
+};
+
 

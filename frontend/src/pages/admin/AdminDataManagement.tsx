@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '../../services/api';
+import { api, monitoringApi, BackupSummaryItem, MonitoringOverviewResponse } from '../../services/api';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatCard } from '../../components/common/StatCard';
 import { SectionCard } from '../../components/common/SectionCard';
@@ -12,32 +12,77 @@ import {
   CheckCircle2,
   FileCode,
   Info,
+  HardDriveDownload,
+  ShieldCheck,
 } from 'lucide-react';
 
 export const AdminDataManagement: React.FC = () => {
   const [health, setHealth] = useState<any>(null);
+  const [overview, setOverview] = useState<MonitoringOverviewResponse | null>(null);
+  const [backups, setBackups] = useState<BackupSummaryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [backupMsg, setBackupMsg] = useState<string | null>(null);
+  const [creatingBackup, setCreatingBackup] = useState(false);
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
+
+  const fetchAll = async () => {
+    setError(null);
+    try {
+      const [hRes, mRes, bRes] = await Promise.all([
+        api.getHealth(),
+        monitoringApi.getOverview().catch(() => null),
+        monitoringApi.listBackups().catch(() => ({ backups: [] })),
+      ]);
+      setHealth(hRes);
+      if (mRes) setOverview(mRes);
+      setBackups(bRes?.backups || []);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to retrieve database health telemetry.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchHealth = async () => {
-      try {
-        const res = await api.getHealth();
-        setHealth(res);
-      } catch (err: any) {
-        setError(err?.message || 'Failed to retrieve database health telemetry.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchHealth();
+    fetchAll();
   }, []);
 
+  const handleCreateBackup = async () => {
+    setCreatingBackup(true);
+    setError(null);
+    setBackupMsg(null);
+    try {
+      const res = await monitoringApi.createBackup();
+      setBackupMsg(`Backup ${res.backup.backup_id} created and verified (${res.backup.total_documents} docs).`);
+      await fetchAll();
+    } catch (err: any) {
+      setError(err?.message || 'Backup creation failed.');
+    } finally {
+      setCreatingBackup(false);
+    }
+  };
+
+  const handleVerifyBackup = async (backupId: string) => {
+    setVerifyingId(backupId);
+    setError(null);
+    setBackupMsg(null);
+    try {
+      const res = await monitoringApi.verifyBackup(backupId);
+      setBackupMsg(`Backup ${res.backup_id} verified (${res.total_documents} docs across ${res.collection_count} collections).`);
+    } catch (err: any) {
+      setError(err?.message || `Verification failed for ${backupId}.`);
+    } finally {
+      setVerifyingId(null);
+    }
+  };
+
   if (loading) {
-    return <LoadingState title="Loading Data Management Telemetry..." description="Inspecting MongoDB database instances." />;
+    return <LoadingState title="Loading Data Management Telemetry..." description="Inspecting MongoDB database instances and backup status." />;
   }
 
-  const dbConnected = health?.database?.connected || health?.status === 'healthy';
+  const dbConnected = overview?.database?.connected ?? (health?.database?.connected || health?.status === 'healthy');
+  const latestBackup = overview?.backups?.latest;
 
   return (
     <div className="space-y-6">
@@ -48,28 +93,109 @@ export const AdminDataManagement: React.FC = () => {
       />
 
       <ErrorAlert message={error || ''} onDismiss={() => setError(null)} />
+      {backupMsg && (
+        <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-800">
+          {backupMsg}
+        </div>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
           title="Database Engine"
-          value="MongoDB 6.0"
-          subtitle="Port 27017 Local Replica"
+          value={`MongoDB ${overview?.database?.server_version || '6.0'}`}
+          subtitle={`${overview?.database?.total_indexes ?? 0} indexes · ${overview?.errors?.recent_system_errors ?? 0} error logs`}
           icon={<Server size={20} className="text-brand-royal" />}
         />
         <StatCard
-          title="Connection Health"
+          title="Connection & Stream Health"
           value={dbConnected ? 'Operational' : 'Disconnected'}
-          subtitle={dbConnected ? 'Ping latency < 2ms' : 'Service offline'}
+          subtitle={
+            dbConnected
+              ? `Ping ${overview?.database?.latency_ms ?? '<2'} ms · Stream failed: ${overview?.streaming?.events_failed ?? 0}`
+              : 'Service offline'
+          }
           icon={<CheckCircle2 size={20} className={dbConnected ? 'text-emerald-500' : 'text-rose-500'} />}
         />
         <StatCard
-          title="Dataset Provenance"
-          value="UCI Benchmark"
-          subtitle="Cortez & Silva (2008) Schema"
+          title="Latest Verified Backup"
+          value={latestBackup ? `${latestBackup.total_documents} docs` : 'No Backups'}
+          subtitle={
+            latestBackup
+              ? `${latestBackup.backup_id} (${Math.round((latestBackup.archive_size || 0) / 1024)} KB)`
+              : 'Run backup below or via CLI'
+          }
           icon={<FileCode size={20} className="text-brand-ocean" />}
         />
       </div>
+
+      {/* Backup & Recovery Governance (Phase 11) */}
+      <SectionCard
+        title="MongoDB Backup & Integrity Verification"
+        subtitle="Create and verify compressed BSON snapshots. Destructive restore is restricted to the CLI confirmation workflow."
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div className="text-xs text-slate-500">
+            Retention: latest valid archives preserved · Stream reconciliation:{' '}
+            <span className="font-semibold text-slate-700">
+              {overview?.reconciliation?.consistent ? 'Consistent' : 'Pending'}
+            </span>
+          </div>
+          <button
+            onClick={handleCreateBackup}
+            disabled={creatingBackup}
+            className="inline-flex items-center gap-2 rounded-lg bg-brand-royal hover:bg-brand-ocean text-white px-4 py-2 text-xs font-semibold disabled:opacity-60"
+          >
+            <HardDriveDownload size={15} />
+            {creatingBackup ? 'Creating Backup...' : 'Create Backup Snapshot'}
+          </button>
+        </div>
+
+        {backups.length === 0 ? (
+          <div className="text-xs text-slate-500 py-3">No backup archives found yet.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-xs text-left">
+              <thead>
+                <tr className="border-b border-slate-200 text-slate-500 uppercase">
+                  <th className="py-2 pr-4">Backup ID</th>
+                  <th className="py-2 pr-4">Created</th>
+                  <th className="py-2 pr-4">Documents</th>
+                  <th className="py-2 pr-4">Size</th>
+                  <th className="py-2 pr-4">Status</th>
+                  <th className="py-2">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {backups.slice(0, 10).map((b) => (
+                  <tr key={b.backup_id}>
+                    <td className="py-2 pr-4 font-mono text-navy-900">{b.backup_id}</td>
+                    <td className="py-2 pr-4 text-slate-500">{b.created_at}</td>
+                    <td className="py-2 pr-4">{b.total_documents}</td>
+                    <td className="py-2 pr-4">{Math.round((b.archive_size || 0) / 1024)} KB</td>
+                    <td className="py-2 pr-4">
+                      <StatusBadge
+                        status={b.archive_exists && b.verified ? 'Verified' : 'Check Required'}
+                        type={b.archive_exists && b.verified ? 'success' : 'neutral'}
+                      />
+                    </td>
+                    <td className="py-2">
+                      <button
+                        onClick={() => handleVerifyBackup(b.backup_id)}
+                        disabled={verifyingId === b.backup_id}
+                        className="inline-flex items-center gap-1 text-brand-royal font-semibold hover:underline disabled:opacity-50"
+                      >
+                        <ShieldCheck size={14} />
+                        {verifyingId === b.backup_id ? 'Verifying...' : 'Verify'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </SectionCard>
 
       {/* Database Schema & Collection Telemetry */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

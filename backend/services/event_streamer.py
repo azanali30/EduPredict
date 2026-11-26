@@ -11,7 +11,7 @@ import logging
 import queue
 import threading
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Generator, List, Optional, Tuple
 from bson import ObjectId
 from pymongo import DESCENDING
@@ -23,6 +23,7 @@ from backend.models.stream_event_model import (
     VALID_EVENT_SOURCES,
     VALID_EVENT_TYPES,
 )
+from backend.services.system_log_service import log_event
 from backend.utils.security import to_object_id
 
 logger = logging.getLogger(__name__)
@@ -392,8 +393,12 @@ class EventStreamer:
             }, err_msg, 500
 
     @classmethod
-    def _sync_academic_state(cls, db: Database, event: StreamEvent) -> None:
-        """Upsert live stream telemetry into academic_records without corrupting existing records."""
+    def _sync_academic_state(cls, db: Database, event: StreamEvent) -> bool:
+        """
+        Atomically update live stream telemetry into academic_records ONLY if no newer
+        `last_stream_timestamp` exists on the target document (prevents concurrent out-of-order overwrites).
+        Returns True if state was written, False if skipped due to a newer timestamp.
+        """
         now = datetime.now(timezone.utc)
         update_fields: Dict[str, Any] = {
             "updated_at": now,
@@ -412,23 +417,34 @@ class EventStreamer:
         elif event.event_type == "progress_update" and event.payload.get("failures") is not None:
             update_fields["failures"] = int(event.payload["failures"])
 
-        db.academic_records.update_one(
-            {
-                "student_id": event.student_id,
-                "subject": event.subject,
-                "term": event.academic_term,
-            },
-            {
-                "$set": update_fields,
-                "$setOnInsert": {
-                    "student_id": event.student_id,
-                    "subject": event.subject,
-                    "term": event.academic_term,
-                    "created_at": now,
-                },
-            },
-            upsert=True,
-        )
+        base_key = {
+            "student_id": event.student_id,
+            "subject": event.subject,
+            "term": event.academic_term,
+        }
+        conditional_filter = {
+            **base_key,
+            "$or": [
+                {"last_stream_timestamp": {"$exists": False}},
+                {"last_stream_timestamp": None},
+                {"last_stream_timestamp": {"$lte": event.event_timestamp}},
+            ],
+        }
+
+        res = db.academic_records.update_one(conditional_filter, {"$set": update_fields}, upsert=False)
+        if res.matched_count > 0:
+            return True
+
+        existing = db.academic_records.find_one(base_key, {"_id": 1, "last_stream_timestamp": 1})
+        if existing is None:
+            new_doc = {
+                **base_key,
+                **update_fields,
+                "created_at": now,
+            }
+            db.academic_records.insert_one(new_doc)
+            return True
+        return False
 
     @classmethod
     def _maybe_trigger_prediction(
@@ -537,6 +553,142 @@ class EventStreamer:
         event.retry_count += 1
         event.status = "pending"
         return cls._process_persisted_event(db, event, actor_user=actor_user, simulate_transient_failure=False)
+
+    @classmethod
+    def retry_failed_events(
+        cls,
+        db: Database,
+        max_batch: int = 50,
+        max_retries: int = 3,
+        actor_user: Any = None,
+    ) -> Tuple[Dict[str, Any], Optional[str], int]:
+        """
+        Bounded bulk retry for failed stream events with retry limits and per-event isolation.
+        """
+        if db is None:
+            return {}, "Database unavailable.", 500
+
+        bounded_limit = max(1, min(int(max_batch), 200))
+        candidates = list(
+            db.stream_events.find(
+                {"status": "failed", "retry_count": {"$lt": int(max_retries)}}
+            )
+            .sort("received_at", 1)
+            .limit(bounded_limit)
+        )
+
+        succeeded = 0
+        failed = 0
+        skipped = 0
+        for doc in candidates:
+            ev_id = doc.get("event_id", "")
+            try:
+                claimed = db.stream_events.find_one_and_update(
+                    {"_id": doc["_id"], "status": "failed", "retry_count": {"$lt": int(max_retries)}},
+                    {"$inc": {"retry_count": 1}, "$set": {"status": "pending"}},
+                )
+                if not claimed:
+                    skipped += 1
+                    continue
+                ev = StreamEvent.from_doc(claimed)
+                ev.retry_count += 1
+                ev.status = "pending"
+                res, err, code = cls._process_persisted_event(
+                    db, ev, actor_user=actor_user, simulate_transient_failure=False
+                )
+                if code in (200, 201) and not err:
+                    succeeded += 1
+                else:
+                    failed += 1
+            except Exception as exc:
+                logger.warning("Bulk retry failed for event %s: %s", ev_id, exc)
+                failed += 1
+
+        try:
+            log_event(
+                db,
+                "STREAM_BULK_RETRY",
+                {"attempted": len(candidates), "succeeded": succeeded, "failed": failed, "skipped": skipped},
+                actor_id=getattr(actor_user, "id", None),
+            )
+        except Exception:
+            pass
+
+        return {
+            "attempted": len(candidates),
+            "succeeded": succeeded,
+            "failed": failed,
+            "skipped": skipped,
+        }, None, 200
+
+    @classmethod
+    def recover_stale_pending_events(
+        cls,
+        db: Database,
+        stale_seconds: int = 60,
+        max_batch: int = 50,
+        max_retries: int = 3,
+        actor_user: Any = None,
+    ) -> Tuple[Dict[str, Any], Optional[str], int]:
+        """
+        Safely recover stream events stuck in 'pending' longer than `stale_seconds`.
+        Uses atomic find_one_and_update claiming and retry_count bounds.
+        """
+        if db is None:
+            return {}, "Database unavailable.", 500
+
+        cutoff = datetime.now(timezone.utc) - timedelta(seconds=max(1, int(stale_seconds)))
+        bounded_limit = max(1, min(int(max_batch), 200))
+        candidates = list(
+            db.stream_events.find(
+                {
+                    "status": "pending",
+                    "received_at": {"$lte": cutoff},
+                    "retry_count": {"$lt": int(max_retries)},
+                }
+            )
+            .sort("received_at", 1)
+            .limit(bounded_limit)
+        )
+
+        recovered = 0
+        failed = 0
+        for doc in candidates:
+            try:
+                claimed = db.stream_events.find_one_and_update(
+                    {"_id": doc["_id"], "status": "pending", "retry_count": {"$lt": int(max_retries)}},
+                    {"$inc": {"retry_count": 1}},
+                )
+                if not claimed:
+                    continue
+                ev = StreamEvent.from_doc(claimed)
+                ev.retry_count += 1
+                res, err, code = cls._process_persisted_event(
+                    db, ev, actor_user=actor_user, simulate_transient_failure=False
+                )
+                if code in (200, 201) and not err:
+                    recovered += 1
+                else:
+                    failed += 1
+            except Exception as exc:
+                logger.warning("Stale pending recovery error: %s", exc)
+                failed += 1
+
+        try:
+            log_event(
+                db,
+                "STREAM_STALE_RECOVERY",
+                {"candidates": len(candidates), "recovered": recovered, "failed": failed, "stale_seconds": stale_seconds},
+                actor_id=getattr(actor_user, "id", None),
+            )
+        except Exception:
+            pass
+
+        return {
+            "candidates": len(candidates),
+            "recovered": recovered,
+            "failed": failed,
+        }, None, 200
 
     @classmethod
     def get_monitoring_status(cls, db: Database) -> Dict[str, Any]:

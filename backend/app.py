@@ -20,9 +20,14 @@ from backend.routes.dropout_routes import dropout_bp
 from backend.routes.demand_routes import demand_bp
 from backend.routes.evaluation_routes import evaluation_bp
 from backend.routes.stream_routes import stream_bp
+from backend.routes.monitoring_routes import monitoring_bp
 from backend.commands.admin_commands import (
     create_admin_command,
     init_db_command,
+    backup_db_command,
+    verify_backup_command,
+    list_backups_command,
+    restore_db_command,
 )
 from backend.services.user_service import UserService
 from backend.database.schema import init_db_indexes
@@ -120,10 +125,15 @@ def create_app(config_name=None):
     app.register_blueprint(demand_bp)
     app.register_blueprint(evaluation_bp)
     app.register_blueprint(stream_bp)
+    app.register_blueprint(monitoring_bp)
 
     # 4. Register CLI Commands
     app.cli.add_command(create_admin_command)
     app.cli.add_command(init_db_command)
+    app.cli.add_command(backup_db_command)
+    app.cli.add_command(verify_backup_command)
+    app.cli.add_command(list_backups_command)
+    app.cli.add_command(restore_db_command)
 
     # 5. Initialize Database Indexes if database is reachable
     with app.app_context():

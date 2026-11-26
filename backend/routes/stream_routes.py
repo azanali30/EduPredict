@@ -169,6 +169,38 @@ def retry_stream_event(event_id: str):
     return jsonify({"status_code": status, **res}), status
 
 
+@stream_bp.route("/retry-failed", methods=["POST"])
+@login_required
+@role_required("admin")
+def bulk_retry_failed_events():
+    """Admin-only bounded bulk retry for failed stream events."""
+    data = request.get_json(silent=True) or {}
+    max_batch = int(data.get("max_batch", 50))
+    max_retries = int(data.get("max_retries", 3))
+    res, err, status = EventStreamer.retry_failed_events(
+        mongo.db, max_batch=max_batch, max_retries=max_retries, actor_user=current_user
+    )
+    if err:
+        return jsonify({"error": "Bulk Retry Error", "message": err, "status_code": status}), status
+    return jsonify({"status_code": status, **res}), status
+
+
+@stream_bp.route("/recover-stale", methods=["POST"])
+@login_required
+@role_required("admin")
+def recover_stale_stream_events():
+    """Admin-only recovery for stale pending stream events."""
+    data = request.get_json(silent=True) or {}
+    stale_seconds = int(data.get("stale_seconds", 60))
+    max_batch = int(data.get("max_batch", 50))
+    res, err, status = EventStreamer.recover_stale_pending_events(
+        mongo.db, stale_seconds=stale_seconds, max_batch=max_batch, actor_user=current_user
+    )
+    if err:
+        return jsonify({"error": "Stale Recovery Error", "message": err, "status_code": status}), status
+    return jsonify({"status_code": status, **res}), status
+
+
 @stream_bp.route("/student/<student_id>", methods=["GET"])
 @login_required
 @role_required("admin", "teacher", "student")

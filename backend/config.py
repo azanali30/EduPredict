@@ -269,6 +269,10 @@ class BaseConfig:
         "ML_SCALER_PATH", str(BASE_DIR / "ml_models" / "feature_scaler.joblib")
     )
 
+    # Phase 11: Backup & Recovery Configuration
+    BACKUP_DIR = os.getenv("BACKUP_DIR", str(BASE_DIR / "backups"))
+    BACKUP_RETENTION_COUNT = int(os.getenv("BACKUP_RETENTION_COUNT", "7"))
+
 
 class DevelopmentConfig(BaseConfig):
     """Development environment configuration."""

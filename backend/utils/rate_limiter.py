@@ -1,7 +1,10 @@
 """
-EduPredict - Lightweight Sliding-Window Rate Limiter (Phase 8D)
+EduPredict - Lightweight Sliding-Window Rate Limiter (Phase 8D / Phase 11 Hardened)
 Module: backend.utils.rate_limiter
 Purpose: Protects expensive ML prediction and bulk evaluation endpoints from abuse.
+Note: `_REQUEST_BUCKETS` is process-local in-memory (thread-safe via `_LOCK`).
+In single-process multi-threaded Waitress deployments it enforces limits accurately;
+multi-process horizontal scaling would require a shared external store.
 """
 
 import time

@@ -63,6 +63,7 @@ tmp/
 scratch/
 backend/uploads/*
 !backend/uploads/.gitkeep
+backups/
 
 
 # Node.js & Frontend Artifacts
