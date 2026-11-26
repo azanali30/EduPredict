@@ -2,7 +2,7 @@
 EduPredict - Course Demand Forecasting Service (Phase 8B)
 Module: backend.services.demand_forecast_service
 Purpose: Extracts real institutional enrollment history from MongoDB 6.x,
-enforces fail-closed multi-tenant organization isolation and RBAC, runs time-series forecasting,
+enforces single-institution RBAC, runs time-series forecasting,
 and persists forecast snapshots and model evaluation metadata.
 """
 

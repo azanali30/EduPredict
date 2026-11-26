@@ -630,7 +630,6 @@ export const evaluationApi = {
       status_code: number;
       models: import('../types').ModelRegistryItem[];
       total: number;
-      organization_id: string | null;
     }>(`/api/models/registry${qs}`);
   },
 

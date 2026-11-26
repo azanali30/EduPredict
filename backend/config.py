@@ -269,18 +269,6 @@ class BaseConfig:
         "ML_SCALER_PATH", str(BASE_DIR / "ml_models" / "feature_scaler.joblib")
     )
 
-    # Phase 9: Multi-Institution SaaS & Stripe Billing Configuration
-    TRUSTED_TENANT_DOMAINS = [
-        d.strip().lower()
-        for d in os.getenv(
-            "TRUSTED_TENANT_DOMAINS",
-            "localhost,127.0.0.1,edupredict.com,testserver",
-        ).split(",")
-        if d.strip()
-    ]
-    STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
-    STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
-
 
 class DevelopmentConfig(BaseConfig):
     """Development environment configuration."""

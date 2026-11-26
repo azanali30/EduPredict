@@ -4,6 +4,8 @@
 **Project:** EduPredict  
 **Branch:** `main`  
 **Baseline Commit:** `b2af166e68d60b58469590855f0e9fcdcad43937`  
+**Phase 10 Implementation Commit:** `29c9cc0cb6983dd045a531d1f358ebe3987d2e2c`  
+**Independent Audit Decision:** `APPROVED WITH MINOR ISSUES`  
 **Phase Scope:** Single-Institution Architectural Cleanup + Phase 10 Real-Time Data Streaming & Batch Integration
 
 ---
@@ -72,7 +74,14 @@
   - `GET /api/stream/events`: Admin & Teacher (sanitized PII; Teachers scoped to assigned subjects; Analysts & Students receive 403).
   - `GET /api/stream/student/<student_id>`: Student (own only), Teacher (enrolled + assigned subject only), Admin (all), Analyst (403).
 - **Test & Build Results:**
-  - Backend: `354 passed` (`pytest -q`, including 10 new Phase 10 streaming/integration tests in `tests/test_phase_10_streaming.py`).
+  - Backend: `354 passed` (`pytest -q`, including 10 Phase 10 streaming/integration tests in `tests/test_phase_10_streaming.py` and 8 demand API tests in `tests/test_demand_api.py`).
   - Frontend Vitest: `7 test files passed (38 tests passed)`.
   - TypeScript (`tsc -b`): Passed (0 errors).
   - Production build (`npm run build`): Passed.
+
+---
+
+## 7. Known Non-Blocking Limitations
+
+1. **Single-Process SSE Broadcaster:** `SSEBroadcaster` (`backend/services/event_streamer.py`) uses in-memory `queue.Queue` subscribers per Python process. In a single-process deployment this operates cleanly; if scaled horizontally across multiple WSGI worker processes, SSE subscribers connected to one worker would not receive events ingested by another worker without an external pub/sub broker.
+2. **Concurrent Out-of-Order Event Race Window:** `EventStreamer.ingest_event()` checks `latest_same` prior to `insert_one` and `_sync_academic_state()`. Two concurrent events arriving within milliseconds for the same `(student_id, subject, event_type)` could race on `_sync_academic_state()` unless guarded by a conditional timestamp update in MongoDB.

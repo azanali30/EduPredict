@@ -754,7 +754,6 @@ class DropoutService:
     ) -> Tuple[Optional[Dict[str, Any]], Optional[str], int]:
         """
         Institution-scoped dropout metrics and distributions for Admin role.
-        Enforces organization isolation when organization_id is set on admin_user.
         """
         if db is None:
             return None, "Database unavailable.", 500

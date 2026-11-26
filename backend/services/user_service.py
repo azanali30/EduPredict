@@ -167,8 +167,7 @@ class UserService:
     ) -> tuple[User | None, str | None]:
         """
         Update user profile attributes by an administrator.
-        Prevents privilege escalation (role/email cannot be modified through this method)
-        and enforces organization_id isolation when provided.
+        Prevents privilege escalation (role/email cannot be modified through this method).
         """
         user = UserService.get_by_id(db, target_user_id)
         if not user:
