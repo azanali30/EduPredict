@@ -442,8 +442,13 @@ class EventStreamer:
                 **update_fields,
                 "created_at": now,
             }
-            db.academic_records.insert_one(new_doc)
-            return True
+            try:
+                db.academic_records.insert_one(new_doc)
+                return True
+            except DuplicateKeyError:
+                # Concurrent thread inserted first; re-apply conditional timestamp guard atomically
+                retry_res = db.academic_records.update_one(conditional_filter, {"$set": update_fields}, upsert=False)
+                return retry_res.matched_count > 0
         return False
 
     @classmethod
@@ -560,22 +565,32 @@ class EventStreamer:
         db: Database,
         max_batch: int = 50,
         max_retries: int = 3,
+        cooldown_seconds: int = 30,
         actor_user: Any = None,
     ) -> Tuple[Dict[str, Any], Optional[str], int]:
         """
-        Bounded bulk retry for failed stream events with retry limits and per-event isolation.
+        Bounded bulk retry for failed stream events with cooldown backoff, retry limits,
+        atomic claiming, and per-event failure isolation.
         """
         if db is None:
             return {}, "Database unavailable.", 500
 
+        now = datetime.now(timezone.utc)
+        cooldown_cutoff = now - timedelta(seconds=max(0, int(cooldown_seconds)))
         bounded_limit = max(1, min(int(max_batch), 200))
-        candidates = list(
-            db.stream_events.find(
-                {"status": "failed", "retry_count": {"$lt": int(max_retries)}}
-            )
-            .sort("received_at", 1)
-            .limit(bounded_limit)
-        )
+
+        query: Dict[str, Any] = {
+            "status": "failed",
+            "retry_count": {"$lt": int(max_retries)},
+        }
+        if cooldown_seconds > 0:
+            query["$or"] = [
+                {"last_retry_at": {"$exists": False}},
+                {"last_retry_at": None},
+                {"last_retry_at": {"$lte": cooldown_cutoff}},
+            ]
+
+        candidates = list(db.stream_events.find(query).sort("received_at", 1).limit(bounded_limit))
 
         succeeded = 0
         failed = 0
@@ -583,9 +598,17 @@ class EventStreamer:
         for doc in candidates:
             ev_id = doc.get("event_id", "")
             try:
+                claim_filter: Dict[str, Any] = {
+                    "_id": doc["_id"],
+                    "status": "failed",
+                    "retry_count": {"$lt": int(max_retries)},
+                }
+                if cooldown_seconds > 0:
+                    claim_filter["$or"] = query["$or"]
+
                 claimed = db.stream_events.find_one_and_update(
-                    {"_id": doc["_id"], "status": "failed", "retry_count": {"$lt": int(max_retries)}},
-                    {"$inc": {"retry_count": 1}, "$set": {"status": "pending"}},
+                    claim_filter,
+                    {"$inc": {"retry_count": 1}, "$set": {"status": "pending", "last_retry_at": now}},
                 )
                 if not claimed:
                     skipped += 1

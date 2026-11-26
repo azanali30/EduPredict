@@ -260,3 +260,112 @@ def test_deployment_config_single_institution_and_sse_hardening():
     assert "*.edupredict.com" not in text
     assert "flushpackets=on" in text
     assert "ProxyTimeout 300" in text
+
+
+def test_restore_rejects_protected_system_databases(clean_db, test_admin, tmp_path, runner):
+    """Verify protected MongoDB system databases (admin, config, local) are rejected in service & CLI."""
+    from backend.commands.admin_commands import restore_db_command
+
+    meta, err = BackupService.create_backup(clean_db, tmp_path, actor_id=test_admin.id)
+    assert err is None
+    bid = meta["backup_id"]
+
+    for protected in ["admin", "config", "local", "ADMIN", "Config", "LOCAL"]:
+        target = clean_db.client[protected]
+        res, r_err = BackupService.restore_backup(
+            target, tmp_path, bid, dry_run=False, replace_existing=True, confirm_destructive=True
+        )
+        assert res is None
+        assert "protected system database" in r_err.lower()
+
+        cli_res = runner.invoke(
+            restore_db_command,
+            [bid, "--apply", "--replace", "--yes", "--target-db", protected],
+        )
+        assert cli_res.exit_code != 0
+
+
+def test_backup_rejects_manifest_metadata_contradictions(clean_db, test_admin, tmp_path):
+    """Verify .meta.json vs manifest.json cross-validation rejects mismatched backup_id, total_documents, and collection_count."""
+    meta, err = BackupService.create_backup(clean_db, tmp_path, actor_id=test_admin.id)
+    assert err is None
+    bid = meta["backup_id"]
+    meta_file = tmp_path / f"{bid}.meta.json"
+    orig_meta = json.loads(meta_file.read_text(encoding="utf-8"))
+
+    for field, bad_val in [
+        ("backup_id", "wrong-backup-id"),
+        ("total_documents", orig_meta["total_documents"] + 999),
+        ("collection_count", orig_meta["collection_count"] + 5),
+        ("format_version", "9.9-unsupported"),
+    ]:
+        tampered = dict(orig_meta)
+        tampered[field] = bad_val
+        meta_file.write_text(json.dumps(tampered), encoding="utf-8")
+        ok, _, v_err = BackupService.verify_backup(tmp_path, bid)
+        assert ok is False
+        assert v_err is not None
+
+
+def test_streaming_concurrent_initial_insert_no_duplicates(clean_db, test_student):
+    """Verify simultaneous initial inserts for the same (student_id, subject, term) produce exactly 1 row and keep newer state."""
+    now = datetime.now(timezone.utc)
+    ev1 = StreamEvent(
+        event_id="evt-init-race-1",
+        event_type="attendance_update",
+        student_id=test_student.id,
+        subject="Mathematics",
+        academic_term="2026-Fall",
+        payload={"absences": 6},
+        event_timestamp=now,
+    )
+    ev2 = StreamEvent(
+        event_id="evt-init-race-2",
+        event_type="attendance_update",
+        student_id=test_student.id,
+        subject="Mathematics",
+        academic_term="2026-Fall",
+        payload={"absences": 2},
+        event_timestamp=now - timedelta(minutes=10),
+    )
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        futs = [pool.submit(EventStreamer._sync_academic_state, clean_db, ev) for ev in (ev1, ev2, ev1, ev2)]
+        for f in futs:
+            f.result()
+
+    matches = list(
+        clean_db.academic_records.find({"student_id": test_student.id, "subject": "Mathematics", "term": "2026-Fall"})
+    )
+    assert len(matches) == 1
+    assert matches[0]["absences"] == 6
+
+
+def test_streaming_retry_cooldown_backoff(clean_db, test_admin, test_student):
+    """Verify cooldown_seconds prevents immediate repeated bulk retries of a failed event."""
+    clean_db.stream_events.insert_one(
+        StreamEvent(
+            event_id="evt-cooldown-1",
+            event_type="attendance_update",
+            student_id=test_student.id,
+            subject="Mathematics",
+            academic_term="2026-Fall",
+            payload={"absences": 3},
+            status="failed",
+            retry_count=0,
+        ).to_doc()
+    )
+    # Mark recent retry attempt
+    clean_db.stream_events.update_one(
+        {"event_id": "evt-cooldown-1"},
+        {"$set": {"last_retry_at": datetime.now(timezone.utc)}},
+    )
+
+    # With 60s cooldown, immediate retry is skipped
+    r_cool, _, c1 = EventStreamer.retry_failed_events(clean_db, cooldown_seconds=60, actor_user=test_admin)
+    assert c1 == 200 and r_cool["attempted"] == 0
+
+    # With 0s cooldown, retry proceeds
+    r_now, _, c2 = EventStreamer.retry_failed_events(clean_db, cooldown_seconds=0, actor_user=test_admin)
+    assert c2 == 200 and r_now["succeeded"] == 1
+

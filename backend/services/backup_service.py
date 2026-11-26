@@ -27,6 +27,7 @@ from backend.services.system_log_service import log_event, sanitize_exception_me
 logger = logging.getLogger(__name__)
 
 BACKUP_FORMAT_VERSION = "1.0-bson-targz"
+PROTECTED_DATABASES = {"admin", "config", "local"}
 _VALID_BACKUP_ID_RE = re.compile(r"^[a-zA-Z0-9_.-]+$")
 _VALID_COLL_NAME_RE = re.compile(r"^[a-zA-Z0-9_]+$")
 
@@ -111,6 +112,19 @@ def run_db_integrity_check(db: Database) -> Dict[str, Any]:
         if pred.get("student_id") not in user_ids:
             issues.append(f"Prediction {pred['_id']} references missing student_id.")
 
+    for dr in db.dropout_records.find({}, {"_id": 1, "student_id": 1}):
+        if dr.get("student_id") not in user_ids:
+            issues.append(f"Dropout record {dr['_id']} references missing student_id.")
+
+    seen_event_ids = set()
+    for se_ev in db.stream_events.find({}, {"_id": 1, "event_id": 1, "student_id": 1}):
+        ev_id = se_ev.get("event_id")
+        if not ev_id or ev_id in seen_event_ids:
+            issues.append(f"Stream event {se_ev['_id']} has missing or duplicate event_id '{ev_id}'.")
+        seen_event_ids.add(ev_id)
+        if se_ev.get("student_id") not in user_ids:
+            issues.append(f"Stream event {se_ev['_id']} references missing student_id.")
+
     return {
         "passed": len(issues) == 0,
         "issues": issues[:50],
@@ -121,6 +135,8 @@ def run_db_integrity_check(db: Database) -> Dict[str, Any]:
             "teacher_subject_assignments": db.teacher_subject_assignments.count_documents({}),
             "student_subject_enrollments": db.student_subject_enrollments.count_documents({}),
             "predictions": db.predictions.count_documents({}),
+            "dropout_records": db.dropout_records.count_documents({}),
+            "stream_events": db.stream_events.count_documents({}),
         },
     }
 
@@ -137,7 +153,8 @@ class BackupService:
             "mongorestore_available": bool(shutil.which("mongorestore")),
             "consistency_model": (
                 "Non-blocking collection-by-collection BSON snapshot. "
-                "Does not lock live traffic and is not a cluster-wide oplog point-in-time snapshot."
+                "Does not lock live traffic and is not a cluster-wide oplog point-in-time snapshot. "
+                "Collection validators, views, and ad-hoc custom indexes outside schema.py are not serialized."
             ),
         }
 
@@ -327,9 +344,31 @@ class BackupService:
                 if manifest.get("format_version") != BACKUP_FORMAT_VERSION:
                     return False, None, f"Unsupported backup format_version: {manifest.get('format_version')}"
 
+                if meta.get("format_version") and meta.get("format_version") != manifest.get("format_version"):
+                    return False, None, "Metadata format_version does not match manifest.json."
+
+                if not meta.get("backup_id") or meta.get("backup_id") != manifest.get("backup_id"):
+                    return False, None, "Metadata backup_id does not match manifest.json."
+
                 colls = manifest.get("collections")
                 if not isinstance(colls, dict):
                     return False, None, "Invalid collections map in manifest.json."
+
+                if meta.get("collection_count") is not None and meta.get("collection_count") != len(colls):
+                    return False, None, "Metadata collection_count does not match manifest.json."
+
+                expected_total_docs = sum(
+                    int(cm.get("doc_count", -1)) for cm in colls.values() if isinstance(cm, dict)
+                )
+                if manifest.get("total_documents") != expected_total_docs:
+                    return False, None, "Manifest total_documents does not match sum of collection doc_counts."
+                if meta.get("total_documents") is not None and meta.get("total_documents") != manifest.get("total_documents"):
+                    return False, None, "Metadata total_documents does not match manifest.json."
+
+                expected_entries = {"manifest.json"} | {f"collections/{c}.bson" for c in colls.keys()}
+                unexpected_bson = [n for n in names if n.startswith("collections/") and n not in expected_entries]
+                if unexpected_bson:
+                    return False, None, f"Unexpected unverified collection entries in archive: {unexpected_bson}"
 
                 for coll_name, c_meta in colls.items():
                     if not _VALID_COLL_NAME_RE.match(coll_name) or coll_name.startswith("system."):
@@ -461,6 +500,10 @@ class BackupService:
         if target_db is None:
             return None, "Target database unavailable."
 
+        target_name = (getattr(target_db, "name", "") or "").strip().lower()
+        if not target_name or target_name in PROTECTED_DATABASES:
+            return None, f"Access denied: restoring into protected system database '{getattr(target_db, 'name', '')}' is prohibited."
+
         ok, details, err = cls.verify_backup(backup_dir, backup_id)
         if not ok or not details:
             return None, err or "Backup verification failed."
@@ -521,6 +564,14 @@ class BackupService:
                         raise RuntimeError(
                             f"Post-restore count mismatch on '{coll_name}': expected {c_meta['doc_count']}, got {actual_count}."
                         )
+                    if docs:
+                        expected_ids = {d["_id"] for d in docs if "_id" in d}
+                        if expected_ids:
+                            found_ids = {d["_id"] for d in target_db[coll_name].find({}, {"_id": 1})}
+                            if found_ids != expected_ids:
+                                raise RuntimeError(
+                                    f"Post-restore document ID equality check failed on '{coll_name}'."
+                                )
                     restored_counts[coll_name] = actual_count
 
             init_db_indexes(target_db)

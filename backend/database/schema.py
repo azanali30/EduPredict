@@ -46,9 +46,33 @@ def init_db_indexes(db: Database) -> dict[str, list[str]]:
 
         # 2. Academic Records collection indexes
         _drop_index_if_present(db.academic_records, "idx_records_org_student_term")
+        # Check for legacy duplicate (student_id, subject, term) rows before enforcing partial unique index
+        dup_check = list(
+            db.academic_records.aggregate([
+                {"$match": {"student_id": {"$type": "objectId"}, "subject": {"$type": "string"}, "term": {"$type": "string"}}},
+                {"$group": {"_id": {"student_id": "$student_id", "subject": "$subject", "term": "$term"}, "cnt": {"$sum": 1}}},
+                {"$match": {"cnt": {"$gt": 1}}},
+                {"$limit": 1},
+            ])
+        )
+        if dup_check:
+            raise ValueError(
+                "Duplicate (student_id, subject, term) documents detected in 'academic_records'. "
+                "Resolve duplicates manually before creating unique index 'idx_records_student_subject_term_unique'."
+            )
         records_idx = [
             db.academic_records.create_index([("student_id", ASCENDING)], name="idx_records_student_id"),
             db.academic_records.create_index([("student_id", ASCENDING), ("term", ASCENDING)], name="idx_records_student_term"),
+            db.academic_records.create_index(
+                [("student_id", ASCENDING), ("subject", ASCENDING), ("term", ASCENDING)],
+                unique=True,
+                partialFilterExpression={
+                    "student_id": {"$type": "objectId"},
+                    "subject": {"$type": "string"},
+                    "term": {"$type": "string"},
+                },
+                name="idx_records_student_subject_term_unique",
+            ),
             db.academic_records.create_index([("created_at", DESCENDING)], name="idx_records_created_at"),
         ]
         created_indexes["academic_records"] = records_idx

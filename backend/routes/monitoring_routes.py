@@ -41,7 +41,7 @@ def _collect_db_metrics(db, include_collection_details: bool = True) -> dict:
             if coll_name.startswith("system."):
                 continue
             try:
-                counts[coll_name] = db[coll_name].count_documents({})
+                counts[coll_name] = db[coll_name].estimated_document_count()
                 total_indexes += len(db[coll_name].index_information())
             except Exception:
                 continue

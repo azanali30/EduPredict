@@ -57,6 +57,16 @@
 
 ## 5. Verification Results
 
-- **Full Backend (`.\.venv\Scripts\pytest.exe -q`):** `362 passed` in 262.71s (0 failed).
-- **Phase 11 Tests (`tests/test_phase_11_reliability.py`):** `8 passed` in 12.58s (included in the 362 total).
+- **Full Backend (`.\.venv\Scripts\pytest.exe -q`):** `366 passed` in 250.84s (0 failed, including `test_inference_latency_budget` passing in 1.90s in isolation and `12 passed` in `tests/test_phase_11_reliability.py`).
+- **Phase 11 Tests (`tests/test_phase_11_reliability.py`):** `12 passed` in 25.67s.
 - **Frontend (`vitest run`, `tsc -b`, `npm run build`):** `7 test files, 38 passed`; `tsc -b` 0 errors; `vite build` succeeded cleanly.
+
+---
+
+## 6. Independent Audit Remediation Summary
+
+- **Protected System Databases (`backend/services/backup_service.py`, `backend/commands/admin_commands.py`):** `restore_backup()` and `restore-db` CLI reject `admin`, `config`, and `local` (case-insensitive) prior to any safety backup or database operation.
+- **Manifest/Metadata Cross-Validation (`backend/services/backup_service.py`):** `_verify_archive_paths()` cross-validates `backup_id`, `format_version`, `total_documents`, `collection_count`, and ensures no unverified `collections/*.bson` entries exist.
+- **Restore Verification Completeness (`backend/services/backup_service.py`):** `run_db_integrity_check()` now covers `dropout_records` and `stream_events`; `restore_backup()` verifies restored `_id` sets alongside counts; capabilities explicitly note that validators, views, and ad-hoc indexes outside `schema.py` are not serialized.
+- **Concurrent Initial Insert Race (`backend/database/schema.py`, `backend/services/event_streamer.py`):** Added duplicate pre-check + partial unique index `idx_records_student_subject_term_unique` on `academic_records` and `DuplicateKeyError` retry fallback in `_sync_academic_state()`.
+- **Retry Backoff & Monitoring Efficiency (`backend/services/event_streamer.py`, `backend/routes/monitoring_routes.py`):** Added `cooldown_seconds` backoff (`last_retry_at`) to `retry_failed_events()` and switched monitoring collection totals to `estimated_document_count()`.

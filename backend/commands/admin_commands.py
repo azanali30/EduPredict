@@ -9,7 +9,7 @@ from flask import current_app
 from flask.cli import with_appcontext
 from backend.extensions import mongo
 from backend.services.user_service import UserService
-from backend.services.backup_service import BackupService
+from backend.services.backup_service import BackupService, PROTECTED_DATABASES
 from backend.database.schema import init_db_indexes
 
 
@@ -120,6 +120,9 @@ def restore_db_command(backup_id, apply, replace, yes, target_db):
     """Safely verify or restore a MongoDB backup archive (dry-run by default)."""
     backup_dir = current_app.config.get("BACKUP_DIR", "backups")
     db_obj = mongo.client[target_db] if (target_db and mongo.client is not None) else mongo.db
+    if (getattr(db_obj, "name", "") or "").strip().lower() in PROTECTED_DATABASES:
+        click.echo(click.style(f"Refusing restore into protected system database '{db_obj.name}'.", fg="red"), err=True)
+        sys.exit(1)
     dry_run = not apply
 
     if replace and not dry_run and not yes:
