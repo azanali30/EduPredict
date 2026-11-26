@@ -34,7 +34,6 @@ def list_all_users():
         role=role_filter,
         limit=limit,
         skip=skip,
-        organization_id=getattr(current_user, "organization_id", None),
     )
     return jsonify({
         "users": users,
@@ -210,7 +209,6 @@ def update_user_profile(user_id):
         target_user_id=oid,
         update_data=data,
         actor_admin_id=current_user.id,
-        organization_id=getattr(current_user, "organization_id", None),
     )
 
     if err or not updated_user:
@@ -250,7 +248,6 @@ def update_user_status(user_id):
         target_user_id=user_id,
         is_active=is_active,
         actor_admin_id=current_user.id,
-        organization_id=getattr(current_user, "organization_id", None),
     )
 
     if err or not updated_user:
@@ -290,7 +287,6 @@ def update_user_role(user_id):
         target_user_id=user_id,
         new_role=new_role,
         actor_admin_id=current_user.id,
-        organization_id=getattr(current_user, "organization_id", None),
     )
 
     if err or not updated_user:

@@ -10,10 +10,9 @@ from pymongo.database import Database
 from pymongo.errors import DuplicateKeyError
 from bson import ObjectId
 
-from flask import has_request_context
 from backend.models.subject_model import Subject
 from backend.utils.security import to_object_id
-from backend.utils.tenant_context import get_current_tenant_id
+
 from backend.services.system_log_service import log_event
 
 logger = logging.getLogger(__name__)
@@ -57,12 +56,10 @@ class SubjectService:
     ) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
         """
         Register a new academic subject in the catalog.
-        Enforces normalized code and canonical_key uniqueness within organization_id.
+        Enforces normalized code and canonical_key uniqueness.
         """
         if db is None:
             return None, "Database unavailable."
-
-        resolved_org = organization_id or (get_current_tenant_id() if has_request_context() else None)
 
         try:
             subject = Subject(
@@ -73,20 +70,17 @@ class SubjectService:
                 description=description,
                 target_scale=target_scale,
                 is_active=True,
-                organization_id=resolved_org,
+                organization_id=organization_id,
             )
         except ValueError as val_err:
             return None, str(val_err)
 
-        # Pre-check for duplicate code or canonical key within organization_id
-        org_filter: Dict[str, Any] = {"organization_id": subject.organization_id} if subject.organization_id else {
-            "$or": [{"organization_id": None}, {"organization_id": {"$exists": False}}]
-        }
-        existing_code = db.subjects.find_one({**org_filter, "code": subject.code})
+        # Pre-check for duplicate code or canonical key
+        existing_code = db.subjects.find_one({"code": subject.code})
         if existing_code:
             return None, f"Subject with code '{subject.code}' already exists."
 
-        existing_key = db.subjects.find_one({**org_filter, "canonical_key": subject.canonical_key})
+        existing_key = db.subjects.find_one({"canonical_key": subject.canonical_key})
         if existing_key:
             return None, f"Subject with canonical key '{subject.canonical_key}' already exists."
 
@@ -126,30 +120,22 @@ class SubjectService:
     def get_subject_by_canonical_key(
         cls, db: Database, canonical_key: str, organization_id: Optional[str] = None
     ) -> Optional[Subject]:
-        """Fetch subject by canonical key (case-insensitive normalized), scoped to organization_id if provided."""
+        """Fetch subject by canonical key (case-insensitive normalized)."""
         if db is None or not canonical_key:
             return None
         clean_key = canonical_key.strip().lower()
-        resolved_org = organization_id or (get_current_tenant_id() if has_request_context() else None)
-        query: Dict[str, Any] = {"canonical_key": clean_key}
-        if resolved_org:
-            query["organization_id"] = resolved_org
-        doc = db.subjects.find_one(query)
+        doc = db.subjects.find_one({"canonical_key": clean_key})
         return Subject.from_doc(doc) if doc else None
 
     @classmethod
     def get_subject_by_code(
         cls, db: Database, code: str, organization_id: Optional[str] = None
     ) -> Optional[Subject]:
-        """Fetch subject by course code (case-insensitive normalized), scoped to organization_id if provided."""
+        """Fetch subject by course code (case-insensitive normalized)."""
         if db is None or not code:
             return None
         clean_code = code.strip().upper()
-        resolved_org = organization_id or (get_current_tenant_id() if has_request_context() else None)
-        query: Dict[str, Any] = {"code": clean_code}
-        if resolved_org:
-            query["organization_id"] = resolved_org
-        doc = db.subjects.find_one(query)
+        doc = db.subjects.find_one({"code": clean_code})
         return Subject.from_doc(doc) if doc else None
 
     @classmethod
@@ -157,11 +143,7 @@ class SubjectService:
         """List all active subjects in the institutional course catalog."""
         if db is None:
             return []
-        resolved_org = organization_id or (get_current_tenant_id() if has_request_context() else None)
-        query: Dict[str, Any] = {"is_active": True}
-        if resolved_org:
-            query["organization_id"] = resolved_org
-        cursor = db.subjects.find(query).sort("name", ASCENDING)
+        cursor = db.subjects.find({"is_active": True}).sort("name", ASCENDING)
         subjects = []
         for doc in cursor:
             s = Subject.from_doc(doc)
@@ -172,16 +154,15 @@ class SubjectService:
     @classmethod
     def ensure_canonical_subjects(cls, db: Database, organization_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """
-        Idempotently ensure baseline canonical subjects exist in MongoDB for the given organization.
+        Idempotently ensure baseline canonical subjects exist in MongoDB.
         Returns the list of canonical subject dictionaries.
         """
         if db is None:
             return []
 
-        resolved_org = organization_id or (get_current_tenant_id() if has_request_context() else None)
         results = []
         for s_def in CANONICAL_SUBJECTS:
-            existing = cls.get_subject_by_canonical_key(db, s_def["canonical_key"], organization_id=resolved_org)
+            existing = cls.get_subject_by_canonical_key(db, s_def["canonical_key"])
             if not existing:
                 created, err = cls.create_subject(
                     db=db,
@@ -191,7 +172,6 @@ class SubjectService:
                     department=s_def["department"],
                     description=s_def["description"],
                     target_scale=s_def["target_scale"],
-                    organization_id=resolved_org,
                 )
                 if created:
                     results.append(created)

@@ -116,26 +116,6 @@ def _extract_user_display_name(user_doc: Optional[Dict[str, Any]]) -> Optional[s
     return user_doc.get("username") or user_doc.get("email")
 
 
-def _check_organization_scope(actor_user: Any, target_doc_or_user: Optional[Dict[str, Any]]) -> bool:
-    """
-    Enforce multi-organization / tenant isolation when organization_id is present.
-    If actor_user has an organization_id, the target record/user must belong to the same organization.
-    """
-    actor_org = getattr(actor_user, "organization_id", None)
-    if not actor_org:
-        return True
-    if not target_doc_or_user:
-        return False
-    target_org = (
-        target_doc_or_user.get("organization_id")
-        if isinstance(target_doc_or_user, dict)
-        else getattr(target_doc_or_user, "organization_id", None)
-    )
-    if not target_org:
-        return False
-    return str(actor_org).strip() == str(target_org).strip()
-
-
 def _check_teacher_student_access(
     db: Database,
     teacher_user: User,
@@ -451,25 +431,6 @@ class DropoutService:
         if db is not None and not user_doc:
             return None, "Student record not found.", 404
 
-        # Organization isolation check (applies to Admin and Teacher)
-        if not _check_organization_scope(actor_user, user_doc):
-            return None, "Access denied. Cross-organization student access is prohibited.", 403
-
-        # Phase 9C: Feature gate & atomic prediction quota check (when subscription exists)
-        from backend.services.billing_service import BillingService
-
-        quota_org = (
-            (user_doc.get("organization_id") if user_doc else None)
-            or getattr(actor_user, "organization_id", None)
-        )
-        if db is not None and quota_org:
-            fg_ok, fg_err, fg_code = BillingService.check_feature_entitlement(db, quota_org, "dropout_analytics")
-            if not fg_ok:
-                return None, fg_err, fg_code
-            q_ok, q_err, q_code = BillingService.consume_prediction_quota(db, quota_org, count=1)
-            if not q_ok:
-                return None, q_err, q_code
-
         # RBAC Check
         actor_role = getattr(actor_user, "role", "")
         if actor_role == "teacher":
@@ -605,8 +566,6 @@ class DropoutService:
             return None, "Database connection unavailable.", 500
 
         user_doc = db.users.find_one({"_id": student_oid})
-        if not _check_organization_scope(actor_user, user_doc):
-            return None, "Access denied. Cross-organization student access is prohibited.", 403
 
         actor_role = getattr(actor_user, "role", "")
         if actor_role == "teacher":
@@ -721,13 +680,7 @@ class DropoutService:
         if not candidate_student_ids:
             return {"students": [], "total": 0, "page": page, "limit": limit}, None, 200
 
-        # Enforce organization isolation on student list
-        teacher_org = getattr(teacher_user, "organization_id", None)
-        if teacher_org:
-            org_users = list(db.users.find({"_id": {"$in": candidate_student_ids}, "organization_id": teacher_org}, {"_id": 1}))
-            student_ids = [u["_id"] for u in org_users]
-        else:
-            student_ids = candidate_student_ids
+        student_ids = candidate_student_ids
 
         if not student_ids:
             return {"students": [], "total": 0, "page": page, "limit": limit}, None, 200
@@ -807,9 +760,6 @@ class DropoutService:
             return None, "Database unavailable.", 500
 
         base_filter: Dict[str, Any] = {}
-        admin_org = getattr(admin_user, "organization_id", None)
-        if admin_org:
-            base_filter["organization_id"] = admin_org
 
         total_assessed = db.dropout_records.count_documents(base_filter)
         low_count = db.dropout_records.count_documents({**base_filter, "risk_tier": "Low"})
@@ -858,9 +808,6 @@ class DropoutService:
             return None, "Database unavailable.", 500
 
         base_filter: Dict[str, Any] = {}
-        analyst_org = getattr(analyst_user, "organization_id", None)
-        if analyst_org:
-            base_filter["organization_id"] = analyst_org
 
         total_assessed = db.dropout_records.count_documents(base_filter)
         low_count = db.dropout_records.count_documents({**base_filter, "risk_tier": "Low"})
@@ -913,15 +860,6 @@ class DropoutService:
             return None, "'student_ids' must be a non-empty list of student IDs.", 400
         if len(student_ids) > 100:
             return None, "Bulk evaluation is limited to at most 100 students per request.", 400
-
-        # Phase 9C: Bulk prediction feature gate check
-        from backend.services.billing_service import BillingService
-
-        actor_org = getattr(actor_user, "organization_id", None)
-        if db is not None and actor_org:
-            fg_ok, fg_err, fg_code = BillingService.check_feature_entitlement(db, actor_org, "bulk_prediction")
-            if not fg_ok:
-                return None, fg_err, fg_code
 
         results: List[Dict[str, Any]] = []
         succeeded = 0
@@ -989,10 +927,6 @@ class DropoutService:
         if not student_oid:
             return None, "Invalid student ID format.", 400
 
-        user_doc = db.users.find_one({"_id": student_oid})
-        if user_doc and not _check_organization_scope(actor_user, user_doc):
-            return None, "Access denied. Cross-organization access is prohibited.", 403
-
         if actor_role == "teacher":
             if not _check_teacher_student_access(db, actor_user, student_oid):
                 return None, "Access denied. Student is not in your assigned subjects.", 403
@@ -1004,9 +938,6 @@ class DropoutService:
         skip = (page - 1) * limit
 
         query: Dict[str, Any] = {"student_id": student_oid}
-        actor_org = getattr(actor_user, "organization_id", None)
-        if actor_org:
-            query["organization_id"] = actor_org
 
         total = db.dropout_prediction_history.count_documents(query)
         cursor = (
@@ -1059,17 +990,9 @@ class DropoutService:
         if not doc:
             return None, "Prediction record not found.", 404
 
-        actor_org = getattr(actor_user, "organization_id", None)
-        doc_org = doc.get("organization_id")
-        if actor_org and doc_org and doc_org != actor_org:
-            return None, "Access denied. Cross-organization access is prohibited.", 403
-
         student_oid = doc.get("student_id")
         if not student_oid:
-            return None, "Access denied. Cross-organization access is prohibited.", 403
-        user_doc = db.users.find_one({"_id": student_oid})
-        if user_doc and not _check_organization_scope(actor_user, user_doc):
-            return None, "Access denied. Cross-organization access is prohibited.", 403
+            return None, "Access denied.", 403
 
         if actor_role == "teacher":
             if not _check_teacher_student_access(db, actor_user, student_oid):
@@ -1097,10 +1020,6 @@ class DropoutService:
             return None, "Database unavailable.", 500
 
         query: Dict[str, Any] = {}
-        admin_org = getattr(admin_user, "organization_id", None)
-        if not admin_org or not str(admin_org).strip():
-            return None, "Organization context required. Admin must belong to a valid organization.", 403
-        query["organization_id"] = str(admin_org).strip()
 
         if risk_tier and risk_tier.strip() in {"Low", "Moderate", "High"}:
             query["risk_tier"] = risk_tier.strip()
@@ -1150,10 +1069,6 @@ class DropoutService:
             return None, "Database unavailable.", 500
 
         base_filter: Dict[str, Any] = {}
-        analyst_org = getattr(analyst_user, "organization_id", None)
-        if not analyst_org or not str(analyst_org).strip():
-            return None, "Organization context required. Analyst must belong to a valid organization.", 403
-        base_filter["organization_id"] = str(analyst_org).strip()
 
         docs = list(db.dropout_records.find(base_filter))
         term_buckets: Dict[str, Dict[str, int]] = {}

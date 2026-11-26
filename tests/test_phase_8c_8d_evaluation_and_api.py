@@ -59,7 +59,6 @@ def test_evaluation_endpoints_rbac_and_metrics(client, test_admin, test_analyst,
     assert dem_res.status_code == 200
     dem_data = dem_res.get_json()
     assert dem_data["domain"] == "course_demand_forecasting"
-    assert dem_data["organization_id"] == "org-eval-a"
     assert dem_data["overall_status"] in {"Insufficient Data", "insufficient_data", "baseline_only", "walk_forward_evaluated"}
 
     reg_res = client.get("/api/models/registry")
@@ -72,55 +71,30 @@ def test_evaluation_endpoints_rbac_and_metrics(client, test_admin, test_analyst,
     ).status_code == 403
 
 
-def test_model_registry_admin_lifecycle_and_org_isolation(client, test_admin, clean_db):
+def test_model_registry_admin_lifecycle(client, test_admin, clean_db):
     """
-    Admin can activate (with mandatory approval notes) and deactivate models within their org only.
-    Cross-org and global (organization_id=None) registry mutations must be rejected with 403.
+    Admin can activate (with mandatory approval notes) and deactivate models in single-institution mode.
     """
-    _set_org(clean_db, test_admin, "org-reg-a")
-    other_res = UserService.create_user(
-        clean_db, "other.admin@test.com", "AdminPass123!", "Other Admin", "admin"
-    )
-    other_admin = other_res[0] if isinstance(other_res, tuple) else other_res
-    _set_org(clean_db, other_admin, "org-reg-b")
-
     client.post("/auth/login", json={"email": test_admin.email, "password": "AdminPassword123!"})
     reg_res = client.get("/api/models/registry")
     assert reg_res.status_code == 200
     models = reg_res.get_json()["models"]
-    org_a_model = next(m for m in models if m.get("organization_id") == "org-reg-a")
-    global_model = next(m for m in models if m.get("organization_id") is None)
-
-    # Organization Admin cannot mutate a global (organization_id=None) model -> 403
-    assert client.post(
-        f"/api/models/registry/{global_model['id']}/activate",
-        json={"approval_notes": "Attempt global mutate"},
-    ).status_code == 403
-    assert client.post(f"/api/models/registry/{global_model['id']}/deactivate").status_code == 403
+    target_model = models[0]
 
     # Missing approval_notes -> 400
-    bad_act = client.post(f"/api/models/registry/{org_a_model['id']}/activate", json={"approval_notes": "  "})
+    bad_act = client.post(f"/api/models/registry/{target_model['id']}/activate", json={"approval_notes": "  "})
     assert bad_act.status_code == 400
 
-    # Valid activation on own org's model -> 200
+    # Valid activation -> 200
     ok_act = client.post(
-        f"/api/models/registry/{org_a_model['id']}/activate",
+        f"/api/models/registry/{target_model['id']}/activate",
         json={"approval_notes": "Approved after UCI holdout & calibration review."},
     )
     assert ok_act.status_code == 200
     assert ok_act.get_json()["model"]["is_active"] is True
 
-    # Cross-org admin (Org B) cannot activate or deactivate Org A's model -> 403
-    client.post("/auth/login", json={"email": other_admin.email, "password": "AdminPass123!"})
-    assert client.post(
-        f"/api/models/registry/{org_a_model['id']}/activate",
-        json={"approval_notes": "Cross-tenant hijack"},
-    ).status_code == 403
-    assert client.post(f"/api/models/registry/{org_a_model['id']}/deactivate").status_code == 403
-
-    # Owning admin (Org A) can deactivate own org's model -> 200
-    client.post("/auth/login", json={"email": test_admin.email, "password": "AdminPassword123!"})
-    ok_deact = client.post(f"/api/models/registry/{org_a_model['id']}/deactivate")
+    # Valid deactivation -> 200
+    ok_deact = client.post(f"/api/models/registry/{target_model['id']}/deactivate")
     assert ok_deact.status_code == 200
     assert ok_deact.get_json()["model"]["is_active"] is False
 
@@ -213,22 +187,11 @@ def test_rate_limiter_enforces_429_when_enabled(app, client, test_admin, test_st
         reset_rate_limits()
 
 
-def test_fail_closed_org_isolation_and_regex_escaping(client, test_admin, test_analyst, clean_db):
+def test_single_institution_records_and_regex_escaping(client, test_admin, test_analyst, clean_db):
     """
-    Verify fail-closed 403 when organization_id is missing on Admin/Analyst, cross-org isolation,
+    Verify single-institution Admin/Analyst access without organization_id,
     and safe re.escape() handling of special/invalid regex characters in search.
     """
-    # 1. Admin without organization_id -> 403
-    client.post("/auth/login", json={"email": test_admin.email, "password": "AdminPassword123!"})
-    assert client.get("/api/dropout/admin/records").status_code == 403
-
-    # 2. Analyst without organization_id -> 403
-    client.post("/auth/login", json={"email": test_analyst.email, "password": "AnalystPassword123!"})
-    assert client.get("/api/dropout/analyst/trends").status_code == 403
-
-    # Seed records in org-iso-a and org-iso-b
-    _set_org(clean_db, test_admin, "org-iso-a")
-    _set_org(clean_db, test_analyst, "org-iso-a")
     clean_db.dropout_records.insert_many([
         {
             "_id": ObjectId(),
@@ -238,41 +201,28 @@ def test_fail_closed_org_isolation_and_regex_escaping(client, test_admin, test_a
             "risk_tier": "Low",
             "model_version": "v1",
             "academic_term": "2026-Fall",
-            "organization_id": "org-iso-a",
-        },
-        {
-            "_id": ObjectId(),
-            "student_id": ObjectId(),
-            "student_name": "Bob OrgB",
-            "risk_probability": 0.85,
-            "risk_tier": "High",
-            "model_version": "v1",
-            "academic_term": "2026-Fall",
-            "organization_id": "org-iso-b",
         },
     ])
 
     client.post("/auth/login", json={"email": test_admin.email, "password": "AdminPassword123!"})
-    # Admin A sees only org-iso-a records
     res_all = client.get("/api/dropout/admin/records")
     assert res_all.status_code == 200
     assert res_all.get_json()["total"] == 1
     assert res_all.get_json()["records"][0]["student_name"] == "Alice [Special.*]"
 
-    # Special regex '.*' must NOT match 'Alice' unless literal '.*' is in the name;
-    # Test with '.*+' which is NOT in Alice's name -> 0 results (proving no regex injection)
     res_rx = client.get("/api/dropout/admin/records?search=.*%2B")
     assert res_rx.status_code == 200
     assert res_rx.get_json()["total"] == 0
 
-    # Invalid-looking unclosed regex '[' must not crash MongoDB -> matches literal '[' in Alice's name
     res_unclosed = client.get("/api/dropout/admin/records?search=[Special")
     assert res_unclosed.status_code == 200
     assert res_unclosed.get_json()["total"] == 1
 
-    # Normal literal search & empty search
     assert client.get("/api/dropout/admin/records?search=Alice").get_json()["total"] == 1
     assert client.get("/api/dropout/admin/records?search=").get_json()["total"] == 1
+
+    client.post("/auth/login", json={"email": test_analyst.email, "password": "AnalystPassword123!"})
+    assert client.get("/api/dropout/analyst/trends").status_code == 200
 
 
 def test_statistical_privacy_complementary_suppression(client, test_analyst, clean_db):
@@ -317,7 +267,7 @@ def test_statistical_privacy_complementary_suppression(client, test_analyst, cle
         "academic_term": "2026-Fall",
         "organization_id": "org-sdc-a",
     })
-    # Insert a 2026-Spring cohort where all cells >= 5 (total=15 in org-sdc-a) to verify org isolation on totals
+    # Insert a 2026-Spring cohort where all cells >= 5 (total=15)
     for tier in ["Low", "Moderate", "High"]:
         for i in range(5):
             docs.append({
@@ -328,25 +278,12 @@ def test_statistical_privacy_complementary_suppression(client, test_analyst, cle
                 "risk_tier": tier,
                 "model_version": "v1",
                 "academic_term": "2026-Spring",
-                "organization_id": "org-sdc-a",
             })
-    # Org B records in 2026-Spring (must never leak into org-sdc-a)
-    for i in range(5):
-        docs.append({
-            "_id": ObjectId(),
-            "student_id": ObjectId(),
-            "student_name": f"OrgB Student {i}",
-            "risk_probability": 0.9,
-            "risk_tier": "High",
-            "model_version": "v1",
-            "academic_term": "2026-Spring",
-            "organization_id": "org-sdc-b",
-        })
     clean_db.dropout_records.insert_many(docs)
 
     client.post("/auth/login", json={"email": test_analyst.email, "password": "AnalystPassword123!"})
 
-    # 1. Overview: total=27 (org-sdc-a only; org-sdc-b excluded), High=6, Moderate=10, Low=11 -> all >= 5
+    # 1. Overview: total=27, High=6, Moderate=10, Low=11 -> all >= 5
     ov_res = client.get("/api/dropout/analyst/overview")
     assert ov_res.status_code == 200
     ov = ov_res.get_json()

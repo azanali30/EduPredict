@@ -41,31 +41,9 @@ class DemandForecastService:
     """Service layer for course and subject enrollment demand forecasting."""
 
     @staticmethod
-    def _require_valid_org_id(actor_user: Any) -> Tuple[Optional[str], Optional[str], int]:
-        """
-        Fail-closed organization context validation.
-        Institutional forecasting operations strictly require a non-empty organization_id.
-        """
-        raw_org = getattr(actor_user, "organization_id", None) if actor_user else None
-        if not raw_org or not isinstance(raw_org, str) or not raw_org.strip():
-            return (
-                None,
-                "Organization context required. Institutional forecasting operations require a valid organization_id.",
-                403,
-            )
-        return raw_org.strip(), None, 200
-
-    @staticmethod
-    def _get_org_student_ids(db: Database, org_id: str) -> List[ObjectId]:
-        """
-        Return list of student ObjectIds belonging strictly to org_id.
-        Never returns None; returns empty list if org_id has no students.
-        """
-        if not org_id or not isinstance(org_id, str) or not org_id.strip():
-            return []
-        org_students = list(
-            db.users.find({"role": "student", "organization_id": org_id.strip()}, {"_id": 1})
-        )
+    def _get_org_student_ids(db: Database, org_id: Optional[str] = None) -> List[ObjectId]:
+        """Return list of all student ObjectIds in the single institution."""
+        org_students = list(db.users.find({"role": "student"}, {"_id": 1}))
         return [u["_id"] for u in org_students]
 
     @staticmethod
@@ -81,24 +59,16 @@ class DemandForecastService:
     def _get_authorized_subjects(
         db: Database,
         actor_user: User,
-        org_id: str,
+        org_id: Optional[str] = None,
         department: Optional[str] = None,
         subject_ids: Optional[List[str]] = None,
     ) -> Tuple[List[Dict[str, Any]], Optional[str], int]:
         """
-        Retrieve active subjects authorized for actor_user within org_id:
-        - Admin / Analyst: organization-scoped active subjects (shared canonical subjects allowed,
-          custom subjects restricted to org_id).
+        Retrieve active subjects authorized for actor_user:
+        - Admin / Analyst: all active subjects in the institution.
         - Teacher: strictly active subjects assigned to this teacher.
         """
-        subj_query: Dict[str, Any] = {
-            "is_active": True,
-            "$or": [
-                {"organization_id": org_id},
-                {"organization_id": {"$exists": False}},
-                {"organization_id": None},
-            ],
-        }
+        subj_query: Dict[str, Any] = {"is_active": True}
 
         if department and department.strip():
             subj_query["department"] = department.strip()
@@ -198,14 +168,9 @@ class DemandForecastService:
     ) -> Tuple[Optional[Dict[str, Any]], Optional[str], int]:
         """
         Compute live course & subject enrollment demand overview from actual MongoDB records.
-        Fails closed if organization_id is missing.
         """
         if db is None:
             return None, "Database connection unavailable.", 500
-
-        org_id, org_err, org_code = cls._require_valid_org_id(actor_user)
-        if org_err:
-            return None, org_err, org_code
 
         if periods_ahead < 1 or periods_ahead > 4:
             return None, "periods_ahead must be an integer between 1 and 4.", 400
@@ -214,13 +179,13 @@ class DemandForecastService:
         if override_err:
             return None, override_err, 400
 
-        subjects, err, code = cls._get_authorized_subjects(db, actor_user, org_id=org_id, department=department)
+        subjects, err, code = cls._get_authorized_subjects(db, actor_user, department=department)
         if err:
             return None, err, code
 
-        org_student_ids = cls._get_org_student_ids(db, org_id)
+        student_ids = cls._get_org_student_ids(db)
         subject_oids = [s["_id"] for s in subjects]
-        histories_map = cls._extract_batch_subject_histories(db, subject_oids, org_student_ids)
+        histories_map = cls._extract_batch_subject_histories(db, subject_oids, student_ids)
 
         forecasts: List[Dict[str, Any]] = []
         term_aggregates: Dict[str, int] = {}
@@ -320,7 +285,6 @@ class DemandForecastService:
 
         return {
             "summary": {
-                "organization_id": org_id,
                 "total_subjects_analyzed": len(forecasts),
                 "total_latest_actual_enrollment": total_latest_actual,
                 "total_predicted_enrollment": total_predicted,
@@ -350,13 +314,9 @@ class DemandForecastService:
         subject_id: str,
         periods_ahead: int = 1,
     ) -> Tuple[Optional[Dict[str, Any]], Optional[str], int]:
-        """Retrieve detailed demand forecast for a single authorized subject within organization."""
+        """Retrieve detailed demand forecast for a single authorized subject."""
         if db is None:
             return None, "Database connection unavailable.", 500
-
-        org_id, org_err, org_code = cls._require_valid_org_id(actor_user)
-        if org_err:
-            return None, org_err, org_code
 
         if not to_object_id(subject_id):
             return None, "Invalid subject_id format.", 400
@@ -365,7 +325,7 @@ class DemandForecastService:
             return None, "periods_ahead must be between 1 and 4.", 400
 
         subjects, err, code = cls._get_authorized_subjects(
-            db, actor_user, org_id=org_id, subject_ids=[subject_id]
+            db, actor_user, subject_ids=[subject_id]
         )
         if err:
             return None, err, code
@@ -373,8 +333,8 @@ class DemandForecastService:
             return None, "Subject not found or access denied.", 404
 
         subj = subjects[0]
-        org_student_ids = cls._get_org_student_ids(db, org_id)
-        histories_map = cls._extract_batch_subject_histories(db, [subj["_id"]], org_student_ids)
+        student_ids = cls._get_org_student_ids(db)
+        histories_map = cls._extract_batch_subject_histories(db, [subj["_id"]], student_ids)
         history = histories_map.get(subj["_id"], [])
 
         fc = forecast_subject_demand(
@@ -405,15 +365,11 @@ class DemandForecastService:
         subject_ids: Optional[List[str]] = None,
     ) -> Tuple[Optional[Dict[str, Any]], Optional[str], int]:
         """
-        Run demand forecasting for authorized organization subjects and persist snapshots
-        and evaluation metadata to MongoDB. Admin-only operation; fails closed without organization_id.
+        Run demand forecasting for authorized subjects and persist snapshots
+        and evaluation metadata to MongoDB. Admin-only operation.
         """
         if db is None:
             return None, "Database connection unavailable.", 500
-
-        org_id, org_err, org_code = cls._require_valid_org_id(admin_user)
-        if org_err:
-            return None, org_err, org_code
 
         if periods_ahead < 1 or periods_ahead > 4:
             return None, "periods_ahead must be an integer between 1 and 4.", 400
@@ -423,23 +379,14 @@ class DemandForecastService:
             return None, override_err, 400
 
         subjects, err, code = cls._get_authorized_subjects(
-            db, admin_user, org_id=org_id, subject_ids=subject_ids
+            db, admin_user, subject_ids=subject_ids
         )
         if err:
             return None, err, code
 
-        # Phase 9C: Enforce advanced_forecasting entitlement and atomic prediction quota
-        from backend.services.billing_service import BillingService
-
-        fg_ok, fg_err, fg_code = BillingService.check_feature_entitlement(
-            db, org_id, "advanced_forecasting"
-        )
-        if not fg_ok:
-            return None, fg_err, fg_code
-
-        org_student_ids = cls._get_org_student_ids(db, org_id)
+        student_ids = cls._get_org_student_ids(db)
         subject_oids = [s["_id"] for s in subjects]
-        histories_map = cls._extract_batch_subject_histories(db, subject_oids, org_student_ids)
+        histories_map = cls._extract_batch_subject_histories(db, subject_oids, student_ids)
 
         saved_records: List[Dict[str, Any]] = []
         docs_to_insert: List[Dict[str, Any]] = []
@@ -461,7 +408,6 @@ class DemandForecastService:
                 subject_code=subj.get("code", ""),
                 subject_name=subj.get("name", ""),
                 department=subj.get("department", "General"),
-                organization_id=org_id,
                 forecast_period=target_period,
                 periods_ahead=periods_ahead,
                 historical_series=history,
@@ -494,9 +440,6 @@ class DemandForecastService:
             models_used[m_name] = models_used.get(m_name, 0) + 1
 
         if docs_to_insert:
-            q_ok, q_err, q_code = BillingService.consume_prediction_quota(db, org_id, count=1)
-            if not q_ok:
-                return None, q_err, q_code
             try:
                 db.demand_forecasts.insert_many(docs_to_insert)
             except PyMongoError as pe:
@@ -505,7 +448,6 @@ class DemandForecastService:
 
         meta_doc = {
             "_id": ObjectId(),
-            "organization_id": org_id,
             "periods_ahead": periods_ahead,
             "subjects_forecasted": len(saved_records),
             "average_mae": round(sum(mae_list) / len(mae_list), 3) if mae_list else None,
@@ -521,7 +463,6 @@ class DemandForecastService:
                 details={
                     "subjects_forecasted": len(saved_records),
                     "periods_ahead": periods_ahead,
-                    "organization_id": org_id,
                 },
                 user_id=admin_user.id,
                 actor_id=admin_user.id,
@@ -533,7 +474,6 @@ class DemandForecastService:
             "message": f"Generated and saved {len(saved_records)} course demand forecast(s).",
             "forecasts": saved_records,
             "metadata": {
-                "organization_id": org_id,
                 "subjects_forecasted": len(saved_records),
                 "average_mae": meta_doc["average_mae"],
                 "models_used": models_used,
@@ -549,20 +489,16 @@ class DemandForecastService:
         page: int = 1,
         limit: int = 20,
     ) -> Tuple[Optional[Dict[str, Any]], Optional[str], int]:
-        """Retrieve paginated persisted forecast snapshots strictly scoped to actor's organization."""
+        """Retrieve paginated persisted forecast snapshots."""
         if db is None:
             return None, "Database connection unavailable.", 500
-
-        org_id, org_err, org_code = cls._require_valid_org_id(actor_user)
-        if org_err:
-            return None, org_err, org_code
 
         if page < 1:
             return None, "page must be >= 1.", 400
         if limit < 1 or limit > MAX_HISTORY_LIMIT:
             return None, f"limit must be between 1 and {MAX_HISTORY_LIMIT}.", 400
 
-        query: Dict[str, Any] = {"organization_id": org_id}
+        query: Dict[str, Any] = {}
         skip = (page - 1) * limit
         total = db.demand_forecasts.count_documents(query)
         cursor = (
@@ -585,18 +521,12 @@ class DemandForecastService:
         db: Database,
         actor_user: User,
     ) -> Tuple[Optional[Dict[str, Any]], Optional[str], int]:
-        """Return latest demand forecasting model evaluation metadata strictly scoped to organization."""
+        """Return latest demand forecasting model evaluation metadata."""
         if db is None:
             return None, "Database connection unavailable.", 500
 
-        org_id, org_err, org_code = cls._require_valid_org_id(actor_user)
-        if org_err:
-            return None, org_err, org_code
-
-        query: Dict[str, Any] = {"organization_id": org_id}
-        latest = db.demand_model_metadata.find_one(query, sort=[("created_at", DESCENDING)])
+        latest = db.demand_model_metadata.find_one({}, sort=[("created_at", DESCENDING)])
         return {
-            "organization_id": org_id,
             "methodology": {
                 "engine": "Time-Series Walk-Forward Demand Forecaster (Phase 8B)",
                 "models_compared": ["NaiveLastValue", "MovingAverage2", "RidgeLagForecaster"],

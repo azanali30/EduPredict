@@ -283,23 +283,19 @@ class ModelEvaluationService:
     ) -> Tuple[Optional[Dict[str, Any]], Optional[str], int]:
         """
         Evaluate Course Demand Forecasting models (NaiveLastValue, MovingAverage2, RidgeLagForecaster)
-        on the authenticated organization's genuine historical enrollment records using Phase 8B's
+        on genuine historical enrollment records using Phase 8B's
         common-origin walk-forward validation. Reports 'Insufficient Data' when < 4 terms exist.
         """
         if db is None:
             return None, "Database connection unavailable.", 500
 
-        org_id, org_err, org_code = DemandForecastService._require_valid_org_id(actor_user)
-        if org_err:
-            return None, org_err, org_code
-
-        subjects, err, code = DemandForecastService._get_authorized_subjects(db, actor_user, org_id=org_id)
+        subjects, err, code = DemandForecastService._get_authorized_subjects(db, actor_user)
         if err:
             return None, err, code
 
-        org_student_ids = DemandForecastService._get_org_student_ids(db, org_id)
+        student_ids = DemandForecastService._get_org_student_ids(db)
         subject_oids = [s["_id"] for s in subjects]
-        histories_map = DemandForecastService._extract_batch_subject_histories(db, subject_oids, org_student_ids)
+        histories_map = DemandForecastService._extract_batch_subject_histories(db, subject_oids, student_ids)
 
         evaluated_subjects = []
         model_agg: Dict[str, Dict[str, List[float]]] = {
@@ -385,7 +381,6 @@ class ModelEvaluationService:
 
         return {
             "domain": "course_demand_forecasting",
-            "organization_id": org_id,
             "overall_status": overall_status,
             "validation_methodology": (
                 "Common-origin expanding-window walk-forward validation. RidgeLagForecaster requires >= 7 "
@@ -485,31 +480,28 @@ class ModelEvaluationService:
                 doc["organization_id"] = None
                 db.model_registry.insert_one(doc)
 
-        # Org-scoped Course Demand Forecaster entry
-        if org_id:
-            existing_demand = db.model_registry.find_one({
-                "model_type": "course_demand_forecasting",
-                "model_version": "Demand_WalkForward_v1.0.0",
-                "organization_id": org_id,
-            })
-            if not existing_demand:
-                entry = ModelRegistryEntry(
-                    model_name="Course Demand Walk-Forward Forecaster",
-                    model_type="course_demand_forecasting",
-                    model_version="Demand_WalkForward_v1.0.0",
-                    algorithm="Common-Origin Walk-Forward (NaiveLastValue / MovingAverage2 / RidgeLag)",
-                    training_dataset_ref=f"MongoDB student_subject_enrollments (org: {org_id})",
-                    dataset_fingerprint="live-institutional-enrollments",
-                    training_params={"min_ridge_terms": 7, "min_splits": 3, "ridge_alpha": 1.0},
-                    evaluation_metrics={"methodology": "Walk-forward MAE, RMSE, MAPE, sMAPE, Bias"},
-                    validation_methodology="Common-origin expanding-window walk-forward validation",
-                    model_status="walk_forward_evaluated",
-                    deployment_status="active",
-                    is_active=True,
-                    organization_id=org_id,
-                    approval_notes="Default organization-scoped forecasting engine.",
-                )
-                db.model_registry.insert_one(entry.to_doc())
+        # Course Demand Forecaster entry
+        existing_demand = db.model_registry.find_one({
+            "model_type": "course_demand_forecasting",
+            "model_version": "Demand_WalkForward_v1.0.0",
+        })
+        if not existing_demand:
+            entry = ModelRegistryEntry(
+                model_name="Course Demand Walk-Forward Forecaster",
+                model_type="course_demand_forecasting",
+                model_version="Demand_WalkForward_v1.0.0",
+                algorithm="Common-Origin Walk-Forward (NaiveLastValue / MovingAverage2 / RidgeLag)",
+                training_dataset_ref="MongoDB student_subject_enrollments",
+                dataset_fingerprint="live-institutional-enrollments",
+                training_params={"min_ridge_terms": 7, "min_splits": 3, "ridge_alpha": 1.0},
+                evaluation_metrics={"methodology": "Walk-forward MAE, RMSE, MAPE, sMAPE, Bias"},
+                validation_methodology="Common-origin expanding-window walk-forward validation",
+                model_status="walk_forward_evaluated",
+                deployment_status="active",
+                is_active=True,
+                approval_notes="Default institutional forecasting engine.",
+            )
+            db.model_registry.insert_one(entry.to_doc())
 
     @classmethod
     def list_registry_models(
@@ -518,25 +510,19 @@ class ModelEvaluationService:
         actor_user: User,
         model_type: Optional[str] = None,
     ) -> Tuple[Optional[Dict[str, Any]], Optional[str], int]:
-        """List model registry entries visible to actor_user's organization."""
+        """List model registry entries."""
         if db is None:
             return None, "Database connection unavailable.", 500
 
-        org_id, org_err, org_code = DemandForecastService._require_valid_org_id(actor_user)
-        if org_err:
-            return None, org_err, org_code
+        cls.ensure_default_registry_entries(db)
 
-        cls.ensure_default_registry_entries(db, org_id=org_id)
-
-        query: Dict[str, Any] = {
-            "$or": [{"organization_id": org_id}, {"organization_id": None}, {"organization_id": {"$exists": False}}]
-        }
+        query: Dict[str, Any] = {}
         if model_type and model_type.strip():
             query["model_type"] = model_type.strip()
 
         cursor = db.model_registry.find(query).sort("created_at", DESCENDING)
         models = [ModelRegistryEntry.from_doc(d).to_dict() for d in cursor]
-        return {"models": models, "total": len(models), "organization_id": org_id}, None, 200
+        return {"models": models, "total": len(models)}, None, 200
 
     @classmethod
     def activate_model(
@@ -553,10 +539,6 @@ class ModelEvaluationService:
         if db is None:
             return None, "Database connection unavailable.", 500
 
-        org_id, org_err, org_code = DemandForecastService._require_valid_org_id(admin_user)
-        if org_err:
-            return None, org_err, org_code
-
         entry_oid = to_object_id(registry_id)
         if not entry_oid:
             return None, "Invalid registry_id format.", 400
@@ -565,14 +547,6 @@ class ModelEvaluationService:
         if not doc:
             return None, "Model registry entry not found.", 404
 
-        doc_org = doc.get("organization_id")
-        if doc_org is None or str(doc_org) != org_id:
-            return (
-                None,
-                "Access denied. Organization administrators cannot mutate global or cross-organization model registry entries.",
-                403,
-            )
-
         if doc.get("model_status") == "insufficient_data" or not doc.get("evaluation_metrics"):
             return None, "Cannot activate model: evaluation metrics are incomplete or data is insufficient.", 422
 
@@ -580,12 +554,8 @@ class ModelEvaluationService:
         if not clean_notes:
             return None, "Explicit 'approval_notes' are required to activate a model version.", 400
 
-        # Deactivate other models of the same type within the same scope
+        # Deactivate other models of the same type
         scope_filter: Dict[str, Any] = {"model_type": doc["model_type"]}
-        if doc_org is not None:
-            scope_filter["organization_id"] = doc_org
-        else:
-            scope_filter["organization_id"] = None
 
         now = datetime.now(timezone.utc)
         db.model_registry.update_many(
@@ -613,7 +583,6 @@ class ModelEvaluationService:
                 "model_version": doc.get("model_version"),
                 "model_type": doc.get("model_type"),
                 "approval_notes": clean_notes,
-                "organization_id": org_id,
             },
             user_id=admin_user.id,
             actor_id=admin_user.id,
@@ -632,10 +601,6 @@ class ModelEvaluationService:
         if db is None:
             return None, "Database connection unavailable.", 500
 
-        org_id, org_err, org_code = DemandForecastService._require_valid_org_id(admin_user)
-        if org_err:
-            return None, org_err, org_code
-
         entry_oid = to_object_id(registry_id)
         if not entry_oid:
             return None, "Invalid registry_id format.", 400
@@ -643,14 +608,6 @@ class ModelEvaluationService:
         doc = db.model_registry.find_one({"_id": entry_oid})
         if not doc:
             return None, "Model registry entry not found.", 404
-
-        doc_org = doc.get("organization_id")
-        if doc_org is None or str(doc_org) != org_id:
-            return (
-                None,
-                "Access denied. Organization administrators cannot mutate global or cross-organization model registry entries.",
-                403,
-            )
 
         now = datetime.now(timezone.utc)
         db.model_registry.update_one(
@@ -665,7 +622,6 @@ class ModelEvaluationService:
             details={
                 "registry_id": str(entry_oid),
                 "model_version": doc.get("model_version"),
-                "organization_id": org_id,
             },
             user_id=admin_user.id,
             actor_id=admin_user.id,

@@ -106,10 +106,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             items: [
               { to: '/admin/reports', label: 'Reports & Exports', icon: <FileText size={18} /> },
               { to: '/admin/data-management', label: 'Data Management', icon: <Database size={18} /> },
+              { to: '/admin/stream', label: 'Real-Time Stream', icon: <Activity size={18} />, badge: '10' },
               { to: '/admin/notifications', label: 'Notifications & Alerts', icon: <Bell size={18} /> },
               { to: '/admin/feedback', label: 'Feedback & Support', icon: <MessageSquare size={18} /> },
               { to: '/admin/logs', label: 'System Monitoring', icon: <Shield size={18} /> },
-              { to: '/admin/billing', label: 'Billing & Quotas', icon: <Layers size={18} />, badge: '9' },
               { to: '/admin/settings', label: 'Profile & Settings', icon: <Settings size={18} /> },
             ],
           },
@@ -206,20 +206,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             items: [
               { to: '/analyst/reports', label: 'Reports & Exports', icon: <FileSpreadsheet size={18} /> },
               { to: '/analyst/settings', label: 'Profile & Settings', icon: <Settings size={18} /> },
-            ],
-          },
-        ];
-
-      case 'platform_super_admin':
-        return [
-          {
-            title: 'Platform Governance',
-            items: [
-              { to: '/platform/overview', label: 'Platform Overview', icon: <LayoutDashboard size={18} /> },
-              { to: '/platform/institutions', label: 'Institutions', icon: <Layers size={18} /> },
-              { to: '/platform/onboarding', label: 'Onboard Tenant', icon: <UserPlus size={18} /> },
-              { to: '/platform/subscriptions', label: 'Subscriptions', icon: <BarChart3 size={18} /> },
-              { to: '/platform/audit-logs', label: 'Global Audit Logs', icon: <Shield size={18} /> },
             ],
           },
         ];

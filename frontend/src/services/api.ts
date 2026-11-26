@@ -22,11 +22,6 @@ import {
 } from '../types';
 
 let cachedCsrfToken: string | null = null;
-let activeTenantId: string | null = null;
-
-export function setActiveTenantId(orgId: string | null) {
-  activeTenantId = orgId && orgId.trim() ? orgId.trim() : null;
-}
 
 export async function getCsrfToken(): Promise<string> {
   if (cachedCsrfToken) return cachedCsrfToken;
@@ -51,10 +46,6 @@ export async function apiRequest<T = any>(
   const headers = new Headers(options.headers || {});
 
   headers.set('Accept', 'application/json');
-
-  if (activeTenantId && !headers.has('X-Institution-ID')) {
-    headers.set('X-Institution-ID', activeTenantId);
-  }
 
   if (options.body && typeof options.body === 'string' && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
@@ -661,126 +652,84 @@ export const evaluationApi = {
     ),
 };
 
-export const platformApi = {
-  getOverview: () =>
-    apiRequest<import('../types').PlatformOverviewResponse>('/api/platform/overview'),
+export interface StreamEventItem {
+  id: string;
+  event_id: string;
+  event_type: 'attendance_update' | 'assessment_result' | 'lms_activity' | 'progress_update';
+  subject_id: string | null;
+  subject: string;
+  academic_term: string;
+  source: string;
+  event_timestamp: string;
+  received_at: string;
+  processed_at: string | null;
+  processing_latency_ms: number | null;
+  status: 'pending' | 'processed' | 'failed' | 'duplicate';
+  retry_count: number;
+  error_message: string | null;
+  is_out_of_order: boolean;
+  has_missing_data: boolean;
+  missing_fields: string[];
+  is_backfill: boolean;
+  prediction_id: string | null;
+}
 
-  listInstitutions: (params?: { status?: string; page?: number; limit?: number }) => {
+export interface StreamStatusResponse {
+  status_code: number;
+  metrics: {
+    events_received: number;
+    events_processed: number;
+    events_failed: number;
+    events_pending: number;
+    out_of_order_events: number;
+    incomplete_data_events: number;
+    backfill_events: number;
+    realtime_events: number;
+    average_latency_ms: number | null;
+    last_event_at: string | null;
+    delivery_guarantee: string;
+  };
+  reconciliation: {
+    realtime_processed: number;
+    batch_backfill_processed: number;
+    total_unique_processed: number;
+    consistent: boolean;
+  };
+}
+
+export const streamApi = {
+  getStatus: () => apiRequest<StreamStatusResponse>('/api/stream/status'),
+
+  listEvents: (params?: { limit?: number; status?: string }) => {
     const query = new URLSearchParams();
+    query.set('format', 'json');
+    if (params?.limit) query.set('limit', String(params.limit));
     if (params?.status) query.set('status', params.status);
-    if (params?.page) query.set('page', String(params.page));
-    if (params?.limit) query.set('limit', String(params.limit));
-    const qs = query.toString() ? `?${query.toString()}` : '';
-    return apiRequest<{
-      status_code: number;
-      institutions: import('../types').InstitutionRecord[];
-      total: number;
-      page: number;
-      limit: number;
-    }>(`/api/platform/institutions${qs}`);
+    return apiRequest<{ status_code: number; events: StreamEventItem[]; total: number }>(
+      `/api/stream/events?${query.toString()}`
+    );
   },
 
-  createInstitution: (payload: {
-    name: string;
-    slug: string;
-    admin_email: string;
-    admin_password: string;
-    admin_name: string;
-    plan_tier?: string;
-    contact_email?: string;
-    status?: string;
+  ingestEvent: (payload: {
+    event_id: string;
+    event_type: string;
+    student_id: string;
+    subject: string;
+    academic_term: string;
+    payload: Record<string, unknown>;
+    event_timestamp?: string;
   }) =>
-    apiRequest<{
-      status_code: number;
-      institution: import('../types').InstitutionRecord;
-      subscription: import('../types').SubscriptionRecord;
-    }>('/api/platform/institutions', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }),
-
-  selfServiceOnboard: (payload: {
-    name: string;
-    slug: string;
-    admin_email: string;
-    admin_password: string;
-    admin_name: string;
-    plan_tier?: string;
-  }) =>
-    apiRequest<{
-      status_code: number;
-      institution: import('../types').InstitutionRecord;
-      subscription: import('../types').SubscriptionRecord;
-    }>('/api/platform/onboarding/register', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }),
-
-  getInstitution: (instId: string) =>
-    apiRequest<{ status_code: number; institution: import('../types').InstitutionRecord }>(
-      `/api/platform/institutions/${instId}`
+    apiRequest<{ status_code: number; status: string; event: StreamEventItem }>(
+      '/api/stream/ingest',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
     ),
 
-  activateInstitution: (instId: string, reason?: string) =>
-    apiRequest<{ status_code: number; institution: import('../types').InstitutionRecord }>(
-      `/api/platform/institutions/${instId}/activate`,
-      { method: 'POST', body: JSON.stringify({ reason }) }
-    ),
-
-  suspendInstitution: (instId: string, reason?: string) =>
-    apiRequest<{ status_code: number; institution: import('../types').InstitutionRecord }>(
-      `/api/platform/institutions/${instId}/suspend`,
-      { method: 'POST', body: JSON.stringify({ reason }) }
-    ),
-
-  reactivateInstitution: (instId: string, reason?: string) =>
-    apiRequest<{ status_code: number; institution: import('../types').InstitutionRecord }>(
-      `/api/platform/institutions/${instId}/reactivate`,
-      { method: 'POST', body: JSON.stringify({ reason }) }
-    ),
-
-  listPlans: () =>
-    apiRequest<{ status_code: number; plans: import('../types').SubscriptionPlan[] }>(
-      '/api/platform/plans'
-    ),
-
-  listSubscriptions: () =>
-    apiRequest<{ status_code: number; subscriptions: import('../types').SubscriptionRecord[] }>(
-      '/api/platform/subscriptions'
-    ),
-
-  getAuditLogs: (params?: { action?: string; target_institution?: string; page?: number; limit?: number }) => {
-    const query = new URLSearchParams();
-    if (params?.action) query.set('action', params.action);
-    if (params?.target_institution) query.set('target_institution', params.target_institution);
-    if (params?.page) query.set('page', String(params.page));
-    if (params?.limit) query.set('limit', String(params.limit));
-    const qs = query.toString() ? `?${query.toString()}` : '';
-    return apiRequest<{
-      status_code: number;
-      logs: import('../types').GlobalAuditLogItem[];
-      total: number;
-      page: number;
-      limit: number;
-    }>(`/api/platform/audit-logs${qs}`);
-  },
-
-  getMySubscription: () =>
-    apiRequest<{
-      status_code: number;
-      subscription: import('../types').SubscriptionRecord;
-      plans: import('../types').SubscriptionPlan[];
-    }>('/api/platform/billing/my-subscription'),
-
-  changeMyPlan: (plan_tier: string) =>
-    apiRequest<{ status_code: number; subscription: import('../types').SubscriptionRecord }>(
-      '/api/platform/billing/change-plan',
-      { method: 'POST', body: JSON.stringify({ plan_tier }) }
-    ),
-
-  cancelMyPlan: () =>
-    apiRequest<{ status_code: number; subscription: import('../types').SubscriptionRecord }>(
-      '/api/platform/billing/cancel',
+  retryEvent: (eventId: string) =>
+    apiRequest<{ status_code: number; status: string; event: StreamEventItem }>(
+      `/api/stream/retry/${encodeURIComponent(eventId)}`,
       { method: 'POST' }
     ),
 };

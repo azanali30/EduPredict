@@ -1,4 +1,4 @@
-export type UserRole = 'student' | 'teacher' | 'admin' | 'analyst' | 'platform_super_admin';
+export type UserRole = 'student' | 'teacher' | 'admin' | 'analyst';
 
 export interface PersonalInfo {
   date_of_birth?: string;

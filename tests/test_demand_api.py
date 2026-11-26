@@ -27,32 +27,24 @@ def test_unauthenticated_demand_access_denied(client):
     assert client.get("/api/demand/model-metadata").status_code == 401
 
 
-def test_missing_organization_context_fails_closed(client, test_admin, test_analyst, test_teacher, clean_db):
+def test_single_institution_access_without_organization_id(client, test_admin, test_analyst, test_teacher, clean_db):
     """
-    Admin, Analyst, and Teacher without a valid organization_id must be rejected (403 Forbidden)
-    and must NEVER gain unrestricted cross-organization access.
+    In single-institution mode, Admin, Analyst, and Teacher succeed without requiring an organization_id.
     """
     SubjectService.ensure_canonical_subjects(clean_db)
     math_subj = SubjectService.get_subject_by_canonical_key(clean_db, "mathematics")
 
-    # Admin without organization_id
     client.post("/auth/login", json={"email": test_admin.email, "password": "AdminPassword123!"})
-    assert client.get("/api/demand/overview").status_code == 403
-    assert client.post("/api/demand/forecast", json={}).status_code == 403
-    assert client.get("/api/demand/history").status_code == 403
-    assert client.get(f"/api/demand/subject/{math_subj.id}").status_code == 403
-    assert client.get("/api/demand/model-metadata").status_code == 403
+    assert client.get("/api/demand/overview").status_code == 200
+    assert client.post("/api/demand/forecast", json={}).status_code == 201
+    assert client.get("/api/demand/history").status_code == 200
+    assert client.get(f"/api/demand/subject/{math_subj.id}").status_code == 200
+    assert client.get("/api/demand/model-metadata").status_code == 200
 
-    # Analyst without organization_id
     client.post("/auth/login", json={"email": test_analyst.email, "password": "AnalystPassword123!"})
-    assert client.get("/api/demand/overview").status_code == 403
-    assert client.get("/api/demand/history").status_code == 403
-    assert client.get("/api/demand/model-metadata").status_code == 403
-
-    # Teacher without organization_id
-    client.post("/auth/login", json={"email": test_teacher.email, "password": "TeacherPassword123!"})
-    assert client.get("/api/demand/overview").status_code == 403
-    assert client.get(f"/api/demand/subject/{math_subj.id}").status_code == 403
+    assert client.get("/api/demand/overview").status_code == 200
+    assert client.get("/api/demand/history").status_code == 200
+    assert client.get("/api/demand/model-metadata").status_code == 200
 
 
 def test_student_forbidden_from_demand_forecasting(client, test_student):
@@ -80,7 +72,6 @@ def test_admin_forecast_generation_history_and_metadata(client, test_admin, test
     res_ov = client.get("/api/demand/overview?periods_ahead=1")
     assert res_ov.status_code == 200
     data = res_ov.get_json()
-    assert data["summary"]["organization_id"] == "org-alpha"
     assert data["summary"]["total_subjects_analyzed"] >= 2
     assert data["summary"]["overall_data_sufficiency"] == "sufficient"
     math_fc = next(f for f in data["forecasts"] if f["subject_id"] == str(math_subj.id))
@@ -99,7 +90,6 @@ def test_admin_forecast_generation_history_and_metadata(client, test_admin, test
 
     res_meta = client.get("/api/demand/model-metadata")
     assert res_meta.status_code == 200
-    assert res_meta.get_json()["organization_id"] == "org-alpha"
     assert res_meta.get_json()["latest_run"]["subjects_forecasted"] >= 2
 
 
@@ -161,77 +151,6 @@ def test_analyst_read_only_and_no_pii(client, test_analyst, test_admin, test_stu
     assert test_student.full_name not in raw_text
     assert str(test_student.id) not in raw_text
     assert client.post("/api/demand/forecast", json={}).status_code == 403
-
-
-def test_cross_organization_isolation_metadata_history_and_enrollments(client, clean_db):
-    """
-    Organization Alpha Admin/Analyst must NEVER access Organization Beta's:
-    - enrollment records
-    - forecast history
-    - model metadata
-    and client-supplied organization_id in POST /api/demand/forecast must be ignored.
-    """
-    SubjectService.ensure_canonical_subjects(clean_db)
-    math_subj = SubjectService.get_subject_by_canonical_key(clean_db, "mathematics")
-
-    admin_a, _ = UserService.create_user(
-        db=clean_db, email="admin.a@edupredict.com", plain_password="AdminPassword123!",
-        full_name="Admin A", role="admin",
-    )
-    _set_org(clean_db, admin_a, "org-alpha")
-
-    analyst_a, _ = UserService.create_user(
-        db=clean_db, email="analyst.a@edupredict.com", plain_password="AnalystPassword123!",
-        full_name="Analyst A", role="analyst",
-    )
-    _set_org(clean_db, analyst_a, "org-alpha")
-
-    stud_b, _ = UserService.create_user(
-        db=clean_db, email="stud.b@edupredict.com", plain_password="StudentPassword123!",
-        full_name="Student B", role="student",
-    )
-    _set_org(clean_db, stud_b, "org-beta")
-
-    EnrollmentService.enroll_student(clean_db, stud_b.id, math_subj.id, "2025-2026-T1", admin_a.id)
-
-    # Seed Org Beta forecast history & model metadata directly
-    clean_db.demand_forecasts.insert_one({
-        "_id": ObjectId(),
-        "subject_id": math_subj.id,
-        "subject_code": "MAT",
-        "subject_name": "Mathematics",
-        "forecast_period": "2025-2026-T2",
-        "predicted_enrollment": 99.0,
-        "organization_id": "org-beta",
-    })
-    clean_db.demand_model_metadata.insert_one({
-        "_id": ObjectId(),
-        "organization_id": "org-beta",
-        "subjects_forecasted": 12,
-        "average_mae": 1.23,
-    })
-
-    # Login as Admin Alpha
-    client.post("/auth/login", json={"email": "admin.a@edupredict.com", "password": "AdminPassword123!"})
-
-    res_ov = client.get("/api/demand/overview")
-    assert res_ov.status_code == 200
-    assert res_ov.get_json()["summary"]["total_latest_actual_enrollment"] == 0
-
-    res_hist = client.get("/api/demand/history")
-    assert res_hist.status_code == 200
-    assert res_hist.get_json()["total"] == 0
-
-    res_meta = client.get("/api/demand/model-metadata")
-    assert res_meta.status_code == 200
-    assert res_meta.get_json()["latest_run"]["subjects_forecasted"] == 0
-
-    # Spoof attempt on POST /api/demand/forecast
-    res_gen = client.post("/api/demand/forecast", json={"periods_ahead": 1, "organization_id": "org-beta"})
-    assert res_gen.status_code == 201
-    for fc in res_gen.get_json()["forecasts"]:
-        assert fc["organization_id"] == "org-alpha"
-        assert fc["latest_actual_enrollment"] is None  # Org Beta student not counted!
 
 
 def test_pagination_and_input_validation(client, test_admin, clean_db):
