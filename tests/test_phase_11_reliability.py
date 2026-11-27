@@ -61,7 +61,14 @@ def test_backup_rejects_tampered_incomplete_and_traversal_archives(clean_db, tes
     import hashlib
     sha = hashlib.sha256(bad_arch.read_bytes()).hexdigest()
     (tmp_path / f"{bad_id}.meta.json").write_text(
-        json.dumps({"backup_id": bad_id, "archive_sha256": sha}), encoding="utf-8"
+        json.dumps({
+            "backup_id": bad_id,
+            "format_version": "1.0-bson-targz",
+            "total_documents": 0,
+            "collection_count": 0,
+            "archive_sha256": sha,
+        }),
+        encoding="utf-8",
     )
     ok_inc, _, inc_err = BackupService.verify_backup(tmp_path, bad_id)
     assert ok_inc is False and "manifest.json" in inc_err
@@ -369,3 +376,165 @@ def test_streaming_retry_cooldown_backoff(clean_db, test_admin, test_student):
     r_now, _, c2 = EventStreamer.retry_failed_events(clean_db, cooldown_seconds=0, actor_user=test_admin)
     assert c2 == 200 and r_now["succeeded"] == 1
 
+
+def test_backup_rejects_missing_null_and_malformed_metadata_fields(clean_db, test_admin, tmp_path):
+    """Verify .meta.json explicitly rejects missing, null, or malformed required fields."""
+    meta, err = BackupService.create_backup(clean_db, tmp_path, actor_id=test_admin.id)
+    assert err is None
+    bid = meta["backup_id"]
+    meta_file = tmp_path / f"{bid}.meta.json"
+    orig_meta = json.loads(meta_file.read_text(encoding="utf-8"))
+
+    # Missing each mandatory field individually
+    for req_field in ("backup_id", "format_version", "total_documents", "collection_count", "archive_sha256"):
+        tampered = dict(orig_meta)
+        del tampered[req_field]
+        meta_file.write_text(json.dumps(tampered), encoding="utf-8")
+        ok, _, v_err = BackupService.verify_backup(tmp_path, bid)
+        assert ok is False
+        assert v_err is not None and req_field in v_err
+
+    # Null and malformed values
+    malformed_cases = [
+        ("backup_id", None),
+        ("backup_id", ""),
+        ("format_version", None),
+        ("format_version", 123),
+        ("total_documents", None),
+        ("total_documents", True),
+        ("total_documents", -1),
+        ("total_documents", "10"),
+        ("collection_count", None),
+        ("collection_count", False),
+        ("collection_count", -2),
+        ("archive_sha256", None),
+        ("archive_sha256", "not-a-valid-sha256"),
+    ]
+    for field, bad_val in malformed_cases:
+        tampered = dict(orig_meta)
+        tampered[field] = bad_val
+        meta_file.write_text(json.dumps(tampered), encoding="utf-8")
+        ok, _, v_err = BackupService.verify_backup(tmp_path, bid)
+        assert ok is False
+        assert v_err is not None
+
+    # Non-object JSON metadata
+    meta_file.write_text("[]", encoding="utf-8")
+    ok_arr, _, arr_err = BackupService.verify_backup(tmp_path, bid)
+    assert ok_arr is False and "object" in arr_err.lower()
+
+
+def test_restore_automatic_rollback_on_failure_preserves_original_db(clean_db, test_admin, tmp_path, monkeypatch):
+    """
+    Fault-injection test on an isolated temporary DB:
+    Simulates a mid-restore failure during destructive replacement and verifies automatic
+    rollback restores the original pre-restore state with indexes and integrity intact.
+    """
+    from backend.database.schema import init_db_indexes
+    from backend.services.backup_service import run_db_integrity_check
+    import backend.services.backup_service as bs_mod
+
+    iso_target_name = "edupredict_rollback_target_test"
+    iso_src_name = "edupredict_rollback_source_test"
+    target_db = clean_db.client[iso_target_name]
+    source_db = clean_db.client[iso_src_name]
+    clean_db.client.drop_database(iso_target_name)
+    clean_db.client.drop_database(iso_src_name)
+
+    try:
+        orig_uid = ObjectId()
+        orig_sid = ObjectId()
+        target_db.users.insert_one({"_id": orig_uid, "email": "orig-user@edupredict.edu", "role": "student"})
+        target_db.subjects.insert_one({"_id": orig_sid, "code": "ORIG101", "name": "Original Subject", "canonical_key": "mathematics"})
+        init_db_indexes(target_db)
+
+        new_uid = ObjectId()
+        new_sid = ObjectId()
+        source_db.users.insert_one({"_id": new_uid, "email": "new-user@edupredict.edu", "role": "student"})
+        source_db.subjects.insert_one({"_id": new_sid, "code": "NEW202", "name": "Replacement Subject", "canonical_key": "portuguese"})
+
+        new_meta, b_err = BackupService.create_backup(source_db, tmp_path, actor_id=test_admin.id)
+        assert b_err is None and new_meta is not None
+
+        orig_extractfile = bs_mod.tarfile.TarFile.extractfile
+        fault_state = {"injected": False}
+
+        def faulty_extractfile(self, member):
+            # Trigger failure mid-loop AFTER `users` was already replaced with new-user
+            if not fault_state["injected"] and target_db.users.find_one({"email": "new-user@edupredict.edu"}) is not None:
+                fault_state["injected"] = True
+                raise RuntimeError("Simulated mid-restore write fault")
+            return orig_extractfile(self, member)
+
+        monkeypatch.setattr(bs_mod.tarfile.TarFile, "extractfile", faulty_extractfile)
+
+        res, r_err = BackupService.restore_backup(
+            target_db,
+            tmp_path,
+            new_meta["backup_id"],
+            dry_run=False,
+            replace_existing=True,
+            confirm_destructive=True,
+            actor_id=test_admin.id,
+        )
+        assert fault_state["injected"] is True
+        assert res is None
+        assert r_err is not None and "rolled back" in r_err.lower()
+
+        # Verify original DB restored cleanly and zero partial state from failed backup remains
+        assert target_db.users.find_one({"email": "orig-user@edupredict.edu"}) is not None
+        assert target_db.users.find_one({"email": "new-user@edupredict.edu"}) is None
+        assert target_db.subjects.find_one({"code": "ORIG101"}) is not None
+        assert target_db.subjects.find_one({"code": "NEW202"}) is None
+        assert "idx_users_email_unique" in target_db.users.index_information()
+        assert run_db_integrity_check(target_db)["passed"] is True
+    finally:
+        clean_db.client.drop_database(iso_target_name)
+        clean_db.client.drop_database(iso_src_name)
+
+
+def test_stale_pending_recovery_sets_last_retry_at_for_cooldown(clean_db, test_admin, test_student, monkeypatch):
+    """Verify recover_stale_pending_events stamps last_retry_at so retry_failed_events enforces cooldown."""
+    stale_time = datetime.now(timezone.utc) - timedelta(minutes=10)
+    clean_db.stream_events.insert_one(
+        StreamEvent(
+            event_id="evt-stale-cooldown-1",
+            event_type="attendance_update",
+            student_id=test_student.id,
+            subject="Mathematics",
+            academic_term="2026-Fall",
+            payload={"absences": 5},
+            status="pending",
+            received_at=stale_time,
+            retry_count=0,
+        ).to_doc()
+    )
+
+    orig_process = EventStreamer._process_persisted_event
+
+    def fail_first_recovery(db, ev, **kwargs):
+        if kwargs.get("simulate_transient_failure") is False and ev.event_id == "evt-stale-cooldown-1" and ev.retry_count == 1:
+            return orig_process(db, ev, actor_user=kwargs.get("actor_user"), simulate_transient_failure=True)
+        return orig_process(db, ev, **kwargs)
+
+    monkeypatch.setattr(EventStreamer, "_process_persisted_event", classmethod(lambda cls, db, ev, **kw: fail_first_recovery(db, ev, **kw)))
+
+    rec_res, rec_err, rec_code = EventStreamer.recover_stale_pending_events(
+        clean_db, stale_seconds=60, max_batch=10, actor_user=test_admin
+    )
+    assert rec_code == 200 and rec_err is None
+    assert rec_res["failed"] == 1
+
+    ev_doc = clean_db.stream_events.find_one({"event_id": "evt-stale-cooldown-1"})
+    assert ev_doc["status"] == "failed"
+    assert ev_doc.get("last_retry_at") is not None
+
+    monkeypatch.undo()
+
+    # Immediate retry with 60s cooldown must be skipped due to last_retry_at stamped by stale recovery
+    bulk_cool, _, c1 = EventStreamer.retry_failed_events(clean_db, cooldown_seconds=60, actor_user=test_admin)
+    assert c1 == 200 and bulk_cool["attempted"] == 0
+
+    # Retry proceeds when cooldown is 0s
+    bulk_now, _, c2 = EventStreamer.retry_failed_events(clean_db, cooldown_seconds=0, actor_user=test_admin)
+    assert c2 == 200 and bulk_now["succeeded"] == 1

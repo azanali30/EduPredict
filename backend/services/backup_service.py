@@ -30,6 +30,14 @@ BACKUP_FORMAT_VERSION = "1.0-bson-targz"
 PROTECTED_DATABASES = {"admin", "config", "local"}
 _VALID_BACKUP_ID_RE = re.compile(r"^[a-zA-Z0-9_.-]+$")
 _VALID_COLL_NAME_RE = re.compile(r"^[a-zA-Z0-9_]+$")
+_VALID_SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
+REQUIRED_META_FIELDS = (
+    "backup_id",
+    "format_version",
+    "total_documents",
+    "collection_count",
+    "archive_sha256",
+)
 
 # Core application collections exported in backups
 DEFAULT_BACKUP_COLLECTIONS = [
@@ -301,6 +309,42 @@ class BackupService:
             if staging_dir.exists():
                 shutil.rmtree(staging_dir, ignore_errors=True)
 
+    @staticmethod
+    def _validate_meta_doc(meta: Any) -> Optional[str]:
+        """Validate that .meta.json contains all required fields with valid types and formats."""
+        if not isinstance(meta, dict):
+            return "Malformed backup metadata: expected JSON object."
+
+        for field in REQUIRED_META_FIELDS:
+            if field not in meta or meta[field] is None:
+                return f"Missing or null required metadata field '{field}'."
+
+        backup_id_val = meta["backup_id"]
+        if (
+            not isinstance(backup_id_val, str)
+            or not backup_id_val.strip()
+            or not _VALID_BACKUP_ID_RE.match(backup_id_val.strip())
+            or ".." in backup_id_val
+        ):
+            return "Malformed metadata field 'backup_id'."
+
+        fmt_val = meta["format_version"]
+        if not isinstance(fmt_val, str) or not fmt_val.strip():
+            return "Malformed metadata field 'format_version'."
+        if fmt_val != BACKUP_FORMAT_VERSION:
+            return f"Unsupported backup format_version in metadata: {fmt_val}"
+
+        sha_val = meta["archive_sha256"]
+        if not isinstance(sha_val, str) or not _VALID_SHA256_RE.match(sha_val.strip()):
+            return "Malformed metadata field 'archive_sha256'."
+
+        for int_field in ("total_documents", "collection_count"):
+            int_val = meta[int_field]
+            if isinstance(int_val, bool) or not isinstance(int_val, int) or int_val < 0:
+                return f"Malformed metadata field '{int_field}': expected non-negative integer."
+
+        return None
+
     @classmethod
     def _verify_archive_paths(
         cls, archive_path: Path, meta_path: Path
@@ -317,10 +361,11 @@ class BackupService:
         except Exception as exc:
             return False, None, f"Malformed backup metadata: {exc}"
 
-        expected_archive_sha = meta.get("archive_sha256")
-        if not expected_archive_sha:
-            return False, None, "Missing archive_sha256 in metadata."
+        meta_err = cls._validate_meta_doc(meta)
+        if meta_err:
+            return False, None, meta_err
 
+        expected_archive_sha = meta["archive_sha256"].strip()
         actual_archive_sha = _sha256_file(archive_path)
         if actual_archive_sha != expected_archive_sha:
             return False, None, "Archive SHA-256 mismatch (file tampered or corrupted)."
@@ -340,21 +385,23 @@ class BackupService:
                 if manifest_file is None:
                     return False, None, "Unable to read manifest.json from archive."
                 manifest = json.loads(manifest_file.read().decode("utf-8"))
+                if not isinstance(manifest, dict):
+                    return False, None, "Malformed manifest.json inside archive: expected JSON object."
 
                 if manifest.get("format_version") != BACKUP_FORMAT_VERSION:
                     return False, None, f"Unsupported backup format_version: {manifest.get('format_version')}"
 
-                if meta.get("format_version") and meta.get("format_version") != manifest.get("format_version"):
+                if meta["format_version"] != manifest.get("format_version"):
                     return False, None, "Metadata format_version does not match manifest.json."
 
-                if not meta.get("backup_id") or meta.get("backup_id") != manifest.get("backup_id"):
+                if meta["backup_id"] != manifest.get("backup_id"):
                     return False, None, "Metadata backup_id does not match manifest.json."
 
                 colls = manifest.get("collections")
                 if not isinstance(colls, dict):
                     return False, None, "Invalid collections map in manifest.json."
 
-                if meta.get("collection_count") is not None and meta.get("collection_count") != len(colls):
+                if meta["collection_count"] != len(colls):
                     return False, None, "Metadata collection_count does not match manifest.json."
 
                 expected_total_docs = sum(
@@ -362,7 +409,7 @@ class BackupService:
                 )
                 if manifest.get("total_documents") != expected_total_docs:
                     return False, None, "Manifest total_documents does not match sum of collection doc_counts."
-                if meta.get("total_documents") is not None and meta.get("total_documents") != manifest.get("total_documents"):
+                if meta["total_documents"] != manifest.get("total_documents"):
                     return False, None, "Metadata total_documents does not match manifest.json."
 
                 expected_entries = {"manifest.json"} | {f"collections/{c}.bson" for c in colls.keys()}
@@ -490,6 +537,7 @@ class BackupService:
         replace_existing: bool = False,
         confirm_destructive: bool = False,
         actor_id: Optional[ObjectId | str] = None,
+        _is_rollback: bool = False,
     ) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
         """
         Verify and restore a backup archive into target_db.
@@ -533,7 +581,7 @@ class BackupService:
             return None, "Destructive restore requires explicit confirmation (confirm_destructive=True)."
 
         safety_backup_id: Optional[str] = None
-        if replace_existing and existing_non_empty:
+        if replace_existing and existing_non_empty and not _is_rollback:
             safety_meta, safety_err = cls.create_backup(
                 target_db,
                 backup_dir=backup_dir,
@@ -604,20 +652,26 @@ class BackupService:
         except Exception as exc:
             err_msg = sanitize_exception_message(exc)
             rollback_msg = (
-                f"Attempted rollback from safety backup '{safety_backup_id}'."
+                f"Automatically rolling back from safety backup '{safety_backup_id}'."
                 if safety_backup_id
                 else "No safety backup was needed."
             )
-            if safety_backup_id:
+            if safety_backup_id and not _is_rollback:
                 try:
-                    cls.restore_backup(
+                    rb_res, rb_err = cls.restore_backup(
                         target_db,
                         backup_dir=backup_dir,
                         backup_id=safety_backup_id,
                         dry_run=False,
                         replace_existing=True,
                         confirm_destructive=True,
+                        actor_id=actor_id,
+                        _is_rollback=True,
                     )
+                    if rb_err or not rb_res:
+                        rollback_msg = f"Automatic rollback failed ({rb_err}); manually restore '{safety_backup_id}'."
+                    else:
+                        rollback_msg = f"Automatically rolled back to safety backup '{safety_backup_id}'."
                 except Exception as rb_exc:
                     rollback_msg = f"Automatic rollback failed ({rb_exc}); manually restore '{safety_backup_id}'."
             return None, f"Restore failed: {err_msg}. {rollback_msg}"

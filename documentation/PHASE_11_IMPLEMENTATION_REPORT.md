@@ -57,9 +57,12 @@
 
 ## 5. Verification Results
 
-- **Full Backend (`.\.venv\Scripts\pytest.exe -q`):** `366 passed` in 250.84s (0 failed, including `test_inference_latency_budget` passing in 1.90s in isolation and `12 passed` in `tests/test_phase_11_reliability.py`).
-- **Phase 11 Tests (`tests/test_phase_11_reliability.py`):** `12 passed` in 25.67s.
-- **Frontend (`vitest run`, `tsc -b`, `npm run build`):** `7 test files, 38 passed`; `tsc -b` 0 errors; `vite build` succeeded cleanly.
+- **Anomaly Detection (`.\.venv\Scripts\pytest.exe -q tests/test_anomaly_detection.py`):** `30 passed` in 18.61s.
+- **Isolated Inference Latency Benchmark (`test_inference_latency_budget`):** `1 passed` in 0.57s (`< 100.0 ms` threshold preserved; measured single-record average `2.27 ms` vs prior `138.73 ms` / `114.07 ms`).
+- **Phase 11 Tests (`.\.venv\Scripts\pytest.exe -q tests/test_phase_11_reliability.py`):** `15 passed` in 21.55s.
+- **Backup/Restore Filter (`.\.venv\Scripts\pytest.exe -q -k "backup or restore"`):** `9 passed, 360 deselected` in 31.21s.
+- **Full Backend (`.\.venv\Scripts\pytest.exe -q`):** `369 passed` in 238.32s (0 failed).
+- **Frontend (`vitest run`, `tsc -b`, `npm run build`):** `7 test files, 38 passed` in 23.59s; `tsc -b` 0 errors; `vite build` succeeded in 20.19s.
 
 ---
 
@@ -70,3 +73,12 @@
 - **Restore Verification Completeness (`backend/services/backup_service.py`):** `run_db_integrity_check()` now covers `dropout_records` and `stream_events`; `restore_backup()` verifies restored `_id` sets alongside counts; capabilities explicitly note that validators, views, and ad-hoc indexes outside `schema.py` are not serialized.
 - **Concurrent Initial Insert Race (`backend/database/schema.py`, `backend/services/event_streamer.py`):** Added duplicate pre-check + partial unique index `idx_records_student_subject_term_unique` on `academic_records` and `DuplicateKeyError` retry fallback in `_sync_academic_state()`.
 - **Retry Backoff & Monitoring Efficiency (`backend/services/event_streamer.py`, `backend/routes/monitoring_routes.py`):** Added `cooldown_seconds` backoff (`last_retry_at`) to `retry_failed_events()` and switched monitoring collection totals to `estimated_document_count()`.
+
+---
+
+## 7. Final Minor Remediation Summary
+
+- **Single-Record Inference Latency Optimization (`backend/ml/anomaly_detector.py`):** Profiled `AnomalyModelBundle.score_single_record()` (`cProfile`), identifying per-call pandas DataFrame slicing (`~4 ms`), `ColumnTransformer` validation overhead (`~26–49 ms`), and 100-tree `joblib.Parallel` sequential wrapper dispatch (`~27–56 ms`) as the bottleneck. Added an exact pre-extracted single-row preprocessor + direct Cython `Tree.apply` evaluator (`_get_fast_single_scorer()`) with strict structural invariant checks, `__getstate__` exclusion, and full fallback to `self.pipeline.decision_function(df_input)`, achieving `0.0` numeric score difference across tested records while reducing average latency from `114–138 ms` to `2.27 ms` (`< 100.0 ms` threshold untouched).
+- **Mandatory `.meta.json` Schema Enforcement (`backend/services/backup_service.py`, `tests/test_phase_11_reliability.py`):** `_validate_meta_doc()` enforces presence, non-nullity, exact types (excluding `bool` for counts), and valid formats for `backup_id`, `format_version`, `total_documents`, `collection_count`, and 64-char hex `archive_sha256` before opening tar archives; added isolated tests covering every missing, null, and malformed case.
+- **Restore Rollback Guard & Fault-Injection Test (`backend/services/backup_service.py`, `tests/test_phase_11_reliability.py`):** Updated rollback in `restore_backup()` to pass `_is_rollback=True` and inspect `(rb_res, rb_err)` rather than silently assuming rollback success, and added an isolated temporary-DB mid-restore fault-injection test verifying full state, index, and integrity restoration.
+- **Stale Pending Recovery Cooldown Consistency (`backend/services/event_streamer.py`, `tests/test_phase_11_reliability.py`):** Updated `recover_stale_pending_events()` to stamp `last_retry_at` atomically during claim so subsequent `retry_failed_events(..., cooldown_seconds=...)` calls enforce cooldown consistently; added regression test.

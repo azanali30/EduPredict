@@ -138,6 +138,111 @@ class AnomalyModelBundle:
         self.model_version = model_version
         self.trained_at = datetime.now(timezone.utc).isoformat()
 
+    def __getstate__(self) -> Dict[str, Any]:
+        """Exclude transient compiled inference cache when serializing with joblib."""
+        state = self.__dict__.copy()
+        state.pop("_fast_scorer_cache", None)
+        return state
+
+    def _get_fast_single_scorer(self):
+        """
+        Build and cache an exact fast single-record decision_function evaluator.
+        Avoids per-call DataFrame slicing and joblib.Parallel dispatch overhead
+        while remaining numerically equivalent to self.pipeline.decision_function(df).
+        Returns None cleanly so callers fall back if a non-standard pipeline is attached.
+        """
+        cached = getattr(self, "_fast_scorer_cache", None)
+        if cached is not None and cached[0] == id(self.pipeline):
+            return cached[1]
+
+        try:
+            from sklearn.ensemble._iforest import _average_path_length
+
+            steps = getattr(self.pipeline, "named_steps", None)
+            if not steps or "preprocessor" not in steps or "model" not in steps:
+                return None
+
+            pre = steps["preprocessor"]
+            est = steps["model"]
+            if not isinstance(pre, ColumnTransformer) or not isinstance(est, IsolationForest):
+                return None
+
+            transformers_spec = [(name, list(cols)) for name, _, cols in pre.transformers_]
+            if transformers_spec != [
+                ("num", APPROVED_NUMERICAL_FEATURES),
+                ("cat", APPROVED_CATEGORICAL_FEATURES),
+            ]:
+                return None
+
+            num_pipe = pre.named_transformers_["num"]
+            cat_pipe = pre.named_transformers_["cat"]
+            num_imp = num_pipe.named_steps["imputer"]
+            scaler = num_pipe.named_steps["scaler"]
+            cat_imp = cat_pipe.named_steps["imputer"]
+            ohe = cat_pipe.named_steps["ohe"]
+
+            if (
+                getattr(num_imp, "strategy", None) != "median"
+                or getattr(cat_imp, "strategy", None) != "most_frequent"
+                or getattr(ohe, "handle_unknown", None) != "ignore"
+                or getattr(ohe, "sparse_output", True)
+                or getattr(ohe, "drop_idx_", None) is not None
+            ):
+                return None
+
+            medians = np.asarray(num_imp.statistics_, dtype=np.float64)
+            center = np.asarray(scaler.center_, dtype=np.float64) if scaler.with_centering else np.zeros_like(medians)
+            scale = np.asarray(scaler.scale_, dtype=np.float64) if scaler.with_scaling else np.ones_like(medians)
+
+            n_num = len(APPROVED_NUMERICAL_FEATURES)
+            cat_maps: List[Dict[str, int]] = []
+            offset = n_num
+            for cats in ohe.categories_:
+                cat_maps.append({str(c): offset + i for i, c in enumerate(cats)})
+                offset += len(cats)
+            n_total = offset
+
+            if n_total != int(est.n_features_in_):
+                return None
+
+            subsample = est._max_features != est.n_features_in_
+            denom = float(len(est.estimators_)) * float(_average_path_length([est._max_samples])[0])
+            if_offset = float(est.offset_)
+            trees = [
+                (t.tree_, f if subsample else None, dpl, apl)
+                for t, f, dpl, apl in zip(
+                    est.estimators_,
+                    est.estimators_features_,
+                    est._decision_path_lengths,
+                    est._average_path_length_per_tree,
+                )
+            ]
+
+            def _score_row(row: Dict[str, Any]) -> float:
+                vec = np.zeros((1, n_total), dtype=np.float64)
+                for j, feat in enumerate(APPROVED_NUMERICAL_FEATURES):
+                    fv = row[feat]
+                    if np.isnan(fv):
+                        fv = medians[j]
+                    vec[0, j] = (fv - center[j]) / scale[j]
+                for feat, cmap in zip(APPROVED_CATEGORICAL_FEATURES, cat_maps):
+                    idx = cmap.get(row[feat])
+                    if idx is not None:
+                        vec[0, idx] = 1.0
+                X32 = vec.astype(np.float32)
+                depth = 0.0
+                for tree_, feats, dpl, apl in trees:
+                    X_in = X32 if feats is None else X32[:, feats]
+                    leaf = tree_.apply(X_in)[0]
+                    depth += float(dpl[leaf]) + float(apl[leaf]) - 1.0
+                score_val = -(2.0 ** (-(depth / denom)) if denom != 0 else 1.0) - if_offset
+                return float(score_val)
+
+            self._fast_scorer_cache = (id(self.pipeline), _score_row)
+            return _score_row
+        except Exception:
+            return None
+
     def score_single_record(self, raw_input: Dict[str, Any]) -> Dict[str, Any]:
         """
         Evaluate an individual record for anomaly detection.
@@ -164,11 +269,14 @@ class AnomalyModelBundle:
             else:
                 row[feat] = str(val) if val is not None else "missing"
 
-        df_input = pd.DataFrame([row], columns=APPROVED_BASELINE_FEATURES)
-
         # 3. Model Inference
         # decision_function: lower (negative) values denote higher anomaly severity (< 0 is outlier)
-        raw_decision_score = float(self.pipeline.decision_function(df_input)[0])
+        fast_scorer = self._get_fast_single_scorer()
+        if fast_scorer is not None:
+            raw_decision_score = fast_scorer(row)
+        else:
+            df_input = pd.DataFrame([row], columns=APPROVED_BASELINE_FEATURES)
+            raw_decision_score = float(self.pipeline.decision_function(df_input)[0])
         is_anomaly_flag = bool(raw_decision_score < 0.0)
 
         # 4. Empirical Cohort Percentile Calculation

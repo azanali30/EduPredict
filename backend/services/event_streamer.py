@@ -660,7 +660,8 @@ class EventStreamer:
         if db is None:
             return {}, "Database unavailable.", 500
 
-        cutoff = datetime.now(timezone.utc) - timedelta(seconds=max(1, int(stale_seconds)))
+        now = datetime.now(timezone.utc)
+        cutoff = now - timedelta(seconds=max(1, int(stale_seconds)))
         bounded_limit = max(1, min(int(max_batch), 200))
         candidates = list(
             db.stream_events.find(
@@ -680,7 +681,7 @@ class EventStreamer:
             try:
                 claimed = db.stream_events.find_one_and_update(
                     {"_id": doc["_id"], "status": "pending", "retry_count": {"$lt": int(max_retries)}},
-                    {"$inc": {"retry_count": 1}},
+                    {"$inc": {"retry_count": 1}, "$set": {"last_retry_at": now}},
                 )
                 if not claimed:
                     continue
