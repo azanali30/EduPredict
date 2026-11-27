@@ -19,6 +19,7 @@ from backend.models.user_model import User
 from backend.ml.anomaly_loader import score_student_features
 from backend.utils.security import to_object_id
 from backend.services.system_log_service import log_event
+from backend.services.notification_service import NotificationService
 from backend.services.assignment_service import AssignmentService
 from backend.services.enrollment_service import EnrollmentService
 from backend.utils.decorators import can_access_student_subject_data
@@ -505,6 +506,8 @@ class AnomalyService:
                 },
                 user_id=actor_user.id,
             )
+
+            NotificationService.dispatch_confirmed_anomaly_alert(db, record)
 
             return record.to_dict(), None, 200
         except PyMongoError as e:

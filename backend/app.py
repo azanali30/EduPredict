@@ -21,6 +21,8 @@ from backend.routes.demand_routes import demand_bp
 from backend.routes.evaluation_routes import evaluation_bp
 from backend.routes.stream_routes import stream_bp
 from backend.routes.monitoring_routes import monitoring_bp
+from backend.routes.notification_routes import notification_bp
+from backend.routes.feedback_routes import feedback_bp
 from backend.commands.admin_commands import (
     create_admin_command,
     init_db_command,
@@ -126,6 +128,8 @@ def create_app(config_name=None):
     app.register_blueprint(evaluation_bp)
     app.register_blueprint(stream_bp)
     app.register_blueprint(monitoring_bp)
+    app.register_blueprint(notification_bp)
+    app.register_blueprint(feedback_bp)
 
     # 4. Register CLI Commands
     app.cli.add_command(create_admin_command)

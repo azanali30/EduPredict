@@ -686,6 +686,77 @@ export interface AnalystDropoutTrendsResponse {
   benchmark_disclosure: string;
 }
 
+// Phase 12A / 12B Persistent Notifications
+export interface NotificationRecord {
+  id: string;
+  recipient_id: string;
+  recipient_role: 'admin' | 'teacher' | 'student' | string;
+  subject_id?: string | null;
+  subject?: string | null;
+  academic_term?: string | null;
+  category:
+    | 'early_warning'
+    | 'dropout_risk'
+    | 'anomaly_alert'
+    | 'broadcast'
+    | 'academic_calendar'
+    | 'system'
+    | 'feedback_update'
+    | string;
+  severity: 'info' | 'warning' | 'critical' | 'success' | string;
+  title: string;
+  message: string;
+  is_read: boolean;
+  read_at?: string | null;
+  provenance?: Record<string, any>;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
 
+export interface NotificationListResponse {
+  status_code: number;
+  notifications: NotificationRecord[];
+  total: number;
+  unread_count: number;
+  page: number;
+  limit: number;
+  total_pages: number;
+}
 
+// Phase 12C Feedback & Support Tickets
+export interface FeedbackTicketRecord {
+  id: string;
+  sender_id: string;
+  sender_role: 'student' | 'teacher';
+  sender_name: string;
+  subject_id?: string | null;
+  subject?: string | null;
+  academic_term?: string | null;
+  category: string;
+  title: string;
+  message: string;
+  share_with_instructor: boolean;
+  status: 'Open' | 'Reviewed' | 'Resolved';
+  admin_response?: string | null;
+  intervention_notes?: string | null;
+  reviewed_by?: string | null;
+  reviewed_by_name?: string | null;
+  reviewed_at?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
 
+export interface FeedbackListResponse {
+  status_code: number;
+  tickets: FeedbackTicketRecord[];
+  summary: {
+    total: number;
+    open: number;
+    reviewed: number;
+    resolved: number;
+  };
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
+}

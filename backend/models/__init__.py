@@ -10,6 +10,8 @@ from backend.models.prediction_model import PredictionRecord
 from backend.models.subject_model import Subject
 from backend.models.teacher_subject_assignment_model import TeacherSubjectAssignment
 from backend.models.student_subject_enrollment_model import StudentSubjectEnrollment
+from backend.models.notification_model import Notification
+from backend.models.feedback_model import FeedbackTicket
 
 __all__ = [
     "User",
@@ -21,4 +23,6 @@ __all__ = [
     "Subject",
     "TeacherSubjectAssignment",
     "StudentSubjectEnrollment",
+    "Notification",
+    "FeedbackTicket",
 ]

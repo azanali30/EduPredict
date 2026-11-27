@@ -282,6 +282,50 @@ def init_db_indexes(db: Database) -> dict[str, list[str]]:
         ]
         created_indexes["stream_events"] = stream_idx
 
+        # 15. Notifications collection indexes (Phase 12A / 12B)
+        notif_idx = [
+            db.notifications.create_index(
+                [("recipient_id", ASCENDING), ("created_at", DESCENDING)],
+                name="idx_notif_recipient_created",
+            ),
+            db.notifications.create_index(
+                [("recipient_id", ASCENDING), ("is_read", ASCENDING), ("created_at", DESCENDING)],
+                name="idx_notif_recipient_read_created",
+            ),
+            db.notifications.create_index(
+                [("recipient_id", ASCENDING), ("category", ASCENDING), ("severity", ASCENDING), ("created_at", DESCENDING)],
+                name="idx_notif_recipient_filters",
+            ),
+            db.notifications.create_index(
+                [("recipient_id", ASCENDING), ("dedup_key", ASCENDING)],
+                unique=True,
+                partialFilterExpression={"dedup_key": {"$type": "string"}},
+                name="idx_notif_recipient_dedup_unique",
+            ),
+        ]
+        created_indexes["notifications"] = notif_idx
+
+        # 16. Feedback & Support Tickets collection indexes (Phase 12C)
+        feedback_idx = [
+            db.feedback_tickets.create_index(
+                [("sender_id", ASCENDING), ("created_at", DESCENDING)],
+                name="idx_feedback_sender_created",
+            ),
+            db.feedback_tickets.create_index(
+                [("status", ASCENDING), ("created_at", DESCENDING)],
+                name="idx_feedback_status_created",
+            ),
+            db.feedback_tickets.create_index(
+                [("subject_id", ASCENDING), ("category", ASCENDING), ("created_at", DESCENDING)],
+                name="idx_feedback_subject_category_created",
+            ),
+            db.feedback_tickets.create_index(
+                [("sender_role", ASCENDING), ("created_at", DESCENDING)],
+                name="idx_feedback_role_created",
+            ),
+        ]
+        created_indexes["feedback_tickets"] = feedback_idx
+
         logger.info("MongoDB 6.x indexes successfully initialized.")
         return created_indexes
 

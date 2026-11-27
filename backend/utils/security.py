@@ -85,3 +85,42 @@ def to_object_id(val) -> ObjectId | None:
         return ObjectId(val)
     except (InvalidId, TypeError):
         return None
+
+
+_HTML_TAG_RE = re.compile(r"<[a-zA-Z!/][^>]*>")
+_JS_SCHEME_RE = re.compile(r"javascript\s*:", re.IGNORECASE)
+_CTRL_CHARS_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+
+
+def clean_and_validate_text(
+    value,
+    field_name: str,
+    min_len: int = 1,
+    max_len: int = 2000,
+    allow_empty: bool = False,
+) -> tuple[str | None, str | None]:
+    """
+    Sanitize user-supplied text against control characters and embedded HTML/script markup
+    without mangling plain mathematical comparisons such as 'score < 50'.
+    """
+    if value is None:
+        if allow_empty:
+            return None, None
+        return None, f"Field '{field_name}' is required."
+    if not isinstance(value, str):
+        return None, f"Field '{field_name}' must be a string."
+
+    cleaned = _CTRL_CHARS_RE.sub("", value)
+    cleaned = re.sub(r"<\s*script[^>]*>.*?<\s*/\s*script\s*>", "", cleaned, flags=re.IGNORECASE | re.DOTALL)
+    cleaned = _HTML_TAG_RE.sub("", cleaned)
+    cleaned = _JS_SCHEME_RE.sub("", cleaned).strip()
+
+    if not cleaned:
+        if allow_empty:
+            return None, None
+        return None, f"Field '{field_name}' cannot be empty."
+    if len(cleaned) < min_len:
+        return None, f"Field '{field_name}' must be at least {min_len} characters."
+    if len(cleaned) > max_len:
+        return None, f"Field '{field_name}' exceeds maximum length of {max_len} characters."
+    return cleaned, None

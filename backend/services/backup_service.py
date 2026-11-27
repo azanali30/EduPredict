@@ -56,6 +56,8 @@ DEFAULT_BACKUP_COLLECTIONS = [
     "demand_model_metadata",
     "model_registry",
     "stream_events",
+    "notifications",
+    "feedback_tickets",
     "system_logs",
 ]
 

@@ -30,6 +30,7 @@ from backend.services.system_log_service import log_event
 from backend.services.anomaly_service import apply_complementary_partition_suppression
 from backend.utils.decorators import can_access_student_data, can_access_student_subject_data
 from backend.utils.security import to_object_id
+from backend.services.notification_service import NotificationService
 
 logger = logging.getLogger(__name__)
 
@@ -515,9 +516,14 @@ class DropoutService:
 
         if db is not None:
             try:
+                doc_to_persist = record.to_doc()
+                doc_id = doc_to_persist.pop("_id", None)
+                update_ops = {"$set": doc_to_persist}
+                if doc_id is not None:
+                    update_ops["$setOnInsert"] = {"_id": doc_id}
                 db.dropout_records.update_one(
                     {"student_id": student_oid},
-                    {"$set": record.to_doc()},
+                    update_ops,
                     upsert=True,
                 )
                 history_doc = {**record.to_doc(), "_id": ObjectId()}
@@ -539,6 +545,16 @@ class DropoutService:
             except PyMongoError as pe:
                 logger.error("Failed to save dropout record: %s", pe)
                 return None, "Database error saving dropout assessment.", 500
+
+            NotificationService.dispatch_dropout_high_risk_alert(
+                db=db,
+                student_id=student_oid,
+                risk_tier=record.risk_tier,
+                risk_probability=record.risk_probability,
+                academic_term=record.academic_term,
+                history_id=history_doc["_id"],
+                subject=subject,
+            )
 
         return record.to_dict(), None, 201
 

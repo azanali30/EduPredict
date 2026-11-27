@@ -23,6 +23,7 @@ from backend.data_engineering.leakage_guard import (
 )
 from backend.utils.decorators import can_access_student_data, can_access_student_subject_data
 from backend.utils.security import to_object_id
+from backend.services.notification_service import NotificationService
 
 logger = logging.getLogger(__name__)
 
@@ -279,6 +280,8 @@ class PredictionService:
         except Exception as e:
             logger.error("Failed to persist prediction: %s", str(e))
             return None, "Database error saving prediction record.", 500
+
+        NotificationService.dispatch_prediction_high_risk_alert(db, prediction_record)
 
         return prediction_record, None, 201
 

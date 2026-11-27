@@ -1,162 +1,142 @@
 import React, { useState } from 'react';
-import { PageHeader } from '../../components/common/PageHeader';
+import { notificationsApi } from '../../services/api';
+import { NotificationCenterPanel } from '../../components/common/NotificationCenterPanel';
 import { SectionCard } from '../../components/common/SectionCard';
-import { StatCard } from '../../components/common/StatCard';
+import { ErrorAlert } from '../../components/common/ErrorAlert';
 import { Button } from '../../components/forms/Button';
-import {
-  Bell,
-  CheckCircle2,
-  AlertTriangle,
-  Info,
-  Send,
-} from 'lucide-react';
+import { InputField } from '../../components/forms/InputField';
+import { CheckCircle2, Send } from 'lucide-react';
 
 export const AdminNotifications: React.FC = () => {
+  const [title, setTitle] = useState('');
   const [broadcastMessage, setBroadcastMessage] = useState('');
-  const [sentSuccess, setSentSuccess] = useState(false);
+  const [severity, setSeverity] = useState('info');
+  const [targetRoles, setTargetRoles] = useState<string[]>(['student', 'teacher']);
+  const [sending, setSending] = useState(false);
+  const [sentInfo, setSentInfo] = useState<string | null>(null);
+  const [broadcastError, setBroadcastError] = useState<string | null>(null);
+  const [refreshSignal, setRefreshSignal] = useState(0);
 
-  const notifications = [
-    {
-      id: '1',
-      title: 'Database Replica Sync Verified',
-      category: 'System Health',
-      message: 'MongoDB 6.0 storage engine report completed with zero replication lag.',
-      time: '10 minutes ago',
-      type: 'success',
-    },
-    {
-      id: '2',
-      title: 'Active Term 2026-T1 Milestone Window',
-      category: 'Academic Calendar',
-      message: 'Mid-term Milestone 1 evaluation window is open for all faculty.',
-      time: '1 hour ago',
-      type: 'info',
-    },
-    {
-      id: '3',
-      title: 'At-Risk Triage Threshold Check',
-      category: 'AI Pipeline',
-      message: 'Classroom prediction volume crossed 80 runs. Early-warning risk triggers active.',
-      time: '3 hours ago',
-      type: 'warning',
-    },
-    {
-      id: '4',
-      title: 'Security Audit Log Rotation',
-      category: 'Security Governance',
-      message: 'Administrative security audit records verified with immutable timestamps.',
-      time: '1 day ago',
-      type: 'success',
-    },
-  ];
-
-  const handleBroadcast = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!broadcastMessage.trim()) return;
-    setSentSuccess(true);
-    setBroadcastMessage('');
-    setTimeout(() => setSentSuccess(false), 3000);
+  const toggleRole = (role: string) => {
+    setTargetRoles((prev) =>
+      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
+    );
   };
 
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Notifications & Administrative Alerts"
-        subtitle="Manage system alerts, institutional broadcasts, and operational status notifications."
-        icon={<Bell size={24} className="text-brand-royal" />}
-      />
+  const handleBroadcast = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim() || !broadcastMessage.trim() || targetRoles.length === 0) {
+      setBroadcastError('Title, message, and at least one recipient role are required.');
+      return;
+    }
+    setSending(true);
+    setBroadcastError(null);
+    setSentInfo(null);
+    try {
+      const res = await notificationsApi.broadcast({
+        title: title.trim(),
+        message: broadcastMessage.trim(),
+        severity,
+        target_roles: targetRoles,
+      });
+      setSentInfo(`Broadcast delivered to ${res.recipient_count} active user inbox(es).`);
+      setTitle('');
+      setBroadcastMessage('');
+      setRefreshSignal((s) => s + 1);
+    } catch (err: any) {
+      setBroadcastError(err?.message || 'Failed to send broadcast notification.');
+    } finally {
+      setSending(false);
+    }
+  };
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard
-          title="Active Alerts"
-          value={notifications.length}
-          subtitle="System & calendar notices"
-          icon={<Bell size={20} className="text-brand-royal" />}
-        />
-        <StatCard
-          title="System Status"
-          value="All Services Healthy"
-          subtitle="Zero critical alerts"
-          icon={<CheckCircle2 size={20} className="text-emerald-500" />}
-        />
-        <StatCard
-          title="Broadcast Channel"
-          value="Enabled"
-          subtitle="Global announcement system"
-          icon={<Send size={20} className="text-brand-ocean" />}
-        />
-      </div>
+  const broadcastPanel = (
+    <SectionCard
+      title="Publish Institutional Broadcast"
+      subtitle="Persist an announcement into targeted student, faculty, or admin inboxes."
+    >
+      <form onSubmit={handleBroadcast} className="space-y-3">
+        <ErrorAlert message={broadcastError || ''} onDismiss={() => setBroadcastError(null)} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Alerts List */}
-        <div className="lg:col-span-2">
-          <SectionCard
-            title="System & Academic Alert Feed"
-            subtitle="Automated alerts generated by platform monitors and calendar schedules."
-          >
-            <div className="space-y-3">
-              {notifications.map((n) => (
-                <div
-                  key={n.id}
-                  className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-3.5 hover:bg-slate-100/60 transition-colors"
-                >
-                  {n.type === 'success' && <CheckCircle2 size={18} className="text-emerald-500 shrink-0 mt-0.5" />}
-                  {n.type === 'info' && <Info size={18} className="text-brand-ocean shrink-0 mt-0.5" />}
-                  {n.type === 'warning' && <AlertTriangle size={18} className="text-amber-500 shrink-0 mt-0.5" />}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-bold text-navy-900">{n.title}</span>
-                      <span className="text-[10px] text-slate-400">{n.time}</span>
-                    </div>
-                    <span className="inline-block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                      {n.category}
-                    </span>
-                    <p className="text-xs text-slate-600 leading-snug">{n.message}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </SectionCard>
-        </div>
+        {sentInfo && (
+          <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-semibold flex items-center gap-1.5 border border-emerald-200">
+            <CheckCircle2 size={14} />
+            <span>{sentInfo}</span>
+          </div>
+        )}
 
-        {/* Global Broadcast Form */}
+        <InputField
+          label="Announcement Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="e.g. Milestone 1 Evaluation Window Open"
+          required
+        />
+
         <div>
-          <SectionCard
-            title="Publish Broadcast Notice"
-            subtitle="Post an institutional announcement visible across teacher and student workspaces."
+          <label className="label">Severity</label>
+          <select
+            aria-label="Broadcast Severity"
+            value={severity}
+            onChange={(e) => setSeverity(e.target.value)}
+            className="input text-xs sm:text-sm"
           >
-            <form onSubmit={handleBroadcast} className="space-y-3">
-              <div>
-                <label className="label">Announcement Content</label>
-                <textarea
-                  value={broadcastMessage}
-                  onChange={(e) => setBroadcastMessage(e.target.value)}
-                  placeholder="e.g. Scheduled platform maintenance on Friday at 22:00 UTC..."
-                  className="input h-28 text-xs sm:text-sm resize-none"
-                  required
-                />
-              </div>
-
-              {sentSuccess && (
-                <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-semibold flex items-center gap-1.5 border border-emerald-200">
-                  <CheckCircle2 size={14} />
-                  <span>Broadcast published successfully to all active sessions.</span>
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                variant="primary"
-                leftIcon={<Send size={14} />}
-                className="w-full shadow-glow"
-              >
-                Send Broadcast
-              </Button>
-            </form>
-          </SectionCard>
+            <option value="info">Info</option>
+            <option value="success">Success</option>
+            <option value="warning">Warning</option>
+            <option value="critical">Critical</option>
+          </select>
         </div>
-      </div>
-    </div>
+
+        <div>
+          <label className="label">Target Roles</label>
+          <div className="flex flex-wrap gap-3 text-xs text-slate-700 pt-1">
+            {(['student', 'teacher', 'admin'] as const).map((r) => (
+              <label key={r} className="inline-flex items-center gap-1.5 capitalize">
+                <input
+                  type="checkbox"
+                  checked={targetRoles.includes(r)}
+                  onChange={() => toggleRole(r)}
+                  className="rounded border-slate-300 text-brand-royal"
+                />
+                <span>{r}s</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="label">Announcement Content</label>
+          <textarea
+            value={broadcastMessage}
+            onChange={(e) => setBroadcastMessage(e.target.value)}
+            placeholder="e.g. Mid-term Milestone 1 evaluations are open this week..."
+            className="input h-28 text-xs sm:text-sm resize-none"
+            required
+          />
+        </div>
+
+        <Button
+          type="submit"
+          variant="primary"
+          leftIcon={<Send size={14} />}
+          disabled={sending}
+          className="w-full shadow-glow"
+        >
+          {sending ? 'Sending...' : 'Send Broadcast'}
+        </Button>
+      </form>
+    </SectionCard>
+  );
+
+  return (
+    <NotificationCenterPanel
+      title="Notifications & Administrative Alerts"
+      subtitle="Manage early-warning notifications, operational alerts, and institutional broadcasts."
+      feedTitle="System & Early-Warning Alert Feed"
+      feedSubtitle="Persisted alerts triggered by predictive pipelines and administrative announcements."
+      sideSlot={broadcastPanel}
+      refreshSignal={refreshSignal}
+    />
   );
 };

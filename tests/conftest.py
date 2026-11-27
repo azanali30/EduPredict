@@ -45,6 +45,8 @@ def clean_db(app):
             mongo.db.demand_model_metadata.delete_many({})
             mongo.db.model_registry.delete_many({})
             mongo.db.stream_events.delete_many({})
+            mongo.db.notifications.delete_many({})
+            mongo.db.feedback_tickets.delete_many({})
     yield mongo.db
 
 

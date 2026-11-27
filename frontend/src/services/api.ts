@@ -812,4 +812,118 @@ export const monitoringApi = {
     }),
 };
 
+export const notificationsApi = {
+  list: (params?: {
+    page?: number;
+    limit?: number;
+    category?: string;
+    severity?: string;
+    is_read?: 'true' | 'false' | '';
+    subject_id?: string;
+  }) => {
+    const query = new URLSearchParams();
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+    if (params?.category) query.set('category', params.category);
+    if (params?.severity) query.set('severity', params.severity);
+    if (params?.is_read) query.set('is_read', params.is_read);
+    if (params?.subject_id) query.set('subject_id', params.subject_id);
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest<import('../types').NotificationListResponse>(`/api/notifications${qs}`);
+  },
+
+  getUnreadCount: () =>
+    apiRequest<{ status_code: number; unread_count: number }>('/api/notifications/unread-count'),
+
+  markAsRead: (notificationId: string) =>
+    apiRequest<{ status_code: number; notification: import('../types').NotificationRecord }>(
+      `/api/notifications/${encodeURIComponent(notificationId)}/read`,
+      { method: 'PATCH' }
+    ),
+
+  markAllAsRead: () =>
+    apiRequest<{ status_code: number; modified_count: number }>('/api/notifications/read-all', {
+      method: 'PATCH',
+    }),
+
+  broadcast: (payload: {
+    title: string;
+    message: string;
+    severity?: string;
+    target_roles?: string[];
+  }) =>
+    apiRequest<{
+      status_code: number;
+      broadcast_id: string;
+      recipient_count: number;
+      target_roles: string[];
+      severity: string;
+      title: string;
+      message: string;
+    }>('/api/notifications/broadcast', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+};
+
+export const feedbackApi = {
+  submit: (payload: {
+    category: string;
+    title: string;
+    message: string;
+    subject_id?: string | null;
+    academic_term?: string;
+    share_with_instructor?: boolean;
+  }) =>
+    apiRequest<{ status_code: number; ticket: import('../types').FeedbackTicketRecord }>(
+      '/api/feedback',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    ),
+
+  list: (params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    category?: string;
+    role?: string;
+    subject_id?: string;
+    search?: string;
+  }) => {
+    const query = new URLSearchParams();
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+    if (params?.status) query.set('status', params.status);
+    if (params?.category) query.set('category', params.category);
+    if (params?.role) query.set('role', params.role);
+    if (params?.subject_id) query.set('subject_id', params.subject_id);
+    if (params?.search) query.set('search', params.search);
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest<import('../types').FeedbackListResponse>(`/api/feedback${qs}`);
+  },
+
+  getById: (ticketId: string) =>
+    apiRequest<{ status_code: number; ticket: import('../types').FeedbackTicketRecord }>(
+      `/api/feedback/${encodeURIComponent(ticketId)}`
+    ),
+
+  updateTicket: (
+    ticketId: string,
+    payload: {
+      status?: 'Open' | 'Reviewed' | 'Resolved';
+      admin_response?: string;
+      intervention_notes?: string;
+    }
+  ) =>
+    apiRequest<{ status_code: number; ticket: import('../types').FeedbackTicketRecord }>(
+      `/api/feedback/${encodeURIComponent(ticketId)}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      }
+    ),
+};
+
 
