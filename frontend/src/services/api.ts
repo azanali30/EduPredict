@@ -416,6 +416,9 @@ export const api = {
       '/api/analyst/diagnostics'
     ),
 
+  getAnalystTrends: () =>
+    apiRequest<import('../types').AnalystTrendsResponse>('/api/analyst/trends'),
+
   // Phase 7C: Academic Anomaly Detection & Human Monitoring
   listAnomalies: (params?: {
     page?: number;
@@ -924,6 +927,232 @@ export const feedbackApi = {
         body: JSON.stringify(payload),
       }
     ),
+};
+
+export const attendanceApi = {
+  createSession: (payload: {
+    subject_id: string;
+    academic_term: string;
+    session_date: string;
+    session_title?: string;
+    notes?: string;
+    records?: Array<{
+      student_id: string;
+      status: import('../types').AttendanceStatus;
+      remarks?: string;
+    }>;
+  }) =>
+    apiRequest<{
+      status_code: number;
+      session: import('../types').AttendanceSessionItem;
+      records: import('../types').AttendanceRecordItem[];
+      disclosure: string;
+    }>('/api/attendance/sessions', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  listSessions: (params?: {
+    subject_id?: string;
+    academic_term?: string;
+    date_from?: string;
+    date_to?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const query = new URLSearchParams();
+    if (params?.subject_id) query.set('subject_id', params.subject_id);
+    if (params?.academic_term) query.set('academic_term', params.academic_term);
+    if (params?.date_from) query.set('date_from', params.date_from);
+    if (params?.date_to) query.set('date_to', params.date_to);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest<{
+      status_code: number;
+      sessions: import('../types').AttendanceSessionItem[];
+      total_count: number;
+      page: number;
+      limit: number;
+      disclosure: string;
+    }>(`/api/attendance/sessions${qs}`);
+  },
+
+  getSessionDetail: (sessionId: string) =>
+    apiRequest<{
+      status_code: number;
+      session: import('../types').AttendanceSessionItem;
+      records: import('../types').AttendanceRecordItem[];
+      roster: import('../types').AttendanceRosterEntry[];
+      disclosure: string;
+    }>(`/api/attendance/sessions/${encodeURIComponent(sessionId)}`),
+
+  markSessionRecords: (
+    sessionId: string,
+    payload: {
+      notes?: string;
+      records: Array<{
+        student_id: string;
+        status: import('../types').AttendanceStatus;
+        remarks?: string;
+      }>;
+    }
+  ) =>
+    apiRequest<{
+      status_code: number;
+      session: import('../types').AttendanceSessionItem;
+      records: import('../types').AttendanceRecordItem[];
+      disclosure: string;
+    }>(`/api/attendance/sessions/${encodeURIComponent(sessionId)}/records`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+
+  getMyAttendance: (params?: {
+    subject_id?: string;
+    academic_term?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const query = new URLSearchParams();
+    if (params?.subject_id) query.set('subject_id', params.subject_id);
+    if (params?.academic_term) query.set('academic_term', params.academic_term);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest<import('../types').StudentAttendanceResponse>(`/api/attendance/student/my${qs}`);
+  },
+
+  getSummary: (params?: {
+    student_id?: string;
+    subject_id?: string;
+    academic_term?: string;
+  }) => {
+    const query = new URLSearchParams();
+    if (params?.student_id) query.set('student_id', params.student_id);
+    if (params?.subject_id) query.set('subject_id', params.subject_id);
+    if (params?.academic_term) query.set('academic_term', params.academic_term);
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest<import('../types').TeacherAttendanceSummaryResponse>(`/api/attendance/summary${qs}`);
+  },
+};
+
+export const academicRecordsApi = {
+  list: (params?: {
+    student_id?: string;
+    subject?: string;
+    subject_id?: string;
+    term?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const query = new URLSearchParams();
+    if (params?.student_id) query.set('student_id', params.student_id);
+    if (params?.subject) query.set('subject', params.subject);
+    if (params?.subject_id) query.set('subject_id', params.subject_id);
+    if (params?.term) query.set('term', params.term);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest<{
+      status_code: number;
+      records: import('../types').AcademicRecordItem[];
+      total_count: number;
+      page: number;
+      limit: number;
+    }>(`/api/academic-records${qs}`);
+  },
+
+  create: (payload: {
+    student_id?: string;
+    student_email?: string;
+    subject_id?: string;
+    subject?: string;
+    term: string;
+    g1?: number;
+    g2?: number;
+    final_exam_marks?: number;
+    study_hours_per_week?: number;
+    assignment_completion_rate?: number;
+    quiz_average?: number;
+    previous_exam_marks?: number;
+    notes?: string;
+  }) =>
+    apiRequest<{ status_code: number; record: import('../types').AcademicRecordItem }>(
+      '/api/academic-records',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    ),
+
+  update: (
+    recordId: string,
+    payload: Partial<{
+      g1: number | null;
+      g2: number | null;
+      final_exam_marks: number | null;
+      study_hours_per_week: number | null;
+      assignment_completion_rate: number | null;
+      quiz_average: number | null;
+      previous_exam_marks: number | null;
+      notes: string | null;
+    }>
+  ) =>
+    apiRequest<{ status_code: number; record: import('../types').AcademicRecordItem }>(
+      `/api/academic-records/${encodeURIComponent(recordId)}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      }
+    ),
+
+  importCsvText: (payload: {
+    csv_content: string;
+    subject_id?: string;
+    term?: string;
+  }) =>
+    apiRequest<{ status_code: number; summary: import('../types').AcademicRecordCsvImportSummary }>(
+      '/api/academic-records/import-csv',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    ),
+};
+
+export const tableauApi = {
+  listDatasets: () =>
+    apiRequest<{
+      status_code: number;
+      datasets: import('../types').TableauDatasetCatalogItem[];
+      count: number;
+    }>('/api/tableau/datasets'),
+
+  exportJson: (dataset: string, applySdc: boolean = true) =>
+    apiRequest<import('../types').TableauExportResponse>(
+      `/api/tableau/export/${encodeURIComponent(dataset)}?format=json&apply_sdc=${applySdc ? 'true' : 'false'}`
+    ),
+
+  downloadCsv: async (dataset: string, applySdc: boolean = true) => {
+    const res = await fetch(
+      `/api/tableau/export/${encodeURIComponent(dataset)}?format=csv&apply_sdc=${applySdc ? 'true' : 'false'}`,
+      { credentials: 'include' }
+    );
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData?.message || 'Failed to download Tableau CSV dataset.');
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `edupredict_tableau_${dataset}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  },
 };
 
 

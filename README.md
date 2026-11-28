@@ -23,11 +23,11 @@ EduPredict is a standalone AI/ML-powered Educational Performance Prediction and 
 ## Technology Stack
 - **Frontend**: React 18, TypeScript, Vite 6, Tailwind CSS 3.4, Recharts 2.15, PostCSS, Autoprefixer, React Router 6, Lucide React, Modern CSS System
 - **Backend**: Python 3.12, Flask 3.1.3, PyMongo 4.20.0, Flask-Login, Flask-WTF, python-dotenv, bcrypt
-- **Operational Database**: MongoDB Server 6.0.29 (native service on port 27017, database: `edupredict`)
-- **Big Data & OLAP**: HDFS WebHDFS REST API client, Apache Impala MPP SQL query catalog, Apache Parquet
+- **Operational Database**: MongoDB Server 6.0.29 (native service on port 27017, database: `edupredict`, 20 indexed operational/analytical collections)
+- **Big Data, OLAP & BI**: HDFS WebHDFS REST API client, Apache Impala MPP SQL query catalog, Apache Parquet, Tableau BI export bridge (`tableau/EduPredict_Analytics_Workbook.twb` + `/api/tableau/*`)
 - **Statistical Computing**: Native R 4.6.2 (ANOVA, Welch t-test, Kruskal-Wallis, Pearson correlation)
-- **Machine Learning & EDA**: Scikit-learn 1.9.1, NumPy 2.5.5, Pandas 3.1.1, Joblib 1.6.0, Matplotlib, Seaborn, Jupyter Notebook
-- **Testing**: Pytest (243 automated tests, 100% passing across auth, RBAC, ML predictions, SDC anomaly detection, strict CORS enforcement, pypdf in-memory PDF parsing & attachment serving, and production hardening), pytest-flask, Vitest (25 frontend tests passing), TypeScript compiler (`tsc -b`), Vite production bundler
+- **Machine Learning & EDA**: Scikit-learn, NumPy, Pandas, Joblib, Matplotlib, Seaborn, Jupyter Notebooks (`notebooks/eda_academic_performance.ipynb`, `notebooks/02_model_training_and_evaluation.ipynb`)
+- **Testing**: Pytest (`384 passed` across auth, RBAC, attendance register, academic records CSV ingestion, Tableau BI/SDC, streaming, reliability, notifications/feedback, ML models, and security hardening), pytest-flask, Vitest (`10 test files, 49 tests passing`), TypeScript compiler (`tsc -b`), Vite production bundler (`npm run build`)
 
 ---
 
@@ -73,11 +73,13 @@ EduPredict/
 │   ├── tailwind.config.js    # Tailwind CSS design system and color palette extension
 │   ├── index.html            # HTML5 template
 │   └── src/                  # React components, pages, context, and styles
-├── ml_models/                # Serialized model artifacts & evaluation reports (Phase 5A)
-│   ├── saved_models/         # 12 champion Scikit-learn pipelines (.joblib) & metadata (.json)
+├── ml_models/                # Serialized model artifacts & evaluation reports
+│   ├── saved_models/         # 13 champion Scikit-learn pipelines (.joblib) & metadata (.json)
 │   └── reports/              # Holdout evaluation, cross-validation & confusion matrix reports
-├── notebooks/                # Executed Jupyter Notebooks (eda_academic_performance.ipynb)
-└── tests/                    # 86 automated unit & integration tests
+├── notebooks/                # Executed Jupyter Notebooks (EDA + 02_model_training_and_evaluation.ipynb)
+├── scripts/                  # Audit, migration & parallel batch benchmark scripts
+├── tableau/                  # Tableau Analytics Workbook XML (.twb) & BI extracts
+└── tests/                    # Automated Pytest unit, integration & security test suites
     ├── conftest.py
     ├── test_admin.py
     ├── test_app_factory.py
@@ -168,12 +170,12 @@ npm run dev
 Vite runs at `http://localhost:5173/` and proxies `/auth` and `/api` requests to `http://127.0.0.1:5000`.
 
 ### 7. Run Automated Tests
-Execute full backend, data pipeline, ML, and Phase 7D security hardening test suite:
+Execute full backend, data pipeline, ML, attendance/academic records, Tableau BI/SDC, and security hardening test suite:
 ```powershell
 $env:PYTHONPATH="."
-.\.venv\Scripts\pytest.exe -v
+.\.venv\Scripts\pytest.exe -q
 ```
-*(All 227 tests passing)*
+*(384 passing pytest tests)*
 
 Execute frontend test suite, type-checking, and production build:
 ```cmd
@@ -181,4 +183,4 @@ cd frontend
 npx vitest run
 npm run build
 ```
-*(All 25 vitest tests passing, 0 TypeScript errors, clean production bundle)*
+*(10 Vitest test files / 49 tests passing, 0 TypeScript errors, clean production bundle)*

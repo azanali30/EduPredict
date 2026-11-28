@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '../../services/api';
-import { PredictionRecord } from '../../types';
+import { api, tableauApi } from '../../services/api';
+import { PredictionRecord, TableauDatasetCatalogItem } from '../../types';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatCard } from '../../components/common/StatCard';
 import { SectionCard } from '../../components/common/SectionCard';
@@ -18,14 +18,21 @@ import {
 
 export const AdminReports: React.FC = () => {
   const [predictions, setPredictions] = useState<PredictionRecord[]>([]);
+  const [tableauDatasets, setTableauDatasets] = useState<TableauDatasetCatalogItem[]>([]);
+  const [downloadingDs, setDownloadingDs] = useState<string | null>(null);
+  const [tableauMsg, setTableauMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchReports = async () => {
       try {
-        const res = await api.listPredictions({ limit: 100 });
-        setPredictions(res.predictions || []);
+        const [predRes, tabRes] = await Promise.all([
+          api.listPredictions({ limit: 100 }),
+          tableauApi.listDatasets().catch(() => ({ datasets: [] })),
+        ]);
+        setPredictions(predRes.predictions || []);
+        setTableauDatasets(tabRes.datasets || []);
       } catch (err: any) {
         setError(err?.message || 'Failed to aggregate administrative report data.');
       } finally {
@@ -35,17 +42,47 @@ export const AdminReports: React.FC = () => {
     fetchReports();
   }, []);
 
+  const handleTableauCsvExport = async (datasetKey: string) => {
+    setDownloadingDs(datasetKey);
+    setTableauMsg(null);
+    setError(null);
+    try {
+      await tableauApi.downloadCsv(datasetKey, true);
+      setTableauMsg(`Downloaded formula-safe, PII-free Tableau extract: edupredict_tableau_${datasetKey}.csv`);
+    } catch (err: any) {
+      setError(err?.message || 'Tableau export failed.');
+    } finally {
+      setDownloadingDs(null);
+    }
+  };
+
+  const escapeCsvCell = (val: string) => {
+    const clean = String(val ?? '');
+    const neutralized = /^[=+\-@\t\r]/.test(clean) ? `'${clean}` : clean;
+    return `"${neutralized.replace(/"/g, '""')}"`;
+  };
+
+  const distinctTerms = Array.from(
+    new Set(predictions.map((p) => p.academic_term).filter((t): t is string => Boolean(t && t.trim())))
+  );
+  const termSummaryValue =
+    distinctTerms.length === 0
+      ? 'No records'
+      : distinctTerms.length === 1
+        ? distinctTerms[0]
+        : `${distinctTerms.length} Active Terms`;
+
   const exportCSV = () => {
     if (predictions.length === 0) return;
     const headers = ['ID', 'Subject', 'Milestone', 'Predicted_Grade', 'Risk_Status', 'Academic_Term', 'Created_At'];
     const rows = predictions.map((p) => [
-      p.id,
-      `"${p.subject}"`,
+      escapeCsvCell(p.id),
+      escapeCsvCell(p.subject),
       p.milestone,
       (p.predicted_final_grade ?? p.predicted_marks ?? 0).toFixed(2),
-      `"${p.predicted_status}"`,
-      `"${p.academic_term || '2026-T1'}"`,
-      `"${p.created_at}"`,
+      escapeCsvCell(p.predicted_status),
+      escapeCsvCell(p.academic_term || '--'),
+      escapeCsvCell(p.created_at),
     ]);
 
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
@@ -113,15 +150,15 @@ export const AdminReports: React.FC = () => {
           icon={<Table size={20} className="text-brand-royal" />}
         />
         <StatCard
-          title="Academic Term"
-          value="2026-T1"
-          subtitle="Current reporting cycle"
+          title="Academic Term Scope"
+          value={termSummaryValue}
+          subtitle="Derived from persisted evaluations"
           icon={<Calendar size={20} className="text-brand-ocean" />}
         />
         <StatCard
-          title="Audit Compliance"
-          value="100% SDC Verified"
-          subtitle="De-identified exports"
+          title="Export Governance"
+          value="Admin Scoped"
+          subtitle="Formula-safe CSV/JSON (use Analyst views for N<5 SDC)"
           icon={<CheckCircle2 size={20} className="text-emerald-500" />}
         />
       </div>
@@ -159,12 +196,48 @@ export const AdminReports: React.FC = () => {
                       {p.predicted_status}
                     </span>
                   </td>
-                  <td className="font-mono text-xs">{p.academic_term || '2026-T1'}</td>
+                  <td className="font-mono text-xs">{p.academic_term || '--'}</td>
                   <td className="text-xs text-slate-500">{new Date(p.created_at).toLocaleDateString()}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      </SectionCard>
+
+      {/* Export for Tableau BI Section */}
+      <SectionCard
+        title="Export for Tableau BI Analytics"
+        subtitle="Generate de-identified, formula-safe CSV datasets matching tableau/EduPredict_Analytics_Workbook.twb schemas."
+        icon={<FileSpreadsheet size={18} className="text-emerald-600" />}
+      >
+        {tableauMsg && (
+          <div className="mb-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 font-semibold">
+            {tableauMsg}
+          </div>
+        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {tableauDatasets.map((ds) => (
+            <div key={ds.dataset} className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between gap-3">
+              <div>
+                <div className="font-bold text-xs text-navy-900">{ds.title}</div>
+                <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">{ds.description}</p>
+                <div className="text-[10px] font-mono text-slate-400 mt-2">
+                  Collections: {ds.source_collections.join(', ')}
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                isLoading={downloadingDs === ds.dataset}
+                leftIcon={<Download size={14} />}
+                onClick={() => handleTableauCsvExport(ds.dataset)}
+              >
+                Export Tableau CSV
+              </Button>
+            </div>
+          ))}
         </div>
       </SectionCard>
     </div>

@@ -1,89 +1,116 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { StatCard } from '../../components/common/StatCard';
-import { api } from '../../services/api';
-import { SubjectItem } from '../../types';
-import {
-  CalendarCheck,
-  Clock,
-  CheckCircle,
-  Award,
-  Sparkles,
-  BookOpen,
-  ArrowRight,
-  BrainCircuit,
-  AlertTriangle,
-  Lightbulb,
-  TrendingUp,
-  BarChart3,
-  Info,
-} from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { StatCard } from '../../components/common/StatCard';
+import { EmptyState } from '../../components/common/EmptyState';
 import { Button } from '../../components/forms/Button';
 import {
-  ResponsiveContainer,
   AreaChart,
   Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-  Legend,
+  ResponsiveContainer,
 } from 'recharts';
+import {
+  CalendarCheck,
+  Clock,
+  CheckCircle,
+  Award,
+  TrendingUp,
+  BrainCircuit,
+  ArrowRight,
+  Sparkles,
+  BookOpen,
+  Lightbulb,
+} from 'lucide-react';
+import { api, attendanceApi, academicRecordsApi } from '../../services/api';
+import {
+  AcademicRecordItem,
+  PredictionRecord,
+  StudentAttendanceResponse,
+  SubjectItem,
+} from '../../types';
 
 export const StudentOverview: React.FC = () => {
   const { user } = useAuth();
   const [enrolledSubjects, setEnrolledSubjects] = useState<SubjectItem[]>([]);
+  const [predictions, setPredictions] = useState<PredictionRecord[]>([]);
+  const [attendance, setAttendance] = useState<StudentAttendanceResponse | null>(null);
+  const [academicRecords, setAcademicRecords] = useState<AcademicRecordItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.getStudentSubjects()
-      .then((res) => setEnrolledSubjects(res.subjects || []))
-      .catch((err) => console.error('Failed to load student subjects:', err));
+    const loadDashboard = async () => {
+      try {
+        const [subjRes, predRes, attRes, recRes] = await Promise.all([
+          api.getStudentSubjects().catch(() => ({ subjects: [] })),
+          api.listPredictions({ limit: 20 }).catch(() => ({ predictions: [] })),
+          attendanceApi.getMyAttendance({ limit: 20 }).catch(() => null),
+          academicRecordsApi.list({ limit: 20 }).catch(() => ({ records: [] })),
+        ]);
+        setEnrolledSubjects(subjRes.subjects || []);
+        setPredictions(predRes.predictions || []);
+        setAttendance(attRes);
+        setAcademicRecords(recRes.records || []);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadDashboard();
   }, []);
 
-  // Curricular baseline indicator benchmarks (for visual representation)
-  const benchmarkTrajectory = [
-    { week: 'Wk 1', benchmark: 88, target: 90 },
-    { week: 'Wk 2', benchmark: 86, target: 90 },
-    { week: 'Wk 3', benchmark: 89, target: 92 },
-    { week: 'Wk 4', benchmark: 85, target: 92 },
-    { week: 'Wk 5', benchmark: 91, target: 94 },
-    { week: 'Wk 6', benchmark: 87, target: 94 },
-    { week: 'Wk 7', benchmark: 92, target: 95 },
-    { week: 'Wk 8', benchmark: 90, target: 95 },
-  ];
+  const verifiedAtt = attendance?.verified_institutional_attendance;
+  const latestPred = predictions[0];
+  const latestRec = academicRecords[0];
 
-  const subjectCurriculumRadar = [
-    { subject: 'Math', target: 90, classAvg: 76 },
-    { subject: 'CS & Algorithms', target: 92, classAvg: 78 },
-    { subject: 'Statistics', target: 85, classAvg: 70 },
-    { subject: 'Databases', target: 88, classAvg: 74 },
-    { subject: 'Physics', target: 82, classAvg: 68 },
-  ];
+  const attendanceValue =
+    verifiedAtt?.has_records && verifiedAtt.overall_attendance_percentage !== null
+      ? `${verifiedAtt.overall_attendance_percentage.toFixed(1)}%`
+      : 'No sessions recorded';
+
+  const studyHoursVal =
+    latestRec?.study_hours_per_week ??
+    latestPred?.features_summary?.study_hours_per_week?.value ??
+    null;
+
+  const assignmentVal =
+    latestRec?.assignment_completion_rate ??
+    latestPred?.features_summary?.assignment_completion_rate?.value ??
+    null;
+
+  const latestGradeVal =
+    latestPred?.predicted_marks !== undefined && latestPred?.predicted_marks !== null
+      ? `${latestPred.predicted_marks.toFixed(1)}%`
+      : 'Prediction unavailable';
+
+  const chartData = [...predictions]
+    .reverse()
+    .map((p, idx) => ({
+      checkpoint: `Run ${idx + 1} (${p.subject.slice(0, 4)} M${p.milestone})`,
+      predicted: Number(p.predicted_marks.toFixed(1)),
+    }));
+
+  const currentTermDisplay =
+    enrolledSubjects[0]?.academic_term || latestRec?.term || 'No active term';
 
   return (
-    <div className="space-y-6">
-      {/* Premium Hero Greeting Banner */}
-      <div className="card bg-gradient-to-br from-navy-950 via-navy-900 to-navy-850 text-white p-6 sm:p-8 relative overflow-hidden border border-navy-800/80 shadow-soft">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-10 right-20 w-64 h-64 bg-sky-400/10 rounded-full blur-2xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-sky-300 text-xs font-semibold mb-3 backdrop-blur-sm">
-              <Sparkles size={14} className="text-sky-400" />
-              <span>Student Performance Analytics Portal</span>
+    <div className="space-y-6 animate-fade-in">
+      {/* Welcome Banner */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-navy-900 via-navy-800 to-navy-700 text-white p-6 sm:p-8 shadow-medium">
+        <div className="absolute right-0 top-0 -mt-12 -mr-12 w-64 h-64 rounded-full bg-brand-500/20 blur-3xl pointer-events-none" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-semibold text-sky-200">
+              <Sparkles size={14} className="text-sky-300" />
+              <span>Student Academic Portal</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-2">
-              Welcome back, {user?.full_name}!
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight font-heading text-white">
+              Welcome back, {user?.full_name || 'Student'}
             </h1>
             <p className="text-slate-300 text-sm leading-relaxed">
-              Monitor your academic indicators, track attendance velocity against curriculum benchmarks, and review upcoming predictive model timelines.
+              Review your verified institutional attendance, coursework assessment records, and AI performance predictions in one workspace.
             </p>
           </div>
 
@@ -91,8 +118,7 @@ export const StudentOverview: React.FC = () => {
             <Link to="/student/records">
               <Button
                 variant="outline"
-                className="border-white/20 text-white hover:bg-white/10 backdrop-blur-sm"
-                leftIcon={<BookOpen size={16} />}
+                className="bg-white/10 hover:bg-white/20 border-white/20 text-white"
               >
                 Academic Records
               </Button>
@@ -125,7 +151,10 @@ export const StudentOverview: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {enrolledSubjects.map((s) => (
-              <div key={s.id} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white transition-all">
+              <div
+                key={s.id}
+                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white transition-all"
+              >
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-bold text-xs text-navy-900">{s.name}</span>
                   {s.code && (
@@ -135,7 +164,9 @@ export const StudentOverview: React.FC = () => {
                   )}
                 </div>
                 <div className="flex items-center justify-between text-[11px] text-slate-500 mt-2">
-                  <span>Term: <strong className="text-brand-royal font-mono">{s.academic_term || '2026-T1'}</strong></span>
+                  <span>
+                    Term: <strong className="text-brand-royal font-mono">{s.academic_term || '--'}</strong>
+                  </span>
                   <span className="badge badge-success text-[9px] py-0 px-1.5">Enrolled</span>
                 </div>
               </div>
@@ -144,269 +175,160 @@ export const StudentOverview: React.FC = () => {
         </div>
       )}
 
-      {/* Primary KPI Metrics */}
+      {/* Primary KPI Metrics (Strictly Real Data / Honest Empty States) */}
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500">
             Core Academic Indicators
           </h2>
-          <span className="text-xs text-slate-400 font-medium">
-            Term 1 (Awaiting Student Submission)
+          <span className="text-xs text-slate-400 font-medium font-mono">
+            {loading ? 'Loading...' : currentTermDisplay}
           </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
-            title="Attendance Rate"
-            value="--"
-            subtitle="Target: ≥ 85% recommended"
-            badgeText="Unlogged"
-            badgeVariant="info"
+            title="Verified Institutional Attendance"
+            value={attendanceValue}
+            subtitle={
+              verifiedAtt?.has_records
+                ? `${verifiedAtt.total_sessions} roll-call session(s)`
+                : 'Target: ≥ 85% roll-call attendance'
+            }
+            badgeText={verifiedAtt?.has_records ? 'Verified Roll Call' : 'Unrecorded'}
+            badgeVariant={verifiedAtt?.has_records ? 'success' : 'info'}
             icon={<CalendarCheck size={20} />}
           />
           <StatCard
             title="Weekly Study Hours"
-            value="--"
-            subtitle="Target: 15–20 hrs/week"
-            badgeText="Pending"
-            badgeVariant="warning"
+            value={studyHoursVal !== null ? `${studyHoursVal} hrs` : 'Insufficient data'}
+            subtitle={studyHoursVal !== null ? 'From latest record/evaluation' : 'No study hours logged'}
             icon={<Clock size={20} />}
           />
           <StatCard
-            title="Assignment Rate"
-            value="--"
-            subtitle="Target: ≥ 90% completed"
-            badgeText="Unlogged"
-            badgeVariant="info"
+            title="Assignment Completion"
+            value={assignmentVal !== null ? `${assignmentVal}%` : 'Insufficient data'}
+            subtitle={assignmentVal !== null ? 'Coursework completion metric' : 'No coursework logged'}
             icon={<CheckCircle size={20} />}
           />
           <StatCard
-            title="Internal Assessment"
-            value="--"
-            subtitle="Exams awaiting entry"
-            badgeText="Unlogged"
-            badgeVariant="info"
+            title="Latest ML Prediction"
+            value={latestGradeVal}
+            subtitle={latestPred ? `${latestPred.subject} · ${latestPred.predicted_status}` : 'Run an AI Prediction'}
+            badgeText={latestPred ? latestPred.predicted_status : 'Unavailable'}
+            badgeVariant={
+              latestPred?.predicted_status === 'High Risk'
+                ? 'danger'
+                : latestPred?.predicted_status === 'Moderate Risk'
+                ? 'warning'
+                : latestPred
+                ? 'success'
+                : 'info'
+            }
             icon={<Award size={20} />}
           />
         </div>
       </div>
 
-      {/* Visual Analytics Charts Section (Recharts) */}
+      {/* Real Persisted Prediction Progression or Honest Empty State */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Attendance & Assessment Trend Chart */}
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-            <div>
-              <div className="flex items-center gap-2">
-                <TrendingUp size={18} className="text-brand-500" />
-                <h3 className="text-base font-bold text-navy-900">
-                  Attendance & Engagement Benchmark
-                </h3>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Curricular baseline vs target attendance percentage across semester weeks
-              </p>
-            </div>
-            <span className="badge badge-info text-[10px]">Benchmark View</span>
-          </div>
-
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={benchmarkTrajectory} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="benchmarkGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0284c7" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#0284c7" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="targetGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#38bdf8" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                <XAxis dataKey="week" stroke="#94a3b8" fontSize={12} tickLine={false} />
-                <YAxis stroke="#94a3b8" fontSize={12} domain={[60, 100]} tickLine={false} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#0B192C',
-                    borderColor: '#1E3E62',
-                    borderRadius: '0.75rem',
-                    color: '#ffffff',
-                    fontSize: '12px',
-                  }}
-                />
-                <Area type="monotone" dataKey="target" stroke="#38bdf8" strokeWidth={2} fillOpacity={1} fill="url(#targetGrad)" name="Target (%)" />
-                <Area type="monotone" dataKey="benchmark" stroke="#0284c7" strokeWidth={2} fillOpacity={1} fill="url(#benchmarkGrad)" name="Curriculum Avg (%)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-brand-500" /> Curriculum Baseline
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-sky-400" /> Target Requirement
-            </span>
-            <span className="text-[11px] text-slate-400 italic">Personal overlay active upon record entry</span>
-          </div>
-        </div>
-
-        {/* Subject-Wise Competency Radar Chart */}
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-            <div>
-              <div className="flex items-center gap-2">
-                <BarChart3 size={18} className="text-brand-500" />
-                <h3 className="text-base font-bold text-navy-900">
-                  Subject-Wise Target Competency
-                </h3>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Target mastery levels vs historical cohort benchmark distribution
-              </p>
-            </div>
-            <span className="badge badge-info text-[10px]">Curricular Model</span>
-          </div>
-
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart outerRadius="75%" data={subjectCurriculumRadar}>
-                <PolarGrid stroke="#e2e8f0" />
-                <PolarAngleAxis dataKey="subject" tick={{ fill: '#475569', fontSize: 11 }} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#94a3b8" fontSize={10} />
-                <Radar name="Target Competency" dataKey="target" stroke="#0284c7" fill="#0284c7" fillOpacity={0.4} />
-                <Radar name="Cohort Baseline" dataKey="classAvg" stroke="#94a3b8" fill="#94a3b8" fillOpacity={0.2} />
-                <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#0B192C',
-                    borderColor: '#1E3E62',
-                    borderRadius: '0.75rem',
-                    color: '#ffffff',
-                    fontSize: '12px',
-                  }}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span>5 Core Knowledge Domains</span>
-            <Link to="/student/records" className="text-brand-600 hover:text-brand-700 font-semibold">
-              Enter Subject Marks &rarr;
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Honest AI Prediction Pipeline Status Card (Phase 4 & 5 Roadmap) */}
-      <div className="card p-6 bg-gradient-to-r from-sky-50/50 via-white to-indigo-50/40 border-brand-100">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-xl">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-sky-100 text-sky-800 text-[11px] font-bold uppercase tracking-wider">
-              <BrainCircuit size={14} className="text-sky-600" />
-              <span>Machine Learning Inference Pipeline</span>
-            </div>
-            <h3 className="text-lg font-extrabold text-navy-900 tracking-tight">
-              Predictive Models & Risk Classifier Status
-            </h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              EduPredict employs supervised Scikit-learn regressors (projected mark %) and random forest classifiers (Low, Moderate, High risk tiers). As per project specifications, model training commences in <strong>Phase 4</strong> followed by real-time user inference in <strong>Phase 5</strong>.
-            </p>
-          </div>
-
-          {/* Stepper Pipeline Visual */}
-          <div className="flex items-center gap-2 sm:gap-3 bg-white p-3 sm:p-4 rounded-xl border border-slate-200/80 shadow-sm shrink-0">
-            <div className="text-center">
-              <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-300 flex items-center justify-center text-xs font-bold mx-auto mb-1">
-                ✓
-              </div>
-              <span className="text-[10px] font-bold text-slate-700 block">Schema</span>
-              <span className="text-[9px] text-emerald-600 font-semibold">Verified</span>
-            </div>
-
-            <div className="w-6 sm:w-10 h-0.5 bg-slate-200" />
-
-            <div className="text-center">
-              <div className="w-8 h-8 rounded-full bg-amber-50 text-amber-600 border border-amber-300 flex items-center justify-center text-xs font-bold mx-auto mb-1 animate-pulse">
-                4
-              </div>
-              <span className="text-[10px] font-bold text-slate-700 block">Training</span>
-              <span className="text-[9px] text-amber-600 font-semibold">Scheduled</span>
-            </div>
-
-            <div className="w-6 sm:w-10 h-0.5 bg-slate-200" />
-
-            <div className="text-center">
-              <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-400 border border-slate-200 flex items-center justify-center text-xs font-bold mx-auto mb-1">
-                5
-              </div>
-              <span className="text-[10px] font-bold text-slate-400 block">Inference</span>
-              <span className="text-[9px] text-slate-400 font-semibold">Upcoming</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Strengths, Weaknesses & Actionable Recommendations */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Academic Strengths & Weaknesses */}
         <div className="card p-6">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <AlertTriangle size={18} className="text-amber-500" />
+              <TrendingUp size={18} className="text-brand-500" />
               <h3 className="text-base font-bold text-navy-900">
-                Subject Strengths & Bottlenecks
+                Predicted Performance Checkpoints
               </h3>
             </div>
-            <span className="badge badge-warning text-[10px]">Awaiting Records</span>
+            <span className="badge badge-info text-[10px]">{predictions.length} Run(s)</span>
           </div>
 
-          <div className="py-8 text-center max-w-sm mx-auto space-y-3">
-            <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
-              <BarChart3 size={24} />
+          {chartData.length === 0 ? (
+            <EmptyState
+              icon={<TrendingUp size={28} />}
+              title="Insufficient historical data"
+              description="No prediction runs or benchmark checkpoints have been saved for your account yet. Complete an evaluation to populate your live progression curve."
+            />
+          ) : (
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="studentPredGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#0284c7" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#0284c7" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis dataKey="checkpoint" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={12} domain={[0, 100]} tickLine={false} />
+                  <Tooltip />
+                  <Area
+                    type="monotone"
+                    dataKey="predicted"
+                    name="Predicted Mark (%)"
+                    stroke="#0284c7"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#studentPredGrad)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
-            <div>
-              <h4 className="text-sm font-bold text-navy-900">No Assessment Data Submitted</h4>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Feature weight analysis will rank your highest performing subjects alongside identified risk bottlenecks once semester marks are logged.
-              </p>
-            </div>
-            <Link to="/student/records">
-              <Button variant="outline" size="sm">
-                Log Academic Record
-              </Button>
-            </Link>
-          </div>
+          )}
         </div>
 
-        {/* Actionable Improvement Strategies */}
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              <Lightbulb size={18} className="text-brand-500" />
-              <h3 className="text-base font-bold text-navy-900">
-                Actionable Recommendations
-              </h3>
+        {/* Coursework & Advisory Summary */}
+        <div className="card p-6 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <Lightbulb size={18} className="text-brand-500" />
+                <h3 className="text-base font-bold text-navy-900">
+                  Coursework & Model Inference Status
+                </h3>
+              </div>
+              <span className="badge badge-success text-[10px]">Models Active</span>
             </div>
-            <span className="badge badge-info text-[10px]">Rule Engine Ready</span>
+
+            {academicRecords.length === 0 && predictions.length === 0 ? (
+              <EmptyState
+                icon={<BookOpen size={28} />}
+                title="No coursework or predictions recorded"
+                description="Verified coursework records and explainable recommendations appear here once instructors enter grades or you run an AI prediction."
+              />
+            ) : (
+              <div className="space-y-3 text-xs">
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                  <span className="text-slate-600 font-medium">Persisted Coursework Records</span>
+                  <span className="font-bold text-navy-900">{academicRecords.length} record(s)</span>
+                </div>
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                  <span className="text-slate-600 font-medium">AI Performance Evaluations</span>
+                  <span className="font-bold text-navy-900">{predictions.length} prediction(s)</span>
+                </div>
+                {latestRec && (
+                  <div className="p-3.5 rounded-xl bg-sky-50/70 border border-sky-200">
+                    <div className="font-bold text-navy-900">
+                      Latest Record: {latestRec.subject} ({latestRec.term})
+                    </div>
+                    <div className="text-slate-600 mt-1">
+                      G1: {latestRec.g1 ?? '--'} · G2: {latestRec.g2 ?? '--'} · Final:{' '}
+                      {latestRec.final_exam_marks ?? '--'}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
-          <div className="py-8 text-center max-w-sm mx-auto space-y-3">
-            <div className="w-12 h-12 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center mx-auto">
-              <Lightbulb size={24} />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-navy-900">Personalized Guidance Pending</h4>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Tailored intervention advice (e.g. recommended weekly study hour adjustments, revision checklists) will automatically generate based on your feature vector.
-              </p>
-            </div>
-            <div className="inline-flex items-center gap-1.5 text-[11px] text-slate-400">
-              <Info size={12} />
-              <span>Guidance engine activates following Phase 4 training</span>
-            </div>
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+            <Link to="/student/attendance" className="text-brand-600 font-semibold hover:underline">
+              View Verified Attendance &rarr;
+            </Link>
+            <Link to="/student/recommendations" className="text-brand-600 font-semibold hover:underline">
+              View Recommendations &rarr;
+            </Link>
           </div>
         </div>
       </div>

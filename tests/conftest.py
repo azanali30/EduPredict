@@ -47,6 +47,8 @@ def clean_db(app):
             mongo.db.stream_events.delete_many({})
             mongo.db.notifications.delete_many({})
             mongo.db.feedback_tickets.delete_many({})
+            mongo.db.attendance_sessions.delete_many({})
+            mongo.db.attendance_records.delete_many({})
     yield mongo.db
 
 

@@ -43,9 +43,23 @@ EduPredict is **not** a generic School Management System, LMS, or billing portal
 - Automated at-risk student early warning flags.
 - Drill-down into individual student indicators.
 
+### Teacher
+- Secure subject-scoped instructor dashboard (`TeacherAttendance`, `TeacherAcademicRecords`, `TeacherPredictions`, `TeacherAtRisk`, `TeacherDropout`, `TeacherNotifications`, `TeacherFeedback`).
+- Enrolled subject roster of assigned students.
+- Persistent roll-call attendance register (`attendance_sessions`, `attendance_records`) and academic coursework CRUD + CSV bulk import (`academic_records`).
+- Class-wide performance, risk distribution analytics, and automated early-warning flags.
+- Drill-down into individual student indicators without overwriting Verified Institutional Attendance into ML 60-session proxy fields.
+
+### Student
+- Personal academic overview derived from persisted attendance sessions, coursework records, and prediction checkpoints (with explicit empty states when unrecorded).
+- Verified Institutional Attendance view strictly separated from Estimated ML Attendance Proxy disclosures.
+- Read-only Academic Coursework Records view, ML Prediction & Progress tracking, and support feedback submissions.
+
 ### Administrator
-- User provisioning and role assignment.
-- System-wide telemetry, performance metrics, and audit logs.
-- Dataset management and HDFS / Tableau export triggers.
-- ML model performance tracking and retraining pipeline controls.
-- Impala OLAP analytical query runner.
+- User provisioning and role assignment (`admin`, `teacher`, `student`, `analyst`).
+- System-wide telemetry, backup integrity verification across 20 collections, and redacted audit logs (`system_logs`).
+- Institutional academic records management, dataset governance, Parquet lakehouse exports, and Tableau BI CSV/JSON dataset downloads.
+- ML model monitoring, feedback/intervention resolution, and institutional broadcasts.
+
+### Institutional Analyst
+- De-identified cohort trends (`/api/analyst/trends`), curriculum statistics, dropout overviews, demand forecasts, and anomaly telemetry strictly enforcing `N < 5` Statistical Disclosure Control (SDC) and complementary cell suppression with zero student PII.

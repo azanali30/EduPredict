@@ -59,6 +59,8 @@ DEFAULT_BACKUP_COLLECTIONS = [
     "notifications",
     "feedback_tickets",
     "system_logs",
+    "attendance_sessions",
+    "attendance_records",
 ]
 
 

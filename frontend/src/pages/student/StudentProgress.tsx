@@ -86,8 +86,22 @@ export const StudentProgress: React.FC = () => {
         />
         <StatCard
           title="Trajectory Velocity"
-          value={predictions.length > 0 ? '+1.2 pts' : 'Baseline'}
-          subtitle="Estimated growth per milestone"
+          value={
+            predictions.length >= 2
+              ? (() => {
+                  const delta =
+                    predictions[0].predicted_marks - predictions[predictions.length - 1].predicted_marks;
+                  return `${delta >= 0 ? '+' : ''}${delta.toFixed(1)} pts`;
+                })()
+              : predictions.length === 1
+              ? 'Baseline (1 run)'
+              : 'Insufficient historical data'
+          }
+          subtitle={
+            predictions.length >= 2
+              ? `Measured across ${predictions.length} persisted checkpoints`
+              : 'At least 2 evaluations required to compute velocity'
+          }
           icon={<ArrowUpRight size={20} className="text-emerald-500" />}
         />
       </div>

@@ -7,6 +7,7 @@ import { StatCard } from '../../components/common/StatCard';
 import { SectionCard } from '../../components/common/SectionCard';
 import { LoadingState } from '../../components/common/LoadingState';
 import { ErrorAlert } from '../../components/common/ErrorAlert';
+import { EmptyState } from '../../components/common/EmptyState';
 import {
   Compass,
   Lightbulb,
@@ -63,50 +64,69 @@ export const StudentRecommendations: React.FC = () => {
 
   const latest = predictions[0];
   const feat = latest?.features_summary || {};
-  const studyHours = feat.study_hours_per_week?.value ?? 3.5;
-  const absences = feat.absences?.value ?? 2;
-  const grade = latest?.predicted_marks ?? 65.0;
+  const studyHours: number | null =
+    typeof feat.study_hours_per_week?.value === 'number' ? feat.study_hours_per_week.value : null;
+  const absences: number | null =
+    typeof feat.absences?.value === 'number' ? feat.absences.value : null;
+  const grade: number | null =
+    typeof latest?.predicted_marks === 'number' ? latest.predicted_marks : null;
 
-  // Generate dynamic, explainable recommendations based on actual features
-  const recommendations = [
-    {
-      id: '1',
-      title: 'Weekly Study Time Optimization',
-      category: 'Study Discipline',
-      impact: 'High Impact (+5 to +10 pts)',
-      currentStatus: `${studyHours} hrs/week recorded`,
-      action:
-        studyHours < 5
-          ? 'Increasing your weekly focused study hours to 5–7 hours significantly increases model predicted performance in standard academic benchmarks.'
-          : 'Your study commitment is strong. Focus on spaced repetition and practice problem sets to consolidate gains.',
-      icon: <Clock size={20} className="text-brand-royal" />,
-      priority: studyHours < 5 ? 'High' : 'Medium',
-    },
-    {
-      id: '2',
-      title: 'Session Attendance Consistency',
-      category: 'Attendance Velocity',
-      impact: 'High Impact (Risk Reduction)',
-      currentStatus: `${absences} absences on record`,
-      action:
-        absences > 4
-          ? 'Each session absence reduces your estimated attendance proxy by 1.67%. Maintaining zero additional absences protects against early-warning risk triggers.'
-          : 'Attendance is exemplary. Consistent classroom presence directly correlates with higher milestone stability.',
-      icon: <CheckCircle2 size={20} className="text-emerald-500" />,
-      priority: absences > 4 ? 'High' : 'Low',
-    },
-    {
-      id: '3',
-      title: 'Milestone 1 Revision Strategy',
-      category: 'Exam Preparedness',
-      impact: 'Medium Impact (+5 pts)',
-      currentStatus: `Target Grade: ${grade.toFixed(1)}% (${grade.toFixed(1)} / 100)`,
-      action:
-        'Prioritize fundamental coursework topics before mid-term evaluations. Utilize practice quizzes to verify mastery before G1 exams.',
-      icon: <Lightbulb size={20} className="text-amber-500" />,
-      priority: 'Medium',
-    },
-  ];
+  const targetHeadroom =
+    grade === null
+      ? 'Prediction unavailable'
+      : grade < 70
+      ? `+${(70 - grade).toFixed(1)} pts to 70% target`
+      : 'On Track (≥ 70%)';
+
+  // Generate dynamic, explainable recommendations strictly from verified persisted features
+  const recommendations = !latest
+    ? []
+    : [
+        {
+          id: '1',
+          title: 'Weekly Study Time Optimization',
+          category: 'Study Discipline',
+          impact: studyHours !== null && studyHours < 5 ? 'High Impact Focus Area' : 'Maintenance Plan',
+          currentStatus:
+            studyHours !== null ? `${studyHours} hrs/week recorded` : 'Study hours unavailable',
+          action:
+            studyHours === null
+              ? 'Study hours were not recorded on this evaluation.'
+              : studyHours < 5
+              ? 'Increasing your weekly focused study hours to 5–7 hours improves model predicted performance in standard academic benchmarks.'
+              : 'Your study commitment is strong. Focus on spaced repetition and practice problem sets to consolidate gains.',
+          icon: <Clock size={20} className="text-brand-royal" />,
+          priority: studyHours !== null && studyHours < 5 ? 'High' : 'Medium',
+        },
+        {
+          id: '2',
+          title: 'Session Attendance Consistency',
+          category: 'Attendance Velocity',
+          impact: 'Attendance Risk Factor',
+          currentStatus:
+            absences !== null ? `${absences} ML-feature absences on record` : 'Absences unavailable',
+          action:
+            absences === null
+              ? 'Absence count was not included in this evaluation.'
+              : absences > 4
+              ? 'Each session absence reduces your estimated attendance proxy by 1.67%. Maintaining zero additional absences protects against early-warning risk triggers.'
+              : 'Attendance is exemplary. Consistent classroom presence directly correlates with higher milestone stability.',
+          icon: <CheckCircle2 size={20} className="text-emerald-500" />,
+          priority: absences !== null && absences > 4 ? 'High' : 'Low',
+        },
+        {
+          id: '3',
+          title: 'Milestone Revision Strategy',
+          category: 'Exam Preparedness',
+          impact: targetHeadroom,
+          currentStatus:
+            grade !== null ? `Predicted Grade: ${grade.toFixed(1)}%` : 'Prediction unavailable',
+          action:
+            'Prioritize fundamental coursework topics before mid-term evaluations. Utilize practice quizzes to verify mastery before exams.',
+          icon: <Lightbulb size={20} className="text-amber-500" />,
+          priority: grade !== null && grade < 60 ? 'High' : 'Medium',
+        },
+      ];
 
   return (
     <div className="space-y-6">
@@ -163,9 +183,9 @@ export const StudentRecommendations: React.FC = () => {
           icon={<Lightbulb size={20} className="text-amber-500" />}
         />
         <StatCard
-          title="Potential Growth"
-          value="+2.5 pts"
-          subtitle="Estimated achievable grade lift"
+          title="Target Headroom (70% Benchmark)"
+          value={targetHeadroom}
+          subtitle="Computed from latest persisted prediction"
           icon={<Sparkles size={20} className="text-brand-royal" />}
         />
         <StatCard
@@ -284,6 +304,13 @@ export const StudentRecommendations: React.FC = () => {
         title="Tailored Improvement Pathways"
         subtitle="Actionable steps derived from empirical regression feature weights (Cortez & Silva 2008)."
       >
+        {recommendations.length === 0 ? (
+          <EmptyState
+            icon={<Lightbulb size={28} />}
+            title="Insufficient historical data"
+            description="Prediction unavailable — run an evaluation in AI Predictions first so recommendations can be calculated strictly from your persisted metrics."
+          />
+        ) : (
         <div className="space-y-4">
           {recommendations.map((rec) => (
             <div
@@ -321,6 +348,7 @@ export const StudentRecommendations: React.FC = () => {
             </div>
           ))}
         </div>
+        )}
       </SectionCard>
     </div>
   );

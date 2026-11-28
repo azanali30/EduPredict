@@ -760,3 +760,246 @@ export interface FeedbackListResponse {
   limit: number;
   total_pages: number;
 }
+
+// ==========================================
+// Attendance Register Types (Workstream A)
+// ==========================================
+
+export type AttendanceStatus = 'Present' | 'Absent' | 'Late' | 'Excused';
+
+export interface AttendanceSessionItem {
+  id: string;
+  subject_id: string;
+  subject_name: string;
+  subject_code: string;
+  teacher_id: string;
+  teacher_name: string;
+  academic_term: string;
+  session_date: string;
+  session_title: string;
+  notes?: string | null;
+  status: string;
+  total_students: number;
+  present_count: number;
+  absent_count: number;
+  late_count: number;
+  excused_count: number;
+  created_by?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  attendance_source: 'verified_institutional_register';
+}
+
+export interface AttendanceRecordItem {
+  id: string;
+  session_id: string;
+  student_id: string;
+  student_name: string;
+  student_code?: string | null;
+  subject_id: string;
+  subject_name: string;
+  teacher_id: string;
+  academic_term: string;
+  session_date: string;
+  status: AttendanceStatus;
+  remarks?: string | null;
+  marked_by?: string | null;
+  marked_at?: string | null;
+  updated_at?: string | null;
+  attendance_source: 'verified_institutional_register';
+}
+
+export interface AttendanceRosterEntry {
+  student_id: string;
+  student_name: string;
+  student_email: string;
+  student_code?: string | null;
+  status: AttendanceStatus | null;
+  remarks?: string | null;
+  record_id?: string | null;
+}
+
+export interface AttendanceSubjectSummary {
+  subject_id: string;
+  subject_name: string;
+  subject_code: string;
+  academic_term: string;
+  total_sessions: number;
+  present_count: number;
+  absent_count: number;
+  late_count: number;
+  excused_count: number;
+  effective_sessions: number;
+  attendance_percentage: number | null;
+  has_records: boolean;
+}
+
+export interface EstimatedMlAttendanceProxy {
+  label: string;
+  absences: number;
+  assumed_sessions: number;
+  estimated_attendance_percentage: number;
+  subject?: string | null;
+  academic_term?: string | null;
+  formula: string;
+  is_verified_roll_call: boolean;
+}
+
+export interface StudentAttendanceResponse {
+  status_code: number;
+  student_id: string;
+  verified_institutional_attendance: {
+    label: string;
+    overall_attendance_percentage: number | null;
+    total_sessions: number;
+    effective_sessions: number;
+    present_count: number;
+    absent_count: number;
+    late_count: number;
+    excused_count: number;
+    has_records: boolean;
+    formula: string;
+    subject_summaries: AttendanceSubjectSummary[];
+  };
+  estimated_ml_proxy: EstimatedMlAttendanceProxy | null;
+  records: AttendanceRecordItem[];
+  total_count: number;
+  page: number;
+  limit: number;
+  disclosure: string;
+}
+
+export interface TeacherAttendanceSummaryResponse {
+  status_code: number;
+  subject_summaries: Array<{
+    subject_id: string;
+    subject_name: string;
+    subject_code: string;
+    academic_term: string;
+    session_count: number;
+    total_marked_entries: number;
+    present_count: number;
+    absent_count: number;
+    late_count: number;
+    excused_count: number;
+    attendance_percentage: number | null;
+  }>;
+  overall: {
+    total_sessions: number;
+    total_marked_entries: number;
+    present_count: number;
+    absent_count: number;
+    late_count: number;
+    excused_count: number;
+    attendance_percentage: number | null;
+    has_records: boolean;
+  };
+  formula: string;
+  disclosure: string;
+}
+
+// ==========================================
+// Academic Records Types (Workstream A)
+// ==========================================
+
+export interface AcademicRecordItem {
+  id: string;
+  student_id: string | null;
+  student_name: string;
+  student_email: string;
+  student_code?: string | null;
+  subject_id?: string | null;
+  subject: string;
+  term: string;
+  g1?: number | null;
+  g2?: number | null;
+  final_exam_marks?: number | null;
+  study_hours_per_week?: number | null;
+  assignment_completion_rate?: number | null;
+  quiz_average?: number | null;
+  previous_exam_marks?: number | null;
+  attendance_percentage?: number | null;
+  studytime?: number | null;
+  failures?: number | null;
+  absences?: number | null;
+  notes?: string | null;
+  source?: string;
+  recorded_by?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface AcademicRecordCsvImportSummary {
+  total_rows: number;
+  successful: number;
+  rejected: number;
+  duplicate: number;
+  created_record_ids: string[];
+  errors: Array<{
+    row: number;
+    status: 'rejected' | 'duplicate';
+    reason: string;
+  }>;
+}
+
+// ==========================================
+// Analyst Cohort Trends Types (Workstream A)
+// ==========================================
+
+export interface AnalystTermTrendPoint {
+  term: string;
+  suppressed: boolean;
+  display_count: string;
+  student_count: number | null;
+  institutional_avg_raw20: number | null;
+  institutional_avg_percentage: number | null;
+  math_avg_raw20: number | null;
+  portuguese_avg_raw20: number | null;
+  coursework_avg_raw20: number | null;
+  attendance_rate_percentage: number | null;
+}
+
+export interface AnalystTrendsResponse {
+  status_code: number;
+  term_trends: AnalystTermTrendPoint[];
+  monitored_terms_count: number;
+  unsuppressed_terms_count: number;
+  institutional_avg_raw20: number | null;
+  institutional_avg_percentage: number | null;
+  institutional_suppressed: boolean;
+  growth_delta_raw20: number | null;
+  trend_available: boolean;
+  trend_message: string;
+  sdc_threshold: number;
+}
+
+// ==========================================
+// Tableau BI Export Types (Workstream B)
+// ==========================================
+
+export interface TableauDatasetCatalogItem {
+  dataset: string;
+  title: string;
+  description: string;
+  columns: string[];
+  source_collections: string[];
+  source_document_counts: Record<string, number>;
+}
+
+export interface TableauExportResponse {
+  status_code: number;
+  metadata: {
+    dataset: string;
+    title: string;
+    exported_at_utc: string;
+    exported_by_role: string;
+    sdc_enforced: boolean;
+    sdc_threshold: number | null;
+    contains_pii: boolean;
+    source_collections: string[];
+    row_count: number;
+    format: string;
+  };
+  columns: string[];
+  rows: Array<Record<string, any>>;
+}

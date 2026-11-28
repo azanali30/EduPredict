@@ -326,6 +326,52 @@ def init_db_indexes(db: Database) -> dict[str, list[str]]:
         ]
         created_indexes["feedback_tickets"] = feedback_idx
 
+        # 19. attendance_sessions Collection Indexes
+        att_sess_idx = [
+            db.attendance_sessions.create_index(
+                [
+                    ("subject_id", ASCENDING),
+                    ("academic_term", ASCENDING),
+                    ("session_date", ASCENDING),
+                    ("session_title", ASCENDING),
+                ],
+                unique=True,
+                name="idx_att_sessions_unique",
+            ),
+            db.attendance_sessions.create_index(
+                [("teacher_id", ASCENDING), ("session_date", DESCENDING)],
+                name="idx_att_sessions_teacher_date",
+            ),
+            db.attendance_sessions.create_index(
+                [("subject_id", ASCENDING), ("academic_term", ASCENDING), ("session_date", DESCENDING)],
+                name="idx_att_sessions_subject_term",
+            ),
+        ]
+        created_indexes["attendance_sessions"] = att_sess_idx
+
+        # 20. attendance_records Collection Indexes
+        att_rec_idx = [
+            db.attendance_records.create_index(
+                [("session_id", ASCENDING), ("student_id", ASCENDING)],
+                unique=True,
+                name="idx_att_records_session_student_unique",
+            ),
+            db.attendance_records.create_index(
+                [
+                    ("student_id", ASCENDING),
+                    ("subject_id", ASCENDING),
+                    ("academic_term", ASCENDING),
+                    ("session_date", DESCENDING),
+                ],
+                name="idx_att_records_student_subject_term",
+            ),
+            db.attendance_records.create_index(
+                [("subject_id", ASCENDING), ("academic_term", ASCENDING), ("session_date", DESCENDING)],
+                name="idx_att_records_subject_term_date",
+            ),
+        ]
+        created_indexes["attendance_records"] = att_rec_idx
+
         logger.info("MongoDB 6.x indexes successfully initialized.")
         return created_indexes
 

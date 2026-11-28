@@ -223,3 +223,27 @@ def get_analyst_anomaly_stats():
         **stats,
     }), 200
 
+
+@analyst_bp.route("/trends", methods=["GET"])
+@analyst_required
+def get_analyst_trends():
+    """
+    Retrieve real multi-term institutional trend aggregates strictly enforcing
+    N < 5 Statistical Disclosure Control (SDC) and complementary suppression.
+    """
+    from backend.services.analyst_trends_service import get_analyst_trends_data
+
+    db = mongo.db
+    if db is None:
+        return jsonify({
+            "error": "Database Unavailable",
+            "message": "Database service is offline.",
+            "status_code": 503,
+        }), 503
+
+    payload = get_analyst_trends_data(db)
+    return jsonify({
+        "status_code": 200,
+        **payload,
+    }), 200
+

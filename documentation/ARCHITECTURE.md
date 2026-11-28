@@ -113,14 +113,14 @@ frontend/
 
 ## 4. Database Schema & Operational Collections (MongoDB 6.x)
 
-The operational database runs on MongoDB 6.x on port `27017` with the following first-class collections and index configurations:
+The operational database runs on MongoDB 6.x on port `27017` with 20 indexed operational and analytical collections:
 
-### 4.1 First-Class Collections
+### 4.1 Operational, Institutional & Analytical Collections
 1. **`users`**:
-   - Stores user authentication and profile data (Admin, Teacher, Student).
+   - Stores user authentication and profile data (`admin`, `teacher`, `student`, `analyst`).
    - Indexes: Unique `email`, Single `role`, Compound `(role, is_active)`.
 2. **`subjects`**:
-   - Curriculum catalog entities (e.g. Mathematics `MATH-101`, Portuguese Language `PORT-101`).
+   - Curriculum catalog entities (`Mathematics` `MATH-101`, `Portuguese Language` `PORT-101`).
    - Indexes: Unique `code` (case-insensitive), Unique `canonical_key`, Single `name`, Single `is_active`.
 3. **`teacher_subject_assignments`**:
    - Institutional allocations linking teachers to subjects and academic terms.
@@ -128,18 +128,37 @@ The operational database runs on MongoDB 6.x on port `27017` with the following 
 4. **`student_subject_enrollments`**:
    - Course registrations linking students to subjects and academic terms.
    - Indexes: Compound Unique `(student_id, subject_id, academic_term)`, Single `student_id`, Single `subject_id`, Single `status`.
-5. **`predictions`**:
-   - Multi-milestone ML inference records and feature provenance.
-   - Fields: `student_id`, `subject` (canonical string), `subject_id` (ObjectId reference), `academic_term`, `milestone`, `predicted_score`, `risk_level`, `model_type`, `feature_snapshot`.
-   - Indexes: Compound `(student_id, created_at)`, Single `subject_id`, Single `risk_level`, Single `milestone`.
-6. **`academic_records`**:
-   - Historical student academic and demographic observations.
-   - Indexes: Unique `student_code`, Single `academic_status`.
-7. **`system_logs`**:
-   - Security and administrative audit trail.
-   - Indexes: Single `timestamp`, Single `event_type`.
-8. **`teacher_student_assignments` (Preserved Legacy Collection)**:
-   - Preserved for backward auditability. Completely superseded by `teacher_subject_assignments` and `student_subject_enrollments`. Legacy assignments never grant subject-level access.
+5. **`attendance_sessions`**:
+   - Teacher-conducted institutional roll-call sessions per subject, term, date, and title.
+   - Indexes: Compound Unique `(subject_id, academic_term, session_date, session_title)`, Compound `(teacher_id, session_date)`, Compound `(subject_id, academic_term, session_date)`.
+6. **`attendance_records`**:
+   - Verified student roll-call attendance statuses (`Present`, `Absent`, `Late`, `Excused`), strictly isolated from ML 60-session proxies.
+   - Indexes: Compound Unique `(session_id, student_id)`, Compound `(student_id, subject_id, academic_term, session_date)`, Compound `(subject_id, academic_term, session_date)`.
+7. **`academic_records`**:
+   - Institutional coursework assessments (`g1`, `g2`, `final_exam_marks`, `assignment_completion_rate`, `quiz_average`, `study_hours_per_week`) via REST CRUD, CSV bulk import, and stream sync.
+   - Indexes: Partial Unique `(student_id, subject, term)`, `student_id`, `(student_id, term)`, `created_at`.
+8. **`analytical_academic_records`**:
+   - De-identified benchmark observations imported for analytics and Parquet lakehouse export.
+9. **`predictions`**:
+   - Multi-milestone ML inference records (`predicted_marks`, `predicted_grade_raw20`, `predicted_status`, `features_summary`, `academic_term`).
+10. **`dropout_records`** & 11. **`dropout_prediction_history`**:
+   - Student early-warning dropout risk tiers (`risk_tier`, `risk_probability`) and longitudinal snapshots.
+12. **`demand_forecasts`** & 13. **`demand_model_metadata`**:
+   - Institutional enrollment demand projections and confidence intervals per course/term.
+14. **`anomaly_records`**:
+   - Human-reviewed academic performance anomalies detected via IsolationForest / statistical checks.
+15. **`model_registry`**:
+   - Serialized champion model metadata, version provenance, and holdout performance summaries.
+16. **`stream_events`**:
+   - Idempotent real-time academic event ingestion ledger and retry states.
+17. **`notifications`**:
+   - Role-scoped persistent alerts (early-warning prediction/dropout/anomaly triggers and admin broadcasts).
+18. **`feedback_tickets`**:
+   - Student and teacher support inquiries, administrative responses, and teacher-visible intervention follow-ups.
+19. **`system_logs`**:
+   - CRLF-sanitized, credential-redacted security, audit, and export trail.
+20. **`teacher_student_assignments` (Preserved Legacy Collection)**:
+   - Preserved read-only for backward auditability; superseded by `teacher_subject_assignments` and `student_subject_enrollments`.
 
 ---
 
@@ -169,13 +188,13 @@ A teacher is authorized to access a student's academic record or generate a pred
 EduPredict implements a multi-milestone progressive inference architecture tailored per academic discipline:
 
 1. **Milestones**:
-   - **Milestone 0 (Term Registration)**: 30 demographic, parental, and behavioral indicators. Zero exam marks. Serves as early diagnostic with explicit false negative disclosures.
-   - **Milestone 1 (Mid-Term)**: Milestone 0 features + Period 1 examination marks ($G_1$ / `previous_exam_marks`).
-   - **Milestone 2 (Continuous Assessment)**: Milestone 1 features + Period 2 continuous quiz scores ($G_2$ / `quiz_scores`).
+   - **Milestone 0 (Term Registration)**: 33 demographic, parental, and behavioral indicators (zero exam marks). Serves as an early diagnostic with explicit baseline disclosures.
+   - **Milestone 1 (Mid-Term)**: Milestone 0 features + Period 1 examination marks (`previous_exam_marks` / $G_1$ equivalent; 34 features).
+   - **Milestone 2 (Continuous Assessment)**: Milestone 1 features + Period 2 continuous quiz scores (`quiz_scores` / $G_2$ equivalent; 35 features).
 2. **Leakage Protection**:
    - $G_3$ (`final_exam_marks`, `academic_status`, `final_percentage`) is strictly excluded from all training and inference feature sets via `backend.data_engineering.leakage_guard.assert_no_leakage()`.
 3. **Artifact Provenance**:
-   - 12 serialized Scikit-learn pipelines in `ml_models/saved_models/` (HistGradientBoosting and Random Forest) partitioned by discipline (`math_*`, `portuguese_*`) and milestone (0, 1, 2) alongside metadata manifests.
+   - 13 serialized Scikit-learn pipelines in `ml_models/saved_models/` (12 Mathematics/Portuguese Milestone 0–2 regressors and classifiers plus `dropout_model.joblib`) alongside metadata manifests and reproducible training/evaluation notebooks (`notebooks/eda_academic_performance.ipynb`, `notebooks/02_model_training_and_evaluation.ipynb`).
 
 ---
 
