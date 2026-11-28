@@ -84,7 +84,7 @@ frontend/
 │   │   ├── admin/            # AdminOverview, UserManagement, TeacherAssignments (3 Tabs), SystemLogs
 │   │   └── status/           # UnauthorizedPage (403), NotFoundPage (404)
 │   └── __tests__/
-│       └── subject_workspace.test.tsx # 15 automated integration tests for multi-subject workflows
+│       └── ...               # 10 Vitest integration test suites (49 frontend tests)
 ```
 
 ---
@@ -94,7 +94,7 @@ frontend/
 1. **CSRF Protection via Session Secret**:
    - On application load or prior to mutating requests, `api.ts` invokes `GET /api/csrf-token`.
    - Flask-WTF generates a signed CSRF token bound to the active session.
-   - For all `POST`, `PUT`, `DELETE` requests, `api.ts` automatically attaches the token in the `X-CSRFToken` request header.
+   - For all `POST`, `PUT`, `PATCH`, `DELETE` requests, `api.ts` automatically attaches the token in the `X-CSRFToken` request header.
    - If a request encounters a CSRF expiration error (400), `api.ts` automatically refreshes the token and transparently retries the mutation once.
 2. **Session Cookies & Credentials**:
    - All fetch requests specify `credentials: 'include'`.
@@ -140,7 +140,7 @@ The operational database runs on MongoDB 6.x on port `27017` with 20 indexed ope
 8. **`analytical_academic_records`**:
    - De-identified benchmark observations imported for analytics and Parquet lakehouse export.
 9. **`predictions`**:
-   - Multi-milestone ML inference records (`predicted_marks`, `predicted_grade_raw20`, `predicted_status`, `features_summary`, `academic_term`).
+   - Multi-milestone ML inference records (`predicted_marks`, `predicted_status`, `features_summary`, `academic_term`, `subject`, `subject_id`, `milestone`). Derived 0–20 analytical views convert `predicted_marks / 5.0` dynamically.
 10. **`dropout_records`** & 11. **`dropout_prediction_history`**:
    - Student early-warning dropout risk tiers (`risk_tier`, `risk_probability`) and longitudinal snapshots.
 12. **`demand_forecasts`** & 13. **`demand_model_metadata`**:

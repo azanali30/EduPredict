@@ -808,10 +808,26 @@ class AttendanceService:
             totals["total_sessions"],
         )
 
-        # Read-only reference lookup of latest ML prediction absence feature (strictly separated)
+        # Read-only reference lookup of latest ML prediction absence feature scoped cleanly to authorized subjects
         estimated_ml_proxy = None
+        proxy_pred_query: Dict[str, Any] = {"student_id": s_oid}
+        if subj_filter_oid:
+            subj_name_match = subject_map.get(subj_filter_oid, {}).get("name")
+            if subj_name_match:
+                proxy_pred_query["$or"] = [{"subject_id": subj_filter_oid}, {"subject": subj_name_match}]
+            else:
+                proxy_pred_query["subject_id"] = subj_filter_oid
+        elif allowed_subject_ids is not None:
+            allowed_names = [subject_map.get(sid, {}).get("name") for sid in allowed_subject_ids if subject_map.get(sid, {}).get("name")]
+            or_clauses: List[Dict[str, Any]] = [{"subject_id": {"$in": allowed_subject_ids}}]
+            if allowed_names:
+                or_clauses.append({"subject": {"$in": allowed_names}})
+            proxy_pred_query["$or"] = or_clauses
+        if academic_term and academic_term.strip():
+            proxy_pred_query["academic_term"] = academic_term.strip()
+
         latest_pred = db.predictions.find_one(
-            {"student_id": s_oid},
+            proxy_pred_query,
             sort=[("created_at", -1)],
             projection={"features_summary": 1, "subject": 1, "created_at": 1, "academic_term": 1},
         )

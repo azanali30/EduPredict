@@ -27,7 +27,7 @@ EduPredict is a standalone AI/ML-powered Educational Performance Prediction and 
 - **Big Data, OLAP & BI**: HDFS WebHDFS REST API client, Apache Impala MPP SQL query catalog, Apache Parquet, Tableau BI export bridge (`tableau/EduPredict_Analytics_Workbook.twb` + `/api/tableau/*`)
 - **Statistical Computing**: Native R 4.6.2 (ANOVA, Welch t-test, Kruskal-Wallis, Pearson correlation)
 - **Machine Learning & EDA**: Scikit-learn, NumPy, Pandas, Joblib, Matplotlib, Seaborn, Jupyter Notebooks (`notebooks/eda_academic_performance.ipynb`, `notebooks/02_model_training_and_evaluation.ipynb`)
-- **Testing**: Pytest (`384 passed` across auth, RBAC, attendance register, academic records CSV ingestion, Tableau BI/SDC, streaming, reliability, notifications/feedback, ML models, and security hardening), pytest-flask, Vitest (`10 test files, 49 tests passing`), TypeScript compiler (`tsc -b`), Vite production bundler (`npm run build`)
+- **Testing**: Pytest (`385 passed` across auth, RBAC, attendance register, academic records CSV ingestion, Tableau BI/SDC, streaming, reliability, notifications/feedback, ML models, and security hardening), pytest-flask, Vitest (`10 test files, 49 tests passing`), TypeScript compiler (`tsc -b`), Vite production bundler (`npm run build`)
 
 ---
 
@@ -175,7 +175,7 @@ Execute full backend, data pipeline, ML, attendance/academic records, Tableau BI
 $env:PYTHONPATH="."
 .\.venv\Scripts\pytest.exe -q
 ```
-*(384 passing pytest tests)*
+*(385 passing pytest tests)*
 
 Execute frontend test suite, type-checking, and production build:
 ```cmd

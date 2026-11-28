@@ -15,6 +15,7 @@ from pymongo.database import Database
 
 from backend.services.analyst_trends_service import (
     CELL_SUPPRESSION_THRESHOLD,
+    _extract_raw20_prediction,
     get_analyst_trends_data,
 )
 
@@ -141,7 +142,7 @@ def _safe_avg(vals: List[float]) -> Optional[float]:
 
 
 def _suppress_needed(count: int, enforce_sdc: bool) -> bool:
-    return enforce_sdc and count < CELL_SUPPRESSION_THRESHOLD
+    return enforce_sdc and 0 < count < CELL_SUPPRESSION_THRESHOLD
 
 
 class TableauExportService:
@@ -277,14 +278,17 @@ class TableauExportService:
             )
         )
 
-        # Coursework final exam mean per (subject, term)
-        coursework_by_st: Dict[Tuple[str, str], List[float]] = {}
+        # Coursework final exam mean & distinct student count per (subject, term)
+        coursework_by_st: Dict[Tuple[str, str], Dict[str, Any]] = {}
         for r in ac_records:
             subj = (r.get("subject") or "Unspecified").strip()
             term = (r.get("term") or "Unspecified").strip()
             val = r.get("final_exam_marks")
-            if isinstance(val, (int, float)):
-                coursework_by_st.setdefault((subj, term), []).append(float(val))
+            if isinstance(val, (int, float)) and not isinstance(val, bool):
+                cw_bucket = coursework_by_st.setdefault((subj, term), {"students": set(), "vals": []})
+                cw_bucket["vals"].append(float(val))
+                if r.get("student_id") is not None:
+                    cw_bucket["students"].add(r["student_id"])
 
         buckets: Dict[Tuple[str, str, int, str], Dict[str, Any]] = {}
         for p in preds:
@@ -300,16 +304,24 @@ class TableauExportService:
             if p.get("student_id") is not None:
                 b["students"].add(p["student_id"])
             b["count"] += 1
-            if isinstance(p.get("predicted_grade_raw20"), (int, float)):
-                b["raw20"].append(float(p["predicted_grade_raw20"]))
-            if isinstance(p.get("predicted_marks"), (int, float)):
-                b["pct"].append(float(p["predicted_marks"]))
+
+            val20 = _extract_raw20_prediction(p)
+            if val20 is not None:
+                b["raw20"].append(val20)
+            pct = p.get("predicted_marks")
+            if isinstance(pct, (int, float)) and not isinstance(pct, bool):
+                b["pct"].append(float(pct))
+            elif val20 is not None:
+                b["pct"].append(round(val20 * 5.0, 2))
 
         rows = []
         for (subj, term, ms, tier), b in sorted(buckets.items()):
             stu_n = len(b["students"])
             suppressed = _suppress_needed(stu_n, enforce_sdc)
-            cw_avg = _safe_avg(coursework_by_st.get((subj, term), []))
+            cw_bucket = coursework_by_st.get((subj, term))
+            cw_avg = None
+            if cw_bucket and (not enforce_sdc or len(cw_bucket["students"]) >= CELL_SUPPRESSION_THRESHOLD):
+                cw_avg = _safe_avg(cw_bucket["vals"])
             rows.append(
                 {
                     "subject": subj,
@@ -332,21 +344,35 @@ class TableauExportService:
         rows = []
         for item in trends_payload.get("term_trends", []):
             if not enforce_sdc and item.get("suppressed"):
-                # Recompute unsuppressed aggregate counts/means for Admin view only (still zero PII)
                 term = item["term"]
                 preds = list(
                     db.predictions.find(
                         {"academic_term": term},
-                        {"student_id": 1, "subject": 1, "predicted_grade_raw20": 1},
+                        {"student_id": 1, "subject": 1, "predicted_grade_raw20": 1, "predicted_marks": 1},
                     )
                 )
                 ac = list(db.academic_records.find({"term": term}, {"student_id": 1, "final_exam_marks": 1}))
                 att = list(db.attendance_records.find({"academic_term": term}, {"student_id": 1, "status": 1}))
                 distinct_s = {d.get("student_id") for d in preds + ac + att if d.get("student_id") is not None}
-                all_r20 = [float(d["predicted_grade_raw20"]) for d in preds if isinstance(d.get("predicted_grade_raw20"), (int, float))]
-                m_r20 = [float(d["predicted_grade_raw20"]) for d in preds if "math" in (d.get("subject") or "").lower() and isinstance(d.get("predicted_grade_raw20"), (int, float))]
-                p_r20 = [float(d["predicted_grade_raw20"]) for d in preds if "port" in (d.get("subject") or "").lower() and isinstance(d.get("predicted_grade_raw20"), (int, float))]
-                cw_r20 = [float(d["final_exam_marks"]) for d in ac if isinstance(d.get("final_exam_marks"), (int, float))]
+
+                all_r20: List[float] = []
+                m_r20: List[float] = []
+                p_r20: List[float] = []
+                for d in preds:
+                    val20 = _extract_raw20_prediction(d)
+                    if val20 is not None:
+                        all_r20.append(val20)
+                        subj_low = (d.get("subject") or "").lower()
+                        if "math" in subj_low:
+                            m_r20.append(val20)
+                        elif "port" in subj_low:
+                            p_r20.append(val20)
+
+                cw_r20 = [
+                    float(d["final_exam_marks"])
+                    for d in ac
+                    if isinstance(d.get("final_exam_marks"), (int, float))
+                ]
                 eff_att = [d for d in att if d.get("status") != "Excused"]
                 att_rate = (
                     round((sum(1 for d in eff_att if d.get("status") in ("Present", "Late")) / len(eff_att)) * 100.0, 1)
@@ -490,35 +516,49 @@ class TableauExportService:
 
     @classmethod
     def _build_demand_forecast_rows(cls, db: Database) -> List[Dict[str, Any]]:
-        docs = list(db.demand_forecasts.find({}).sort("target_term", 1))
+        docs = list(db.demand_forecasts.find({}))
         rows = []
         for d in docs:
+            target_term = d.get("forecast_period") or d.get("target_term") or ""
+            horizon = d.get("periods_ahead") if d.get("periods_ahead") is not None else d.get("forecast_horizon", "")
+            lower_ci = d.get("confidence_lower") if d.get("confidence_lower") is not None else d.get("lower_ci")
+            upper_ci = d.get("confidence_upper") if d.get("confidence_upper") is not None else d.get("upper_ci")
             rows.append(
                 {
                     "department": d.get("department", ""),
                     "subject_name": d.get("subject_name") or d.get("subject", ""),
-                    "target_term": d.get("target_term", ""),
-                    "forecast_horizon": d.get("forecast_horizon", ""),
+                    "target_term": target_term,
+                    "forecast_horizon": horizon,
                     "predicted_enrollment": d.get("predicted_enrollment"),
-                    "lower_ci": d.get("lower_ci"),
-                    "upper_ci": d.get("upper_ci"),
+                    "lower_ci": lower_ci,
+                    "upper_ci": upper_ci,
                     "trend_direction": d.get("trend_direction", ""),
                 }
             )
+        rows.sort(key=lambda r: (str(r["target_term"]), str(r["subject_name"])))
         return rows
 
     @classmethod
     def _build_anomaly_summary_rows(cls, db: Database, enforce_sdc: bool) -> List[Dict[str, Any]]:
         docs = list(
-            db.anomaly_records.find({}, {"subject": 1, "severity": 1, "status": 1, "student_id": 1})
+            db.anomaly_records.find(
+                {},
+                {
+                    "subject": 1,
+                    "anomaly_severity": 1,
+                    "severity": 1,
+                    "review_status": 1,
+                    "status": 1,
+                    "student_id": 1,
+                },
+            )
         )
         buckets: Dict[Tuple[str, str, str], Dict[str, Any]] = {}
         for d in docs:
-            key = (
-                (d.get("subject") or "Unspecified").strip(),
-                (d.get("severity") or "Medium").strip(),
-                (d.get("status") or "Open").strip(),
-            )
+            subj = (d.get("subject") or "Unspecified").strip()
+            sev = (d.get("anomaly_severity") or d.get("severity") or "Low / Typical").strip()
+            rev_st = (d.get("review_status") or d.get("status") or "Pending Review").strip()
+            key = (subj, sev, rev_st)
             b = buckets.setdefault(key, {"students": set(), "count": 0})
             if d.get("student_id") is not None:
                 b["students"].add(d["student_id"])

@@ -590,3 +590,174 @@ def test_parallel_batch_benchmark_safe_execution():
         assert m_res["elapsed_seconds"] > 0
 
 
+# ---------------------------------------------------------------------------
+# AUDIT REMEDIATION: REAL SCHEMA END-TO-END INTEGRATION TESTS
+# ---------------------------------------------------------------------------
+
+def test_real_model_schemas_in_analyst_trends_tableau_and_attendance_scope(
+    client, clean_db, test_admin, test_teacher, test_student, test_analyst
+):
+    """
+    Exercises /api/analyst/trends and Tableau exports against real PredictionRecord,
+    DemandForecastRecord, and AnomalyRecord documents (not synthetic field overrides),
+    plus verifies coursework SDC threshold and teacher attendance ML-proxy subject scoping.
+    """
+    from backend.models.anomaly_record_model import AnomalyRecord
+    from backend.models.demand_forecast_model import DemandForecastRecord
+    from backend.models.prediction_model import PredictionRecord
+
+    math_subj, port_subj = _setup_math_and_portuguese(clean_db, test_admin, test_teacher, test_student)
+
+    # Create a student prediction in Portuguese AND one in Mathematics via real PredictionRecord/PredictionService
+    PredictionService.create_prediction(
+        clean_db, test_student.id, test_admin, "Portuguese Language", 2, _sample_prediction_features(absences=18), "2026-T1"
+    )
+    PredictionService.create_prediction(
+        clean_db, test_student.id, test_teacher, "Mathematics", 2, _sample_prediction_features(absences=6), "2026-T1"
+    )
+
+    # Teacher assigned ONLY to Mathematics inspecting /api/attendance/summary for test_student
+    # must receive Mathematics proxy (absences=6 -> 90.0%), NOT Portuguese proxy (absences=18 -> 70.0%)
+    _login(client, test_teacher.email, "TeacherPassword123!")
+    r_teacher_sum = client.get(f"/api/attendance/summary?student_id={test_student.id}&subject_id={math_subj.id}")
+    assert r_teacher_sum.status_code == 200
+    proxy = r_teacher_sum.get_json()["estimated_ml_proxy"]
+    assert proxy is not None
+    assert proxy["subject"] == "Mathematics"
+    assert proxy["absences"] == 6.0
+
+    # Insert real PredictionRecord.to_doc() rows (which ONLY carry predicted_marks, no predicted_grade_raw20)
+    # across 5 students in 2025-T2 (60.0% => 12.0/20) and 5 students in 2026-T2 (80.0% => 16.0/20),
+    # while 2026-T1 only has test_student (N=1 -> suppressed!)
+    cohort_ids = []
+    for idx in range(5):
+        u, _ = UserService.create_user(clean_db, f"real_c_{idx}@edupredict.com", "StudentPass123!", f"Real Stu {idx}", "student")
+        cohort_ids.append(u.id)
+        clean_db.predictions.insert_one(
+            PredictionRecord(
+                student_id=u.id,
+                created_by=test_admin.id,
+                subject="Mathematics",
+                subject_id=math_subj.id,
+                academic_term="2025-T2",
+                milestone=2,
+                predicted_marks=60.0,
+                predicted_status="Moderate Risk",
+                confidence_scores={"Moderate Risk": 0.75},
+                top_confidence=0.75,
+                features_summary={"absences": {"value": 4}},
+                regressor_model="RandomForestRegressor",
+                classifier_model="GradientBoostingClassifier",
+            ).to_doc()
+        )
+        clean_db.predictions.insert_one(
+            PredictionRecord(
+                student_id=u.id,
+                created_by=test_admin.id,
+                subject="Mathematics",
+                subject_id=math_subj.id,
+                academic_term="2026-T2",
+                milestone=2,
+                predicted_marks=80.0,
+                predicted_status="Low Risk / On Track",
+                confidence_scores={"Low Risk / On Track": 0.90},
+                top_confidence=0.90,
+                features_summary={"absences": {"value": 1}},
+                regressor_model="RandomForestRegressor",
+                classifier_model="GradientBoostingClassifier",
+            ).to_doc()
+        )
+
+    # Only 1 student has academic_records in 2026-T2 -> coursework_avg_raw20 MUST stay suppressed (<5)
+    clean_db.academic_records.insert_one({
+        "student_id": cohort_ids[0],
+        "subject": "Mathematics",
+        "term": "2026-T2",
+        "final_exam_marks": 19.0,
+    })
+
+    # Insert real DemandForecastRecord and AnomalyRecord documents
+    clean_db.demand_forecasts.insert_one(
+        DemandForecastRecord(
+            subject_id=math_subj.id,
+            subject_code="MATH-101",
+            subject_name="Mathematics",
+            department="Science",
+            forecast_period="2026-T2",
+            periods_ahead=1,
+            historical_series=[{"term": "2026-T1", "enrollment": 25}],
+            latest_actual_enrollment=25,
+            predicted_enrollment=32.5,
+            confidence_lower=28.0,
+            confidence_upper=37.0,
+            confidence_level="95%",
+            growth_rate_pct=30.0,
+            trend_direction="increasing",
+            demand_tier="High Demand",
+        ).to_doc()
+    )
+    clean_db.anomaly_records.insert_one(
+        AnomalyRecord(
+            source_record_id="src-real-1",
+            student_id=cohort_ids[0],
+            student_name="Sensitive Name Should Not Export",
+            subject="Mathematics",
+            milestone=2,
+            model_version="v1",
+            raw_decision_score=-0.25,
+            anomaly_score=0.92,
+            cohort_percentile=99.0,
+            anomaly_severity="High Anomaly",
+            review_status="Confirmed Anomaly",
+        ).to_doc()
+    )
+
+    _login(client, test_analyst.email, "AnalystPassword123!")
+    r_trends = client.get("/api/analyst/trends")
+    assert r_trends.status_code == 200
+    t_json = r_trends.get_json()
+    assert t_json["trend_available"] is True
+    assert t_json["growth_delta_raw20"] == 4.0  # 16.0 - 12.0 derived from predicted_marks / 5.0
+    t_by_term = {t["term"]: t for t in t_json["term_trends"]}
+    assert t_by_term["2025-T2"]["math_avg_raw20"] == 12.0
+    assert t_by_term["2026-T1"]["suppressed"] is True
+    assert t_by_term["2026-T2"]["math_avg_raw20"] == 16.0
+    assert t_by_term["2026-T2"]["coursework_avg_raw20"] is None  # Only 1 coursework student -> suppressed!
+
+    # Verify Tableau real-schema exports as Analyst
+    r_tab_perf = client.get("/api/tableau/export/academic_performance")
+    assert r_tab_perf.status_code == 200
+    perf_rows = r_tab_perf.get_json()["rows"]
+    m2_2025 = next(r for r in perf_rows if r["academic_term"] == "2025-T2" and r["subject"] == "Mathematics")
+    assert m2_2025["avg_predicted_raw20"] == 12.0
+    assert m2_2025["avg_predicted_pct"] == 60.0
+
+    r_tab_dem = client.get("/api/tableau/export/demand_forecast_summary")
+    assert r_tab_dem.status_code == 200
+    dem_rows = r_tab_dem.get_json()["rows"]
+    assert len(dem_rows) == 1
+    assert dem_rows[0]["target_term"] == "2026-T2"
+    assert dem_rows[0]["forecast_horizon"] == 1
+    assert dem_rows[0]["lower_ci"] == 28.0
+    assert dem_rows[0]["upper_ci"] == 37.0
+
+    # Analyst anomaly summary suppresses N=1 (<5), preserves real severity/review_status bucket keys
+    r_tab_anom_ana = client.get("/api/tableau/export/anomaly_summary")
+    assert r_tab_anom_ana.status_code == 200
+    anom_ana_rows = r_tab_anom_ana.get_json()["rows"]
+    assert anom_ana_rows[0]["severity"] == "High Anomaly"
+    assert anom_ana_rows[0]["review_status"] == "Confirmed Anomaly"
+    assert anom_ana_rows[0]["suppressed"] is True
+    assert "Sensitive Name" not in str(anom_ana_rows)
+
+    # Admin ?apply_sdc=false reveals count=1 for AnomalyRecord while omitting student PII
+    _login(client, test_admin.email, "AdminPassword123!")
+    r_tab_anom_adm = client.get("/api/tableau/export/anomaly_summary?apply_sdc=false")
+    assert r_tab_anom_adm.status_code == 200
+    anom_adm_rows = r_tab_anom_adm.get_json()["rows"]
+    assert anom_adm_rows[0]["severity"] == "High Anomaly"
+    assert anom_adm_rows[0]["review_status"] == "Confirmed Anomaly"
+    assert anom_adm_rows[0]["alert_count_display"] == 1
+
+
+

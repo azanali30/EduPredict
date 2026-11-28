@@ -66,10 +66,21 @@ Starting cleanly from verified baseline commit `91106962659913c88a9dae1bfc7bdc06
 ---
 
 ## 5. Verification Results (Sequential Suite on Final Codebase)
-- **Backend Full Suite (`.\.venv\Scripts\pytest.exe -q`):** `384 passed in 376.14s` (`0` failed, `0` skipped), including [`tests/test_phase_13_14.py`](../tests/test_phase_13_14.py) (`7` comprehensive backend integration/security tests).
-- **Frontend Vitest Suite (`npx.cmd vitest run`):** `10 test files passed (10), 49 tests passed (49)` in `34.82s`, including [`phase13_attendance_records_dashboards.test.tsx`](../frontend/src/__tests__/phase13_attendance_records_dashboards.test.tsx).
-- **TypeScript & Vite Production Build (`tsc -b && npm run build`):** `0` TypeScript errors, `2,091 modules transformed`, clean bundle built in `36.15s`.
+- **Backend Full Suite (`.\.venv\Scripts\pytest.exe -q`):** `385 passed` (`0` failed, `0` skipped), including [`tests/test_phase_13_14.py`](../tests/test_phase_13_14.py) (`8` comprehensive backend integration/security tests).
+- **Frontend Vitest Suite (`npx.cmd vitest run`):** `10 test files passed (10), 49 tests passed (49)`, including [`phase13_attendance_records_dashboards.test.tsx`](../frontend/src/__tests__/phase13_attendance_records_dashboards.test.tsx).
+- **TypeScript & Vite Production Build (`tsc -b && npm run build`):** `0` TypeScript errors, `2,091 modules transformed`, clean production bundle built cleanly.
 - **Notebook Verification (`nbconvert --execute`):** 19/19 code cells executed (`errors: []`).
 - **Explicit Deferrals / Non-Running External Services:**
   - `100+ students / 25+ teachers / 1 admin` large-scale load test intentionally not run per baseline governance rules.
   - Native Hadoop HDFS daemons, Impala server, multi-node Apache `httpd`, and Tableau Desktop GUI are not installed/started locally; integration contracts, SQL validation harness, and workbook XML validation substitute cleanly in local CI.
+
+---
+
+## 6. Independent Audit Findings & Post-Audit Remediation
+Following the independent read-only audit of baseline implementation commit `77802b8eea4f35d13a8964bed4826d0ad8cd64a7`, all blocking and minor findings were remediated and re-verified against live production domain models:
+1. **`predicted_marks` vs `predicted_grade_raw20` Fallback (`analyst_trends_service.py`, `tableau_export_service.py`):** Added `_extract_raw20_prediction()` converting real `PredictionRecord.predicted_marks / 5.0` dynamically so `/api/analyst/trends`, `academic_performance`, and `subject_trends` populate accurately on persisted `PredictionRecord` documents.
+2. **Coursework Cohort Privacy & Residual Inference Guards (`analyst_trends_service.py`, `tableau_export_service.py`):** Enforced distinct `academic_records` student threshold (`N >= 5`) before releasing `coursework_avg_raw20` / `avg_coursework_final_raw20`, and computed global trend institutional averages strictly over unsuppressed cohorts.
+3. **`DemandForecastRecord` & `AnomalyRecord` Real-Schema Alignment (`tableau_export_service.py`):** Mapped `forecast_period` -> `target_term`, `periods_ahead` -> `forecast_horizon`, `confidence_lower`/`confidence_upper` -> `lower_ci`/`upper_ci`, and `anomaly_severity` / `review_status` directly from real domain models; handled zero-row attendance session buckets cleanly.
+4. **Teacher Attendance ML Proxy Subject Scoping (`attendance_service.py`):** Restricted read-only `estimated_ml_proxy` prediction lookup to the teacher's authorized subject scope (`subj_filter_oid` / `allowed_subject_ids`) and optional term filter.
+5. **Documentation Consistency Sync:** Updated `README.md`, `documentation/ARCHITECTURE.md`, `documentation/PROJECT_OVERVIEW.md` (removed duplicate Student/Teacher sections and legacy UI/script tags), and `documentation/EDUPREDICT_SRS_TRACEABILITY_MATRIX.md` (removed stale test counts and outdated limitations).
+6. **End-to-End Real-Schema Integration Test:** Added `test_real_model_schemas_in_analyst_trends_tableau_and_attendance_scope` in `tests/test_phase_13_14.py` exercising persisted `PredictionRecord`, `DemandForecastRecord`, and `AnomalyRecord` documents directly through `/api/analyst/trends`, `/api/tableau/export/*`, and `/api/attendance/summary`.

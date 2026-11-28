@@ -3,8 +3,7 @@ EduPredict - Cohort Trend Aggregation & SDC Service (Workstream A / Phase 13)
 Module: backend.services.analyst_trends_service
 Purpose: Computes real institution-wide term trends across persisted predictions,
 academic records, and attendance roll-call aggregates while strictly enforcing
-Statistical Disclosure Control (N < 5 suppression + complementary suppression)
-and returning zero student-level PII.
+Statistical Disclosure Control (N < 5 suppression) and returning zero student-level PII.
 """
 
 from typing import Any, Dict, List, Optional, Set
@@ -17,6 +16,17 @@ def _safe_mean(values: List[float]) -> Optional[float]:
     if not values:
         return None
     return round(sum(values) / len(values), 2)
+
+
+def _extract_raw20_prediction(pred_doc: Dict[str, Any]) -> Optional[float]:
+    """Derive 0-20 scale grade from explicit raw20 field or real PredictionRecord.predicted_marks (0-100)."""
+    raw20 = pred_doc.get("predicted_grade_raw20")
+    if isinstance(raw20, (int, float)) and not isinstance(raw20, bool):
+        return float(raw20)
+    pct = pred_doc.get("predicted_marks")
+    if isinstance(pct, (int, float)) and not isinstance(pct, bool):
+        return round(float(pct) / 5.0, 2)
+    return None
 
 
 def get_analyst_trends_data(db: Optional[Database]) -> Dict[str, Any]:
@@ -35,7 +45,6 @@ def get_analyst_trends_data(db: Optional[Database]) -> Dict[str, Any]:
             "sdc_threshold": CELL_SUPPRESSION_THRESHOLD,
         }
 
-    # Fetch only aggregate-relevant non-PII fields
     preds = list(
         db.predictions.find(
             {},
@@ -56,8 +65,6 @@ def get_analyst_trends_data(db: Optional[Database]) -> Dict[str, Any]:
                 "subject": 1,
                 "term": 1,
                 "final_exam_marks": 1,
-                "g1": 1,
-                "g2": 1,
             },
         )
     )
@@ -80,6 +87,7 @@ def get_analyst_trends_data(db: Optional[Database]) -> Dict[str, Any]:
                 "students": set(),
                 "math_students": set(),
                 "port_students": set(),
+                "coursework_students": set(),
                 "att_students": set(),
                 "all_raw20": [],
                 "all_pct": [],
@@ -91,23 +99,19 @@ def get_analyst_trends_data(db: Optional[Database]) -> Dict[str, Any]:
             }
         return term_buckets[term_name]
 
-    global_students: Set[Any] = set()
-    global_raw20: List[float] = []
-    global_pct: List[float] = []
-
     for p in preds:
         term = (p.get("academic_term") or "Unspecified").strip() or "Unspecified"
         b = _bucket(term)
         sid = p.get("student_id")
         if sid is not None:
             b["students"].add(sid)
-            global_students.add(sid)
-        raw20 = p.get("predicted_grade_raw20")
+
+        val20 = _extract_raw20_prediction(p)
         pct = p.get("predicted_marks")
-        if isinstance(raw20, (int, float)):
-            val20 = float(raw20)
+        val_pct = float(pct) if isinstance(pct, (int, float)) and not isinstance(pct, bool) else (round(val20 * 5.0, 2) if val20 is not None else None)
+
+        if val20 is not None:
             b["all_raw20"].append(val20)
-            global_raw20.append(val20)
             subj = (p.get("subject") or "").strip().lower()
             if "math" in subj:
                 b["math_raw20"].append(val20)
@@ -117,10 +121,8 @@ def get_analyst_trends_data(db: Optional[Database]) -> Dict[str, Any]:
                 b["port_raw20"].append(val20)
                 if sid is not None:
                     b["port_students"].add(sid)
-        if isinstance(pct, (int, float)):
-            val_pct = float(pct)
+        if val_pct is not None:
             b["all_pct"].append(val_pct)
-            global_pct.append(val_pct)
 
     for rec in ac_records:
         term = (rec.get("term") or "Unspecified").strip() or "Unspecified"
@@ -128,10 +130,11 @@ def get_analyst_trends_data(db: Optional[Database]) -> Dict[str, Any]:
         sid = rec.get("student_id")
         if sid is not None:
             b["students"].add(sid)
-            global_students.add(sid)
         final_m = rec.get("final_exam_marks")
-        if isinstance(final_m, (int, float)):
+        if isinstance(final_m, (int, float)) and not isinstance(final_m, bool):
             b["coursework_raw20"].append(float(final_m))
+            if sid is not None:
+                b["coursework_students"].add(sid)
 
     for att in att_records:
         term = (att.get("academic_term") or "Unspecified").strip() or "Unspecified"
@@ -140,7 +143,6 @@ def get_analyst_trends_data(db: Optional[Database]) -> Dict[str, Any]:
         if sid is not None:
             b["students"].add(sid)
             b["att_students"].add(sid)
-            global_students.add(sid)
         st = att.get("status", "")
         if st != "Excused":
             b["att_effective"] += 1
@@ -148,6 +150,10 @@ def get_analyst_trends_data(db: Optional[Database]) -> Dict[str, Any]:
                 b["att_present_late"] += 1
 
     term_trends: List[Dict[str, Any]] = []
+    unsuppressed_students: Set[Any] = set()
+    unsuppressed_raw20: List[float] = []
+    unsuppressed_pct: List[float] = []
+
     for term_name in sorted(term_buckets.keys()):
         b = term_buckets[term_name]
         cohort_n = len(b["students"])
@@ -170,17 +176,22 @@ def get_analyst_trends_data(db: Optional[Database]) -> Dict[str, Any]:
             )
             continue
 
+        unsuppressed_students.update(b["students"])
+        unsuppressed_raw20.extend(b["all_raw20"])
+        unsuppressed_pct.extend(b["all_pct"])
+
         math_n = len(b["math_students"])
         port_n = len(b["port_students"])
         math_ok = math_n >= CELL_SUPPRESSION_THRESHOLD
         port_ok = port_n >= CELL_SUPPRESSION_THRESHOLD
 
-        # Complementary suppression: if only one subject falls below threshold while
-        # the other exists in a 2-subject institutional cohort, suppress both subject averages
-        if (math_n > 0 and not math_ok) or (port_n > 0 and not port_ok):
+        # Complementary suppression: if either subject has 1..4 students while the other exists,
+        # suppress both subject averages so suppressed sub-cohort values cannot be backed out
+        if (0 < math_n < CELL_SUPPRESSION_THRESHOLD) or (0 < port_n < CELL_SUPPRESSION_THRESHOLD):
             math_ok = False
             port_ok = False
 
+        cw_ok = len(b["coursework_students"]) >= CELL_SUPPRESSION_THRESHOLD
         att_ok = len(b["att_students"]) >= CELL_SUPPRESSION_THRESHOLD and b["att_effective"] > 0
         att_rate = (
             round((b["att_present_late"] / b["att_effective"]) * 100.0, 1) if att_ok else None
@@ -196,14 +207,15 @@ def get_analyst_trends_data(db: Optional[Database]) -> Dict[str, Any]:
                 "institutional_avg_percentage": _safe_mean(b["all_pct"]),
                 "math_avg_raw20": _safe_mean(b["math_raw20"]) if math_ok else None,
                 "portuguese_avg_raw20": _safe_mean(b["port_raw20"]) if port_ok else None,
-                "coursework_avg_raw20": _safe_mean(b["coursework_raw20"]),
+                "coursework_avg_raw20": _safe_mean(b["coursework_raw20"]) if cw_ok else None,
                 "attendance_rate_percentage": att_rate,
             }
         )
 
-    institutional_suppressed = len(global_students) < CELL_SUPPRESSION_THRESHOLD
-    institutional_avg_raw20 = None if institutional_suppressed else _safe_mean(global_raw20)
-    institutional_avg_percentage = None if institutional_suppressed else _safe_mean(global_pct)
+    # Aggregate institutional summary strictly across unsuppressed cohorts to eliminate residual inference
+    institutional_suppressed = len(unsuppressed_students) < CELL_SUPPRESSION_THRESHOLD
+    institutional_avg_raw20 = None if institutional_suppressed else _safe_mean(unsuppressed_raw20)
+    institutional_avg_percentage = None if institutional_suppressed else _safe_mean(unsuppressed_pct)
 
     unsuppressed_with_avg = [
         t for t in term_trends if not t["suppressed"] and t["institutional_avg_raw20"] is not None

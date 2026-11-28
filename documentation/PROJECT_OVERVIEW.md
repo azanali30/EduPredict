@@ -18,30 +18,15 @@ EduPredict is **not** a generic School Management System, LMS, or billing portal
 | **Web Gateway** | Production reverse proxy, static caching, WSGI server | Apache HTTP Server config (`httpd.conf`) + Flask | Apache Server |
 | **Predictive ML** | Performance regression, risk classification, feature importance | Scikit-learn, NumPy, Pandas, Joblib | Machine Learning |
 | **Data Science & EDA** | Interactive exploratory analysis, statistical distributions | Jupyter Notebooks (`notebooks/`) | Jupyter / Anaconda |
-| **Statistical Validation** | Hypothesis testing, ANOVA, statistical significance | RStudio / Standalone R scripts (`scripts/r_analytics/`) | RStudio |
+| **Statistical Validation** | Hypothesis testing, ANOVA, statistical significance | Native R scripts (`analytics/r/statistical_validation.R`) | RStudio / R |
 | **Enterprise BI** | Executive academic reporting, interactive BI dashboards | Tableau Public / Desktop (.twb workbook & exports) | Tableau |
-| **Processing Models** | Parallel cohort scoring & real-time campus event streaming | Multiprocessing (`concurrent.futures`) & SSE streaming | Batch & Real-Time |
-| **Front-End SaaS** | Role-partitioned student, teacher, and administrator dashboards | HTML5, CSS3, JavaScript, Bootstrap 5, Chart.js | Web UI / UX |
-| **Quality & QA** | Automated unit, integration, and security test suites | Pytest | Testing |
+| **Processing Models** | Parallel cohort scoring & real-time campus event streaming | Concurrent batch benchmark & idempotent event streaming | Batch & Real-Time |
+| **Front-End UI** | Role-partitioned student, teacher, admin, and analyst dashboards | React 18, TypeScript, Tailwind CSS, Recharts | Web UI / UX |
+| **Quality & QA** | Automated unit, integration, and security test suites | Pytest & Vitest | Testing |
 
 ---
 
 ## 3. User Roles and Separation of Concerns
-
-### Student
-- Secure authentication.
-- Private academic record input (attendance, study hours, assignment rate, quiz scores, previous marks, subject grades).
-- View predicted results and risk level (Low, Moderate, High).
-- Diagnostic breakdown of strong vs. weak subjects.
-- Personalized, actionable improvement recommendations.
-- Historical progress tracking over time.
-
-### Teacher
-- Secure instructor dashboard.
-- Roster of assigned students.
-- Class-wide performance and risk distribution analytics.
-- Automated at-risk student early warning flags.
-- Drill-down into individual student indicators.
 
 ### Teacher
 - Secure subject-scoped instructor dashboard (`TeacherAttendance`, `TeacherAcademicRecords`, `TeacherPredictions`, `TeacherAtRisk`, `TeacherDropout`, `TeacherNotifications`, `TeacherFeedback`).
