@@ -42,13 +42,31 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const canAccessNotifications = Boolean(user && user.role !== 'analyst');
 
-  useEffect(() => {
+  const loadNavbarNotifications = React.useCallback(async () => {
     if (!canAccessNotifications || typeof notificationsApi?.list !== 'function') {
       setNotifications([]);
       setUnreadCount(0);
       return;
     }
+    try {
+      const res = await notificationsApi.list({ limit: 5 });
+      if (res) {
+        setNotifications(res.notifications || []);
+        setUnreadCount(res.unread_count || 0);
+      }
+    } catch {
+      setNotifications([]);
+      setUnreadCount(0);
+    }
+  }, [canAccessNotifications]);
+
+  useEffect(() => {
     let isMounted = true;
+    if (!canAccessNotifications || typeof notificationsApi?.list !== 'function') {
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
+    }
     notificationsApi
       .list({ limit: 5 })
       .then((res) => {
@@ -64,10 +82,18 @@ export const Navbar: React.FC<NavbarProps> = ({
         }
       });
 
+    const handleSync = () => {
+      if (isMounted) {
+        void loadNavbarNotifications();
+      }
+    };
+    window.addEventListener('edupredict:notifications-updated', handleSync);
+
     return () => {
       isMounted = false;
+      window.removeEventListener('edupredict:notifications-updated', handleSync);
     };
-  }, [canAccessNotifications, location.pathname]);
+  }, [canAccessNotifications, location.pathname, loadNavbarNotifications]);
 
   const handleMarkOneRead = async (id: string) => {
     if (typeof notificationsApi?.markAsRead !== 'function') return;
@@ -75,6 +101,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       await notificationsApi.markAsRead(id);
       setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)));
       setUnreadCount((prev) => Math.max(0, prev - 1));
+      await loadNavbarNotifications();
     } catch {
       // ignore non-critical header refresh errors
     }

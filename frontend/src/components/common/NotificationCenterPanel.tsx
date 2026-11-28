@@ -90,6 +90,7 @@ export const NotificationCenterPanel: React.FC<NotificationCenterPanelProps> = (
         prev.map((item) => (item.id === id ? { ...item, is_read: true } : item))
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
+      window.dispatchEvent(new CustomEvent('edupredict:notifications-updated'));
     } catch (err: any) {
       setError(err?.message || 'Failed to mark notification as read.');
     } finally {
@@ -104,6 +105,7 @@ export const NotificationCenterPanel: React.FC<NotificationCenterPanelProps> = (
       await notificationsApi.markAllAsRead();
       setNotifications((prev) => prev.map((item) => ({ ...item, is_read: true })));
       setUnreadCount(0);
+      window.dispatchEvent(new CustomEvent('edupredict:notifications-updated'));
     } catch (err: any) {
       setError(err?.message || 'Failed to mark all notifications as read.');
     } finally {

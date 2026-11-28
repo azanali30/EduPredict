@@ -274,11 +274,11 @@ export const AdminFeedback: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="label">Intervention Notes (Optional)</label>
+                      <label className="label">Intervention Notes (Optional — Visible on Ticket)</label>
                       <textarea
                         value={interventionNotes}
                         onChange={(e) => setInterventionNotes(e.target.value)}
-                        placeholder="Record internal academic follow-up or triage notes..."
+                        placeholder="Record academic follow-up or intervention steps visible to the ticket owner..."
                         className="input h-16 text-xs resize-none"
                       />
                     </div>

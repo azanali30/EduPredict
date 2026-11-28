@@ -249,22 +249,96 @@ class FeedbackService:
                 "resolved": db.feedback_tickets.count_documents({"sender_id": actor_oid, "status": "Resolved"}),
             }
         elif role == "teacher":
-            scope_filter = {
-                "$or": [
-                    {"sender_id": actor_oid},
+            t_assigns = list(
+                db.teacher_subject_assignments.find(
+                    {"teacher_id": actor_oid, "status": "active"},
+                    {"subject_id": 1, "academic_term": 1},
+                )
+            )
+            assigned_subj_ids = {a.get("subject_id") for a in t_assigns if a.get("subject_id")}
+            active_subj_ids = (
+                {
+                    s["_id"]
+                    for s in db.subjects.find(
+                        {"_id": {"$in": list(assigned_subj_ids)}, "is_active": {"$ne": False}},
+                        {"_id": 1},
+                    )
+                }
+                if assigned_subj_ids
+                else set()
+            )
+            teacher_terms_by_subject: Dict[ObjectId, set[str]] = {}
+            for a in t_assigns:
+                s_id = a.get("subject_id")
+                term_str = (a.get("academic_term") or "").strip() if isinstance(a.get("academic_term"), str) else ""
+                if s_id in active_subj_ids and term_str:
+                    teacher_terms_by_subject.setdefault(s_id, set()).add(term_str)
+
+            if active_subj_ids:
+                scope_filter = {
+                    "$or": [
+                        {"sender_id": actor_oid},
+                        {
+                            "sender_role": "student",
+                            "category": "Academic Counseling",
+                            "share_with_instructor": True,
+                            "subject_id": {"$in": list(active_subj_ids)},
+                        },
+                    ]
+                }
+            else:
+                scope_filter = {"sender_id": actor_oid}
+
+            candidate_docs = list(
+                db.feedback_tickets.find(scope_filter).sort([("created_at", DESCENDING), ("_id", DESCENDING)])
+            )
+            counseling_student_ids = list({
+                d.get("sender_id")
+                for d in candidate_docs
+                if d.get("sender_id") != actor_oid and d.get("sender_id") is not None
+            })
+            student_terms_by_pair: Dict[Tuple[ObjectId, ObjectId], set[str]] = {}
+            if counseling_student_ids and active_subj_ids:
+                for enr in db.student_subject_enrollments.find(
                     {
-                        "sender_role": "student",
-                        "category": "Academic Counseling",
-                        "share_with_instructor": True,
-                        "subject_id": {"$ne": None},
+                        "student_id": {"$in": counseling_student_ids},
+                        "subject_id": {"$in": list(active_subj_ids)},
+                        "status": "active",
                     },
-                ]
-            }
-            all_authorized_docs = [
-                d
-                for d in db.feedback_tickets.find(scope_filter).sort([("created_at", DESCENDING), ("_id", DESCENDING)])
-                if cls._is_teacher_authorized_for_ticket(db, actor_user, d)
-            ]
+                    {"student_id": 1, "subject_id": 1, "academic_term": 1},
+                ):
+                    st_id = enr.get("student_id")
+                    sb_id = enr.get("subject_id")
+                    term_str = (
+                        (enr.get("academic_term") or "").strip()
+                        if isinstance(enr.get("academic_term"), str)
+                        else ""
+                    )
+                    if st_id and sb_id and term_str:
+                        student_terms_by_pair.setdefault((st_id, sb_id), set()).add(term_str)
+
+            def _is_batch_authorized(doc_item: Dict[str, Any]) -> bool:
+                if doc_item.get("sender_id") == actor_oid:
+                    return True
+                if (
+                    doc_item.get("sender_role") != "student"
+                    or doc_item.get("category") != "Academic Counseling"
+                    or doc_item.get("share_with_instructor") is not True
+                ):
+                    return False
+                st_oid = doc_item.get("sender_id")
+                sb_oid = doc_item.get("subject_id")
+                if not st_oid or not sb_oid:
+                    return False
+                t_terms = teacher_terms_by_subject.get(sb_oid, set())
+                s_terms = student_terms_by_pair.get((st_oid, sb_oid), set())
+                raw_term = doc_item.get("academic_term")
+                clean_term = raw_term.strip() if isinstance(raw_term, str) and raw_term.strip() else None
+                if clean_term:
+                    return clean_term in t_terms and clean_term in s_terms
+                return len(t_terms & s_terms) > 0
+
+            all_authorized_docs = [d for d in candidate_docs if _is_batch_authorized(d)]
             summary = {
                 "total": len(all_authorized_docs),
                 "open": sum(1 for d in all_authorized_docs if d.get("status") == "Open"),

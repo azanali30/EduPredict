@@ -157,3 +157,24 @@ All automated checks were executed sequentially against the final code state wit
 - **Delivery Channel:** Notifications are persisted in MongoDB and fetched on navigation/action by REST clients; real-time push over SSE/WebSocket and external SMTP/SMS/Twilio channels remain outside Phase 12 scope.
 - **Navbar Refresh Cadence:** `Navbar` refreshes unread count/preview on route transitions and read actions rather than background polling intervals.
 - **Scale Testing Deferred:** The final institutional scale test (`100+ students`, `25+ teachers`, single admin) remains deferred until all 16 development phases are completed.
+
+---
+
+## 10. Minor Audit Remediation Summary
+
+Following the independent read-only audit of commit `55b01b0987518e9173a811231c94f8b0a1090935` (`APPROVED WITH MINOR ISSUES`), all five low-severity findings were remediated without expanding scope:
+
+1. **PATCH CSRF Auto-Retry (`frontend/src/services/api.ts`):** Added `'PATCH'` alongside `'POST'`, `'PUT'`, and `'DELETE'` in the single-attempt expired-CSRF `400` refresh-and-retry path, preserving request headers and payloads.
+2. **Intervention Notes Visibility Wording (`frontend/src/pages/admin/AdminFeedback.tsx`):** Updated label and placeholder from `"internal"` wording to `"Intervention Notes (Optional — Visible on Ticket)"` and `"Record academic follow-up or intervention steps visible to the ticket owner..."`, matching `FeedbackTicket.to_dict()` and `FeedbackInquiryWorkspace.tsx`.
+3. **Fail-Closed Subject Resolution (`backend/services/notification_service.py`):** Updated `_resolve_authorized_teachers()` so an explicit non-empty `subject_oid` or `subject_name` that cannot resolve to an active subject in `db.subjects` returns `[]` rather than falling back across all enrolled subjects, while keeping omitted-subject institutional dropout alerts intact.
+4. **Feedback Response Update Deduplication (`backend/services/notification_service.py`):** Added response digest hashing (`resp_digest`) to `dedup_key` in `notify_feedback_status_update()` (`feedback_update:{ticket_id}:{status}:{resp_digest}`) so subsequent Admin response edits under an unchanged status emit a new notification while repeated identical updates remain deduplicated.
+5. **Navbar Sync & Batched Teacher Ticket Scoping (`frontend/src/components/common/Navbar.tsx`, `NotificationCenterPanel.tsx`, `AdminNotifications.tsx`, `backend/services/feedback_service.py`):** Added immediate unread-count synchronization via `edupredict:notifications-updated` events + `loadNavbarNotifications()`, and replaced per-ticket `can_access_student_subject_data()` database queries in `FeedbackService.list_tickets()` (`role="teacher"`) with O(1) batched `teacher_subject_assignments`, `subjects`, and `student_subject_enrollments` lookups preserving exact subject, term, ownership, and RBAC rules.
+
+### Post-Remediation Verification Results
+- **Phase 12 Backend Suite (`.\.venv\Scripts\pytest.exe -v tests/test_phase_12_notifications_feedback.py`):** `8 passed in 25.91s`
+- **Targeted Backend Regressions:** `125 passed in 108.67s (0:01:48)`
+- **Full Backend Pytest Suite (`.\.venv\Scripts\pytest.exe -q`):** `377 passed in 279.24s (0:04:39)`
+- **Frontend Vitest Suite (`npx.cmd vitest run`):** `Test Files 9 passed (9)`, `Tests 45 passed (45)` in `25.69s`
+- **Frontend TypeScript Check (`npx.cmd tsc -b`):** Passed (exit code `0`)
+- **Frontend Vite Production Build (`npm.cmd run build`):** `✓ built in 28.54s` (`2091 modules transformed`)
+

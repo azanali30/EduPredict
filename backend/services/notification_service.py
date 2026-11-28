@@ -5,6 +5,7 @@ Purpose: Persists user notifications, Admin institutional broadcasts, read-state
 and idempotent failure-isolated early-warning alerts from Prediction, Dropout, and Anomaly services.
 """
 
+import hashlib
 import logging
 import math
 from datetime import datetime, timezone
@@ -354,18 +355,39 @@ class NotificationService:
         Resolve active teachers assigned to subjects/terms matching an active student enrollment.
         Strictly enforces single-institution subject-term alignment; never uses legacy tables.
         """
-        resolved_subj_oid = to_object_id(subject_oid)
+        has_explicit_subject = False
+        resolved_subj_oid: Optional[ObjectId] = None
+
+        if subject_oid is not None and str(subject_oid).strip():
+            has_explicit_subject = True
+            oid_candidate = to_object_id(subject_oid)
+            if oid_candidate:
+                subj_doc = db.subjects.find_one(
+                    {"_id": oid_candidate, "is_active": {"$ne": False}},
+                    {"_id": 1},
+                )
+                if subj_doc:
+                    resolved_subj_oid = subj_doc["_id"]
+
         if not resolved_subj_oid and isinstance(subject_name, str) and subject_name.strip():
+            has_explicit_subject = True
             clean_s = subject_name.strip()
-            subj_doc = db.subjects.find_one({
-                "$or": [
-                    {"canonical_key": clean_s.lower()},
-                    {"name": clean_s},
-                    {"code": clean_s.upper()},
-                ]
-            })
-            if subj_doc:
+            subj_doc = db.subjects.find_one(
+                {
+                    "$or": [
+                        {"canonical_key": clean_s.lower()},
+                        {"name": clean_s},
+                        {"code": clean_s.upper()},
+                    ]
+                },
+                {"_id": 1, "is_active": 1},
+            )
+            if subj_doc and subj_doc.get("is_active", True):
                 resolved_subj_oid = subj_doc["_id"]
+
+        # Fail closed when an explicit non-empty subject cannot be resolved
+        if has_explicit_subject and not resolved_subj_oid:
+            return []
 
         enroll_q: Dict[str, Any] = {"student_id": student_oid, "status": "active"}
         if resolved_subj_oid:
@@ -691,8 +713,20 @@ class NotificationService:
             if not sender_oid:
                 return 0
             status_val = getattr(ticket, "status", "Reviewed")
+            admin_response_val = (getattr(ticket, "admin_response", None) or "").strip()
+            resp_digest = (
+                hashlib.sha256(admin_response_val.encode("utf-8")).hexdigest()[:12]
+                if admin_response_val
+                else "none"
+            )
             title = f"Support Ticket Update: {status_val}"
-            message = f"Your inquiry '{getattr(ticket, 'title', 'Ticket')}' was updated to status '{status_val}'."
+            if admin_response_val:
+                message = (
+                    f"Your inquiry '{getattr(ticket, 'title', 'Ticket')}' ({status_val}) "
+                    "received an updated administrator response."
+                )
+            else:
+                message = f"Your inquiry '{getattr(ticket, 'title', 'Ticket')}' was updated to status '{status_val}'."
             _, created = cls.create_notification(
                 db=db,
                 recipient_id=sender_oid,
@@ -704,12 +738,13 @@ class NotificationService:
                 subject_id=getattr(ticket, "subject_id", None),
                 subject=getattr(ticket, "subject", None),
                 academic_term=getattr(ticket, "academic_term", None),
-                dedup_key=f"feedback_update:{getattr(ticket, 'id', '')}:{status_val}",
+                dedup_key=f"feedback_update:{getattr(ticket, 'id', '')}:{status_val}:{resp_digest}",
                 provenance={
                     "trigger_type": "feedback_status_update",
                     "source_collection": "feedback_tickets",
                     "source_id": str(getattr(ticket, "id", "")),
                     "status": status_val,
+                    "response_digest": resp_digest,
                 },
             )
             return 1 if created else 0

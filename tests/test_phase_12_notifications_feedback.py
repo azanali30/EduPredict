@@ -539,3 +539,174 @@ def test_analyst_strictly_blocked_and_csrf_enforced(app, clean_db, client, test_
         assert with_csrf.status_code == 201
     finally:
         app.config["WTF_CSRF_ENABLED"] = prev_csrf
+
+
+def test_fail_closed_explicit_subject_teacher_resolution(clean_db, test_admin, test_teacher, test_student):
+    """Explicit unresolvable subjects fail closed and never leak across all enrolled subjects."""
+    SubjectService.ensure_canonical_subjects(clean_db)
+    math_subj = SubjectService.get_subject_by_canonical_key(clean_db, "mathematics")
+    AssignmentService.assign_teacher_to_subject(clean_db, test_teacher.id, math_subj.id, "2026-T1", test_admin.id)
+    EnrollmentService.enroll_student(clean_db, test_student.id, math_subj.id, "2026-T1", test_admin.id)
+
+    # Valid subject resolves authorized teacher cleanly
+    resolved_valid = NotificationService._resolve_authorized_teachers(
+        clean_db, test_student.id, subject_name="Mathematics", academic_term="2026-T1"
+    )
+    assert [doc["_id"] for doc in resolved_valid] == [test_teacher.id]
+
+    # Explicit nonexistent subject name or ObjectId fails closed ([])
+    assert NotificationService._resolve_authorized_teachers(
+        clean_db, test_student.id, subject_name="NonExistentSubject", academic_term="2026-T1"
+    ) == []
+    assert NotificationService._resolve_authorized_teachers(
+        clean_db, test_student.id, subject_oid=ObjectId(), academic_term="2026-T1"
+    ) == []
+
+    # Omitted subject (e.g. institutional dropout screening without subject) still resolves active enrollment teachers
+    resolved_no_subj = NotificationService._resolve_authorized_teachers(
+        clean_db, test_student.id, subject_name=None, academic_term="2026-T1"
+    )
+    assert [doc["_id"] for doc in resolved_no_subj] == [test_teacher.id]
+
+
+def test_feedback_response_edit_dedup_behavior(clean_db, client, test_admin, test_student):
+    """Editing admin_response under unchanged status creates a new alert, while identical updates deduplicate."""
+    _login(client, test_student.email, "StudentPassword123!")
+    sub = client.post(
+        "/api/feedback",
+        json={
+            "category": "Course Feedback",
+            "title": "Schedule Question",
+            "message": "Confirming review hours for this week.",
+        },
+    )
+    assert sub.status_code == 201
+    ticket_id = sub.get_json()["ticket"]["id"]
+
+    _login(client, test_admin.email, "AdminPassword123!")
+    r1 = client.patch(
+        f"/api/feedback/{ticket_id}",
+        json={"status": "Reviewed", "admin_response": "Initial response: Thursday at 2 PM."},
+    )
+    assert r1.status_code == 200
+    assert clean_db.notifications.count_documents({"recipient_id": test_student.id, "category": "feedback_update"}) == 1
+
+    # Identical retry under same status and response must deduplicate cleanly
+    r1_dup = client.patch(
+        f"/api/feedback/{ticket_id}",
+        json={"status": "Reviewed", "admin_response": "Initial response: Thursday at 2 PM."},
+    )
+    assert r1_dup.status_code == 200
+    assert clean_db.notifications.count_documents({"recipient_id": test_student.id, "category": "feedback_update"}) == 1
+
+    # New response edit under unchanged status generates a fresh notification
+    r2_edit = client.patch(
+        f"/api/feedback/{ticket_id}",
+        json={"status": "Reviewed", "admin_response": "Updated time: Friday at 3 PM."},
+    )
+    assert r2_edit.status_code == 200
+    assert clean_db.notifications.count_documents({"recipient_id": test_student.id, "category": "feedback_update"}) == 2
+
+    # Transition to Resolved emits another notification
+    r3_res = client.patch(
+        f"/api/feedback/{ticket_id}",
+        json={"status": "Resolved", "admin_response": "Updated time: Friday at 3 PM."},
+    )
+    assert r3_res.status_code == 200
+    assert clean_db.notifications.count_documents({"recipient_id": test_student.id, "category": "feedback_update"}) == 3
+
+
+def test_teacher_ticket_scoping_batch_query_and_term_isolation(clean_db, client, test_admin, test_teacher, test_student, monkeypatch):
+    """Verify teacher list_tickets enforces exact subject/term RBAC with O(1) batched DB queries."""
+    import pymongo.collection
+
+    SubjectService.ensure_canonical_subjects(clean_db)
+    math_subj = SubjectService.get_subject_by_canonical_key(clean_db, "mathematics")
+    port_subj = SubjectService.get_subject_by_canonical_key(clean_db, "portuguese")
+
+    AssignmentService.assign_teacher_to_subject(clean_db, test_teacher.id, math_subj.id, "2026-T1", test_admin.id)
+    EnrollmentService.enroll_student(clean_db, test_student.id, math_subj.id, "2026-T1", test_admin.id)
+    EnrollmentService.enroll_student(clean_db, test_student.id, math_subj.id, "2026-T2", test_admin.id)
+    EnrollmentService.enroll_student(clean_db, test_student.id, port_subj.id, "2026-T1", test_admin.id)
+
+    _login(client, test_student.email, "StudentPassword123!")
+    # 2 shared Math tickets in authorized 2026-T1 term
+    for idx in range(2):
+        assert client.post(
+            "/api/feedback",
+            json={
+                "category": "Academic Counseling",
+                "subject_id": str(math_subj.id),
+                "academic_term": "2026-T1",
+                "share_with_instructor": True,
+                "title": f"Math T1 Counseling {idx}",
+                "message": "Requesting extra practice exercises for Milestone 1.",
+            },
+        ).status_code == 201
+
+    # 1 shared Math ticket in unauthorized 2026-T2 term (must stay hidden)
+    assert client.post(
+        "/api/feedback",
+        json={
+            "category": "Academic Counseling",
+            "subject_id": str(math_subj.id),
+            "academic_term": "2026-T2",
+            "share_with_instructor": True,
+            "title": "Math T2 Mismatched Term",
+            "message": "Requesting help for term teacher does not teach.",
+        },
+    ).status_code == 201
+
+    # 1 shared Portuguese ticket (unassigned subject, must stay hidden)
+    assert client.post(
+        "/api/feedback",
+        json={
+            "category": "Academic Counseling",
+            "subject_id": str(port_subj.id),
+            "academic_term": "2026-T1",
+            "share_with_instructor": True,
+            "title": "Portuguese Unauthorized Subject",
+            "message": "Should remain hidden from Math-only teacher.",
+        },
+    ).status_code == 201
+
+    # 1 private student ticket (must stay hidden)
+    assert client.post(
+        "/api/feedback",
+        json={
+            "category": "Academic Counseling",
+            "subject_id": str(math_subj.id),
+            "academic_term": "2026-T1",
+            "share_with_instructor": False,
+            "title": "Private Math Note",
+            "message": "Marked private; must never appear in teacher queue.",
+        },
+    ).status_code == 201
+
+    _login(client, test_teacher.email, "TeacherPassword123!")
+    assert client.post(
+        "/api/feedback",
+        json={
+            "category": "Curriculum & Grading",
+            "subject_id": str(math_subj.id),
+            "title": "Teacher Own Ticket",
+            "message": "Self-submitted faculty observation.",
+        },
+    ).status_code == 201
+
+    find_calls = []
+    orig_find = pymongo.collection.Collection.find
+
+    def counting_find(self, *args, **kwargs):
+        find_calls.append(getattr(self, "name", ""))
+        return orig_find(self, *args, **kwargs)
+
+    monkeypatch.setattr(pymongo.collection.Collection, "find", counting_find)
+    res = client.get("/api/feedback")
+    assert res.status_code == 200
+    payload = res.get_json()
+    titles = {t["title"] for t in payload["tickets"]}
+    assert titles == {"Math T1 Counseling 0", "Math T1 Counseling 1", "Teacher Own Ticket"}
+    assert payload["total"] == 3
+    # Batched query path executes bounded find calls (teacher assignments, subjects, tickets, enrollments)
+    assert len(find_calls) <= 4

@@ -78,7 +78,7 @@ export async function apiRequest<T = any>(
   }
 
   // If CSRF error occurred, refresh token and retry once
-  if (response.status === 400 && ['POST', 'PUT', 'DELETE'].includes(method)) {
+  if (response.status === 400 && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
     const errorClone = response.clone();
     try {
       const errJson = await errorClone.json();

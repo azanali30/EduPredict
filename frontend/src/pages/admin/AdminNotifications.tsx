@@ -43,6 +43,7 @@ export const AdminNotifications: React.FC = () => {
       setTitle('');
       setBroadcastMessage('');
       setRefreshSignal((s) => s + 1);
+      window.dispatchEvent(new CustomEvent('edupredict:notifications-updated'));
     } catch (err: any) {
       setBroadcastError(err?.message || 'Failed to send broadcast notification.');
     } finally {
