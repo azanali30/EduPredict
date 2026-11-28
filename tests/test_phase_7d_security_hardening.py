@@ -116,6 +116,8 @@ def test_create_app_in_production_succeeds_with_valid_secret(monkeypatch):
     strong_key = "b9823476abcdf0123456789abcdef0123456789abcdef0123456789abcdef01"
     monkeypatch.setenv("SECRET_KEY", strong_key)
     monkeypatch.setenv("MONGO_URI", "mongodb://localhost:27017/edupredict_test")
+    monkeypatch.setenv("MONGO_DB_NAME", "edupredict_test")
+    monkeypatch.setattr(ProductionConfig, "MONGO_DB_NAME", "edupredict_test")
     monkeypatch.setenv("CORS_ORIGINS", "https://edupredict.edu")
 
     app = create_app("production")
@@ -126,8 +128,10 @@ def test_create_app_in_production_succeeds_with_valid_secret(monkeypatch):
     assert app.config["SESSION_COOKIE_SAMESITE"] == "Lax"
 
 
-def test_development_and_testing_startup_compatibility():
+def test_development_and_testing_startup_compatibility(monkeypatch):
     """Development and testing modes must start cleanly with safe defaults."""
+    monkeypatch.setenv("MONGO_DB_NAME", "edupredict_test")
+    monkeypatch.setattr(DevelopmentConfig, "MONGO_DB_NAME", "edupredict_test")
     app_test = create_app("testing")
     assert app_test.config["TESTING"] is True
     assert app_test.config["SESSION_COOKIE_HTTPONLY"] is True
@@ -596,6 +600,8 @@ def test_production_startup_fails_with_insecure_or_empty_cors(monkeypatch):
     strong_key = "a" * 64
     monkeypatch.setenv("SECRET_KEY", strong_key)
     monkeypatch.setenv("MONGO_URI", "mongodb://localhost:27017/edupredict_test")
+    monkeypatch.setenv("MONGO_DB_NAME", "edupredict_test")
+    monkeypatch.setattr(ProductionConfig, "MONGO_DB_NAME", "edupredict_test")
 
     # 1. Wildcard in production
     monkeypatch.setenv("CORS_ORIGINS", "*")

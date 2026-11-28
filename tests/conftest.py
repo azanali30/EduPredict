@@ -25,11 +25,29 @@ def app():
     mongo.close()
 
 
+@pytest.fixture(autouse=True)
+def isolate_test_mongo(app):
+    """Ensure global mongo singleton always points back to edupredict_test after any test."""
+    with app.app_context():
+        if mongo.db is None or mongo.db.name != app.config["MONGO_DB_NAME"]:
+            mongo.init_app(app)
+    yield
+    with app.app_context():
+        if mongo.db is None or mongo.db.name != app.config["MONGO_DB_NAME"]:
+            mongo.init_app(app)
+
+
 @pytest.fixture(scope="function")
 def clean_db(app):
     """Ensure clean collections for each test function in edupredict_test."""
     with app.app_context():
+        if mongo.db is None or mongo.db.name != app.config["MONGO_DB_NAME"]:
+            mongo.init_app(app)
         if mongo.db is not None:
+            if "test" not in mongo.db.name.lower():
+                raise RuntimeError(
+                    f"Refusing to run clean_db on non-test database '{mongo.db.name}'!"
+                )
             mongo.db.users.delete_many({})
             mongo.db.teacher_student_assignments.delete_many({})
             mongo.db.academic_records.delete_many({})
